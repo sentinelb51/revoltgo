@@ -1,7 +1,6 @@
 package revoltgo
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -68,8 +67,6 @@ type Session struct {
 }
 
 type SelfBot struct {
-	Email        string `json:"-"`
-	Password     string `json:"-"`
 	ID           string `json:"id"`
 	UserID       string `json:"uid"`
 	SessionToken string `json:"token"`
@@ -167,37 +164,22 @@ func (s *Session) OnServerMemberLeave(fn func(*Session, *EventServerMemberLeave)
 
 // Channel fetches a channel using an API call
 func (s *Session) Channel(id string) (channel *ServerChannel, err error) {
-
 	url := EndpointChannels(id)
-	response, err := s.request(http.MethodGet, url, nil)
-	if err == nil {
-		err = json.Unmarshal(response, &channel)
-	}
-
+	err = s.request(http.MethodGet, url, nil, &channel)
 	return
 }
 
 // User fetches a user by their ID
 func (s *Session) User(id string) (user *User, err error) {
-
 	url := EndpointUsers(id)
-	response, err := s.request(http.MethodGet, url, nil)
-	if err == nil {
-		err = json.Unmarshal(response, &user)
-	}
-
+	err = s.request(http.MethodGet, url, nil, &user)
 	return
 }
 
 // Server fetches a server by its ID
 func (s *Session) Server(id string) (server *Server, err error) {
-
 	url := EndpointServers(id)
-	response, err := s.request(http.MethodGet, url, nil)
-	if err == nil {
-		err = json.Unmarshal(response, &server)
-	}
-
+	err = s.request(http.MethodGet, url, nil, &server)
 	return
 }
 
@@ -208,181 +190,112 @@ func (s *Session) ServerCreate(data *ServerCreateData) (server *Server, err erro
 		data.Nonce = ULID()
 	}
 
-	payload, err := json.Marshal(data)
-	if err != nil {
-		return
-	}
-
-	url := URLServersCreate
-	response, err := s.request(http.MethodPost, url, payload)
-	if err == nil {
-		err = json.Unmarshal(response, &server)
-	}
+	url := EndpointServers("create")
+	err = s.request(http.MethodPost, url, data, &server)
 
 	return
 }
 
+func (s *Session) ChannelMessageSend(cID string, ms *MessageSend) (message *Message, err error) {
+
+	if ms.Nonce == "" {
+		ms.Nonce = ULID()
+	}
+
+	url := EndpointChannelMessages(cID)
+	err = s.request(http.MethodPost, url, ms, &message)
+	return
+}
+
+func (s *Session) ChannelMessageDelete(cID, mID string) error {
+	url := EndpointChannelMessagesMessage(cID, mID)
+	_, err := s.handleRequest(http.MethodDelete, url, nil)
+	return err
+}
+
 // Login as a regular user; this is for self-bots only
-func (s *Session) Login(friendlyName string) (sb *SelfBot, err error) {
+// friendlyName is an optional parameter that helps identify the session later
+func (s *Session) Login(email, password, friendlyName string) (sb *SelfBot, err error) {
 
 	if s.SelfBot == nil {
 		panic("method restricted to self-bots")
 	}
 
-	url := URLAuthSessionLogin
-	response, err := s.request(http.MethodPost, url, []byte("{\"email\":\""+s.SelfBot.Email+"\",\"password\":\""+s.SelfBot.Password+"\",\"friendly_name\":\""+friendlyName+"\"}"))
-	if err == nil {
-		err = json.Unmarshal(response, &sb)
+	payload := &LoginData{
+		Email:        email,
+		Password:     password,
+		FriendlyName: friendlyName,
 	}
 
+	url := URLAuthSessionsLogin
+	err = s.request(http.MethodPost, url, payload, &sb)
 	return
 }
 
-// Fetch all of the DMs.
+// DirectMessages returns a list of direct message channels.
 func (s *Session) DirectMessages() (channels []*ServerChannel, err error) {
-
 	url := EndpointUsers("dms")
-	response, err := s.request(http.MethodGet, url, nil)
-	if err == nil {
-		err = json.Unmarshal(response, &channels)
-	}
-
+	err = s.request(http.MethodGet, url, nil, &channels)
 	return
 }
 
 // Edit client user.
 func (s *Session) Edit(eu *EditUser) error {
-
-	data, err := json.Marshal(eu)
-	if err != nil {
-		return err
-	}
-
 	url := EndpointUsers("@me")
-	_, err = s.request(http.MethodPatch, url, data)
-	return err
+	return s.request(http.MethodPatch, url, eu, nil)
 }
 
 // GroupCreate creates a group based on the data provided
 // "Users" field is a list of users that will be in the group
-func (s *Session) GroupCreate(data *GroupCreateData) (channel *ServerChannel, err error) {
+func (s *Session) GroupCreate(data GroupCreateData) (channel *ServerChannel, err error) {
 
 	if data.Nonce == "" {
 		data.Nonce = ULID()
 	}
 
-	payload, err := json.Marshal(data)
-	if err != nil {
-		return
-	}
-
-	url := URLChannelsCreate
-	response, err := s.request(http.MethodPost, url, payload)
-	if err == nil {
-		err = json.Unmarshal(response, &channel)
-	}
-
+	url := EndpointChannels("create")
+	err = s.request(http.MethodPost, url, data, &channel)
 	return
 }
 
-// Fetch relationships.
+// Relationships returns a list of relationships for the current user
 func (s *Session) Relationships() (relationships []*UserRelations, err error) {
-
 	url := URLUsersRelationships
-	response, err := s.request(http.MethodGet, url, nil)
-	if err == nil {
-		err = json.Unmarshal(response, &relationships)
-	}
-
+	err = s.request(http.MethodGet, url, nil, &relationships)
 	return
 }
 
-// Send friend request. / Accept friend request.
-// User relations struct only will have status. id is not defined for this function.
-func (s *Session) AddFriend(username string) (*UserRelations, error) {
-	relationshipData := &UserRelations{}
-
-	response, err := s.request("PUT", "/users/"+username+"/friend", nil)
-
-	if err != nil {
-		return relationshipData, err
-	}
-
-	err = json.Unmarshal(response, relationshipData)
-	return relationshipData, err
+// FriendAdd sends or accepts a friend request.
+func (s *Session) FriendAdd(username string) (relations *UserRelations, err error) {
+	url := EndpointUsersFriend(username)
+	err = s.request(http.MethodPut, url, nil, &relations)
+	return
 }
 
-// Deny friend request. / Remove friend.
-// User relations struct only will have status. id is not defined for this function.
-func (s *Session) RemoveFriend(username string) (*UserRelations, error) {
-	relationshipData := &UserRelations{}
-
-	response, err := s.request("DELETE", "/users/"+username+"/friend", nil)
-
-	if err != nil {
-		return relationshipData, err
-	}
-
-	err = json.Unmarshal(response, relationshipData)
-	return relationshipData, err
+// FriendDelete removes a friend or declines a friend request.
+func (s *Session) FriendDelete(username string) (relations *UserRelations, err error) {
+	url := EndpointUsersFriend(username)
+	err = s.request(http.MethodDelete, url, nil, &relations)
+	return
 }
 
-// Create a new bot.
-func (s *Session) BotCreate(name string) (*Bot, error) {
-	botData := &Bot{}
-	botData.Client = s
-
-	response, err := s.request(http.MethodPost, "/bots/create", []byte("{\"name\":\""+name+"\"}"))
-
-	if err != nil {
-		return botData, err
-	}
-
-	err = json.Unmarshal(response, botData)
-	return botData, err
-
+// BotCreate creates a bot based on the data provided
+func (s *Session) BotCreate(data BotCreateData) (bot *Bot, err error) {
+	url := EndpointBots("create")
+	err = s.request(http.MethodPost, url, data, &bot)
+	return
 }
 
-// Fetch client bots.
-func (s *Session) Bots() (*FetchedBots, error) {
-	bots := &FetchedBots{}
-
-	response, err := s.request(http.MethodGet, "/bots/@me", nil)
-
-	if err != nil {
-		return bots, err
-	}
-
-	err = json.Unmarshal(response, bots)
-
-	if err != nil {
-		return bots, err
-	}
-
-	// Add client for bots.
-	for _, i := range bots.Bots {
-		i.Client = s
-	}
-
-	return bots, nil
+// Bots returns a list of bots for the current user
+func (s *Session) Bots() (bots *FetchedBots, err error) {
+	url := EndpointBots("@me")
+	err = s.request(http.MethodGet, url, nil, &bots)
+	return
 }
 
-// Fetch a bot.
-func (s *Session) FetchBot(id string) (*Bot, error) {
-	bot := &struct {
-		Bot *Bot `json:"bot"`
-	}{
-		Bot: &Bot{
-			Client: s,
-		},
-	}
-
-	response, err := s.request(http.MethodGet, "/bots/"+id, nil)
-
-	if err != nil {
-		return bot.Bot, err
-	}
-
-	err = json.Unmarshal(response, bot)
-	return bot.Bot, err
+// BotsPublic fetches a public bot by its ID
+func (s *Session) BotsPublic(id string) (bot *Bot, err error) {
+	url := EndpointBots(id)
+	err = s.request(http.MethodGet, url, nil, &bot)
+	return
 }

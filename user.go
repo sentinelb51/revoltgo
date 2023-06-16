@@ -45,7 +45,7 @@ func (u User) FormatMention() string {
 func (u User) OpenDirectMessage(session *Session) (*ServerChannel, error) {
 	dmChannel := &ServerChannel{}
 
-	response, err := session.request(http.MethodGet, "/users/"+u.ID+"/dm", nil)
+	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/dm", nil)
 
 	if err != nil {
 		return dmChannel, err
@@ -59,7 +59,7 @@ func (u User) OpenDirectMessage(session *Session) (*ServerChannel, error) {
 func (u User) FetchDefaultAvatar(session *Session) (*Binary, error) {
 	avatarData := &Binary{}
 
-	response, err := session.request(http.MethodGet, "/users/"+u.ID+"/default_avatar", nil)
+	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/default_avatar", nil)
 
 	if err != nil {
 		return avatarData, err
@@ -74,7 +74,7 @@ func (u User) FetchRelationship(session *Session) (*UserRelations, error) {
 	relationshipData := &UserRelations{}
 	relationshipData.ID = u.ID
 
-	response, err := session.request(http.MethodGet, "/users/"+u.ID+"/relationship", nil)
+	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/relationship", nil)
 
 	if err != nil {
 		return relationshipData, err
@@ -89,7 +89,7 @@ func (u User) Block(session *Session) (*UserRelations, error) {
 	relationshipData := &UserRelations{}
 	relationshipData.ID = u.ID
 
-	response, err := session.request("PUT", "/users/"+u.ID+"/block", nil)
+	response, err := session.handleRequest(http.MethodPut, "/users/"+u.ID+"/block", nil)
 
 	if err != nil {
 		return relationshipData, err
@@ -104,7 +104,7 @@ func (u User) Unblock(session *Session) (*UserRelations, error) {
 	relationshipData := &UserRelations{}
 	relationshipData.ID = u.ID
 
-	response, err := session.request("DELETE", "/users/"+u.ID+"/block", nil)
+	response, err := session.handleRequest(http.MethodDelete, "/users/"+u.ID+"/block", nil)
 
 	if err != nil {
 		return relationshipData, err

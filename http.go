@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,12 +12,24 @@ import (
 	This file contains structs and functions related to interacting with Revolt's REST API
 */
 
-// request is a helper function to send HTTP requests to the API
-func (s *Session) request(method, path string, data []byte) ([]byte, error) {
+// handleRequest sends HTTP requests and return the response body as a byte slice
+func (s *Session) handleRequest(method, path string, data any) ([]byte, error) {
 
 	// todo: maybe add URLAPI before path to make sure it's not sent to external sites?
-	payload := bytes.NewBuffer(data)
-	request, err := http.NewRequest(method, path, payload)
+
+	var (
+		payload []byte
+		err     error
+	)
+
+	if data != nil {
+		payload, err = json.Marshal(data)
+		if err != nil {
+			return nil, fmt.Errorf("handleRequest: json.Marshal: %s", err)
+		}
+	}
+
+	request, err := http.NewRequest(method, path, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +45,7 @@ func (s *Session) request(method, path string, data []byte) ([]byte, error) {
 		request.Header.Set("X-Session-Token", s.SelfBot.SessionToken)
 	}
 
-	// Send request
+	// Send handleRequest
 	response, err := s.HTTP.Do(request)
 	if err != nil {
 		return nil, err
@@ -45,11 +58,44 @@ func (s *Session) request(method, path string, data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	if !(response.StatusCode >= 200 && response.StatusCode < 300) {
-		err = fmt.Errorf("%s: %s", response.Status, body)
+	switch response.StatusCode {
+	case http.StatusOK:
+	case http.StatusCreated:
+	case http.StatusNoContent:
+	case http.StatusBadGateway:
+		// TODO: Implement re-tries with sequences
+		fallthrough
+	case http.StatusTooManyRequests:
+		// TODO: Implement rate-limit handling
+		fallthrough
+	case http.StatusUnauthorized:
+		fallthrough
+	default: // Error condition
+		err = fmt.Errorf("bad status code %d: %s", response.StatusCode, body)
 	}
 
 	return body, err
+}
+
+// request is a helper function to send HTTP requests using handleRequest and unmarshal the response into a struct
+// * data will always be encoded in JSON
+// * result will always be decoded from JSON, and must be a pointer
+func (s *Session) request(method, url string, data, result any) (err error) {
+	response, err := s.handleRequest(method, url, data)
+	if err == nil {
+		err = json.Unmarshal(response, result)
+	}
+	return
+}
+
+type LoginData struct {
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	FriendlyName string `json:"friendly_name"`
+}
+
+type BotCreateData struct {
+	Name string `json:"name"`
 }
 
 // GroupCreateData describes how a group should be created

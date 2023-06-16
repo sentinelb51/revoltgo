@@ -23,9 +23,8 @@ const (
 	EventTypeChannelUpdate EventType = "ChannelUpdate"
 	EventTypeChannelDelete EventType = "ChannelDelete"
 
-	EventTypeGroupCreate        EventType = "GroupCreate"
-	EventTypeGroupMemberAdded   EventType = "GroupMemberAdded"
-	EventTypeGroupMemberRemoved EventType = "GroupMemberRemoved"
+	EventTypeChannelGroupJoin  EventType = "GroupCreate"
+	EventTypeChannelGroupLeave EventType = "GroupLeave"
 
 	EventTypeChannelStartTyping EventType = "ChannelStartTyping"
 	EventTypeChannelStopTyping  EventType = "ChannelStopTyping"

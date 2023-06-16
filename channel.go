@@ -52,7 +52,7 @@ func (c ServerChannel) SendMessage(session *Session, message *MessageSend) (*Mes
 		return respMessage, err
 	}
 
-	response, err := session.request(http.MethodPost, "/channels/"+c.ID+"/messages", msgData)
+	response, err := session.handleRequest(http.MethodPost, "/channels/"+c.ID+"/messages", msgData)
 
 	if err != nil {
 		return respMessage, err
@@ -78,8 +78,8 @@ func (c ServerChannel) FetchMessages(session *Session, options map[string]interf
 
 	fetchedMsgs := &FetchedMessages{}
 
-	// Send request
-	response, err := session.request(http.MethodGet, url, nil)
+	// Send handleRequest
+	response, err := session.handleRequest(http.MethodGet, url, nil)
 
 	if err != nil {
 		return fetchedMsgs, err
@@ -102,7 +102,7 @@ func (c ServerChannel) FetchMessages(session *Session, options map[string]interf
 func (c ServerChannel) FetchMessage(session *Session, id string) (*Message, error) {
 	msg := &Message{}
 
-	response, err := session.request(http.MethodGet, "/channels/"+c.ID+"/messages/"+id, nil)
+	response, err := session.handleRequest(http.MethodGet, "/channels/"+c.ID+"/messages/"+id, nil)
 
 	if err != nil {
 		return msg, err
@@ -120,20 +120,20 @@ func (c ServerChannel) Edit(session *Session, ec *EditChannel) error {
 		return err
 	}
 
-	_, err = session.request(http.MethodPatch, "/channels/"+c.ID, data)
+	_, err = session.handleRequest(http.MethodPatch, "/channels/"+c.ID, data)
 	return err
 }
 
 // Delete channel.
 func (c ServerChannel) Delete(session *Session) error {
-	_, err := session.request("DELETE", "/channels/"+c.ID, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/channels/"+c.ID, nil)
 	return err
 }
 
 // Create a new invite.
 // Returns a string (invite code) and error (nil if not exists).
 func (c ServerChannel) CreateInvite(session *Session) (string, error) {
-	data, err := session.request(http.MethodPost, "/channels/"+c.ID+"/invites", nil)
+	data, err := session.handleRequest(http.MethodPost, "/channels/"+c.ID+"/invites", nil)
 
 	if err != nil {
 		return "", err
@@ -154,7 +154,7 @@ func (c ServerChannel) SetPermissions(session *Session, role_id string, permissi
 		role_id = "default"
 	}
 
-	_, err := session.request("PUT", "/channels/"+c.ID+"/permissions/"+role_id, []byte(fmt.Sprintf("{\"permissions\":%d}", permissions)))
+	_, err := session.handleRequest(http.MethodPut, "/channels/"+c.ID+"/permissions/"+role_id, []byte(fmt.Sprintf("{\"permissions\":%d}", permissions)))
 	return err
 }
 

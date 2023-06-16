@@ -49,7 +49,7 @@ func (c *Group) CalculateCreationDate() error {
 func (c ServerChannel) FetchMembers(session *Session) ([]*User, error) {
 	var groupMembers []*User
 
-	response, err := session.request(http.MethodGet, "/channels/"+c.ID+"/members", nil)
+	response, err := session.handleRequest(http.MethodGet, "/channels/"+c.ID+"/members", nil)
 
 	if err != nil {
 		return groupMembers, err
@@ -61,12 +61,12 @@ func (c ServerChannel) FetchMembers(session *Session) ([]*User, error) {
 
 // Add a new group recipient.
 func (c ServerChannel) AddGroupRecipient(session *Session, uid string) error {
-	_, err := session.request("PUT", "/channels/"+c.ID+"/recipients/"+uid, nil)
+	_, err := session.handleRequest(http.MethodPut, "/channels/"+c.ID+"/recipients/"+uid, nil)
 	return err
 }
 
 // Delete a group recipient.
 func (c ServerChannel) DeleteGroupRecipient(session *Session, uid string) error {
-	_, err := session.request("DELETE", "/channels/"+c.ID+"/recipients/"+uid, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/channels/"+c.ID+"/recipients/"+uid, nil)
 	return err
 }

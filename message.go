@@ -112,7 +112,7 @@ type MessageEmbeddedVideo struct {
 
 // Edit message content.
 func (m *Message) Edit(session *Session, content string) error {
-	_, err := session.request(http.MethodPatch, "/channels/"+m.Channel+"/messages/"+m.ID, []byte("{\"content\": \""+content+"\"}"))
+	_, err := session.handleRequest(http.MethodPatch, "/channels/"+m.Channel+"/messages/"+m.ID, []byte("{\"content\": \""+content+"\"}"))
 
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (m *Message) Edit(session *Session, content string) error {
 
 // Delete the message.
 func (m Message) Delete(session *Session) error {
-	_, err := session.request("DELETE", "/channels/"+m.Channel+"/messages/"+m.ID, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/channels/"+m.Channel+"/messages/"+m.ID, nil)
 	return err
 }
 
@@ -143,7 +143,7 @@ func (m Message) Reply(session *Session, mention bool, sm *MessageSend) (*Messag
 		return respMessage, err
 	}
 
-	response, err := session.request(http.MethodPost, "/channels/"+m.Channel+"/messages", msgData)
+	response, err := session.handleRequest(http.MethodPost, "/channels/"+m.Channel+"/messages", msgData)
 
 	if err != nil {
 		return respMessage, err

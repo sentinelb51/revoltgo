@@ -88,7 +88,7 @@ func (s Server) Edit(session *Session, es *EditServer) error {
 		return err
 	}
 
-	_, err = session.request(http.MethodPatch, "/servers/"+s.ID, data)
+	_, err = session.handleRequest(http.MethodPatch, "/servers/"+s.ID, data)
 
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func (s Server) Edit(session *Session, es *EditServer) error {
 // If the server not created by client, it will leave.
 // Otherwise it will be deleted.
 func (s Server) Delete(session *Session) error {
-	_, err := session.request("DELETE", "/servers/"+s.ID, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/servers/"+s.ID, nil)
 
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (s Server) Delete(session *Session) error {
 func (s Server) CreateTextChannel(session *Session, name, description string) (*ServerChannel, error) {
 	channel := &ServerChannel{}
 
-	data, err := session.request(http.MethodPost, "/servers/"+s.ID+"/channels", []byte("{\"type\":\"Text\",\"name\":\""+name+"\",\"description\":\""+description+"\",\"nonce\":\""+ULID()+"\"}"))
+	data, err := session.handleRequest(http.MethodPost, "/servers/"+s.ID+"/channels", []byte("{\"type\":\"Text\",\"name\":\""+name+"\",\"description\":\""+description+"\",\"nonce\":\""+ULID()+"\"}"))
 
 	if err != nil {
 		return channel, err
@@ -133,7 +133,7 @@ func (s Server) CreateTextChannel(session *Session, name, description string) (*
 func (s Server) CreateVoiceChannel(session *Session, name, description string) (*ServerChannel, error) {
 	channel := &ServerChannel{}
 
-	data, err := session.request(http.MethodPost, "/servers/"+s.ID+"/channels", []byte("{\"type\":\"Voice\",\"name\":\""+name+"\",\"description\":\""+description+"\",\"nonce\":\""+ULID()+"\"}"))
+	data, err := session.handleRequest(http.MethodPost, "/servers/"+s.ID+"/channels", []byte("{\"type\":\"Voice\",\"name\":\""+name+"\",\"description\":\""+description+"\",\"nonce\":\""+ULID()+"\"}"))
 
 	if err != nil {
 		return channel, err
@@ -152,7 +152,7 @@ func (s Server) CreateVoiceChannel(session *Session, name, description string) (
 func (s Server) FetchMember(session *Session, id string) (*Member, error) {
 	member := &Member{}
 
-	data, err := session.request(http.MethodGet, "/servers/"+s.ID+"/members/"+id, nil)
+	data, err := session.handleRequest(http.MethodGet, "/servers/"+s.ID+"/members/"+id, nil)
 
 	if err != nil {
 		return member, err
@@ -171,7 +171,7 @@ func (s Server) FetchMember(session *Session, id string) (*Member, error) {
 func (s Server) FetchMembers(session *Session) (*FetchedMembers, error) {
 	members := &FetchedMembers{}
 
-	data, err := session.request(http.MethodGet, "/servers/"+s.ID+"/members", nil)
+	data, err := session.handleRequest(http.MethodGet, "/servers/"+s.ID+"/members", nil)
 
 	if err != nil {
 		return members, err
@@ -189,7 +189,7 @@ func (s Server) EditMember(session *Session, id string, em *EditMember) error {
 		return err
 	}
 
-	_, err = session.request(http.MethodPatch, "/servers/"+s.ID+"/members/"+id, data)
+	_, err = session.handleRequest(http.MethodPatch, "/servers/"+s.ID+"/members/"+id, data)
 
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (s Server) EditMember(session *Session, id string, em *EditMember) error {
 
 // Kick a member from server.
 func (s Server) KickMember(session *Session, id string) error {
-	_, err := session.request("DELETE", "/servers/"+s.ID+"/members/"+id, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/servers/"+s.ID+"/members/"+id, nil)
 
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func (s Server) KickMember(session *Session, id string) error {
 
 // Ban a member from server.
 func (s Server) BanMember(session *Session, id, reason string) error {
-	_, err := session.request("PUT", "/servers/"+s.ID+"/bans/"+id, []byte("{\"reason\":\""+reason+"\"}"))
+	_, err := session.handleRequest(http.MethodPut, "/servers/"+s.ID+"/bans/"+id, []byte("{\"reason\":\""+reason+"\"}"))
 
 	if err != nil {
 		return err
@@ -222,7 +222,7 @@ func (s Server) BanMember(session *Session, id, reason string) error {
 
 // Unban a member from server.
 func (s Server) UnbanMember(session *Session, id string) error {
-	_, err := session.request("DELETE", "/servers/"+s.ID+"/bans/"+id, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/servers/"+s.ID+"/bans/"+id, nil)
 
 	if err != nil {
 		return err
@@ -235,7 +235,7 @@ func (s Server) UnbanMember(session *Session, id string) error {
 func (s Server) FetchBans(session *Session) (*FetchedBans, error) {
 	bans := &FetchedBans{}
 
-	data, err := session.request(http.MethodGet, "/servers/"+s.ID+"/bans", nil)
+	data, err := session.handleRequest(http.MethodGet, "/servers/"+s.ID+"/bans", nil)
 
 	if err != nil {
 		return bans, err
@@ -264,7 +264,7 @@ func (s Server) SetPermissions(session *Session, role_id string, channel_permiss
 		role_id = "default"
 	}
 
-	_, err := session.request("PUT", "/servers/"+s.ID+"/permissions/"+role_id, []byte(fmt.Sprintf("{\"permissions\":{\"server\":%d,\"channel\":%d}}", channel_permissions, server_permissions)))
+	_, err := session.handleRequest(http.MethodPut, "/servers/"+s.ID+"/permissions/"+role_id, []byte(fmt.Sprintf("{\"permissions\":{\"server\":%d,\"channel\":%d}}", channel_permissions, server_permissions)))
 
 	if err != nil {
 		return err
@@ -281,7 +281,7 @@ func (s Server) CreateRole(session *Session, name string) (string, uint, uint, e
 		Permissions []uint `json:"permissions"`
 	}{}
 
-	data, err := session.request(http.MethodPost, "/servers/"+s.ID+"/roles", []byte("{\"name\":\""+name+"\"}"))
+	data, err := session.handleRequest(http.MethodPost, "/servers/"+s.ID+"/roles", []byte("{\"name\":\""+name+"\"}"))
 
 	if err != nil {
 		return role.ID, 0, 0, err
@@ -304,7 +304,7 @@ func (s Server) EditRole(session *Session, id string, er *EditRole) error {
 		return err
 	}
 
-	_, err = session.request(http.MethodPatch, "/servers/"+s.ID+"/roles/"+id, data)
+	_, err = session.handleRequest(http.MethodPatch, "/servers/"+s.ID+"/roles/"+id, data)
 
 	if err != nil {
 		return err
@@ -315,7 +315,7 @@ func (s Server) EditRole(session *Session, id string, er *EditRole) error {
 
 // Delete a server role.
 func (s Server) DeleteRole(session *Session, id string) error {
-	_, err := session.request("DELETE", "/servers/"+s.ID+"/roles/"+id, nil)
+	_, err := session.handleRequest(http.MethodDelete, "/servers/"+s.ID+"/roles/"+id, nil)
 
 	if err != nil {
 		return err
@@ -326,7 +326,7 @@ func (s Server) DeleteRole(session *Session, id string) error {
 
 // Fetch server invite.
 func (s Server) FetchInvites(session *Session, id string) error {
-	_, err := session.request(http.MethodGet, "/servers/"+id+"/invites", nil)
+	_, err := session.handleRequest(http.MethodGet, "/servers/"+id+"/invites", nil)
 
 	if err != nil {
 		return err
@@ -337,7 +337,7 @@ func (s Server) FetchInvites(session *Session, id string) error {
 
 // Mark a server as read.
 func (s Server) MarkServerAsRead(session *Session, id string) error {
-	_, err := session.request("PUT", "/servers/"+id+"/ack", nil)
+	_, err := session.handleRequest(http.MethodPut, "/servers/"+id+"/ack", nil)
 
 	if err != nil {
 		return err
