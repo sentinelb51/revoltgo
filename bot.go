@@ -1,39 +1,49 @@
 package revoltgo
 
-import (
-	"encoding/json"
-	"net/http"
-)
-
-// Bot struct.
 type Bot struct {
-	ID              string `json:"_id"`
-	OwnerID         string `json:"owner"`
-	Token           string `json:"token"`
-	IsPublic        bool   `json:"public"`
-	InteractionsUrl string `json:"interactionsURL"`
+	ID string `json:"_id"`
+
+	// User ID of the bot owner
+	Owner string `json:"owner"`
+
+	// Token used to authenticate requests for this bot
+	Token string `json:"token"`
+
+	// Whether the bot is public (may be invited by anyone)
+	Public bool `json:"public"`
+
+	// Whether to enable analytics
+	Analytics bool `json:"analytics"`
+
+	// Whether this bot should be publicly discoverable
+	Discoverable bool `json:"discoverable"`
+
+	// Reserved; URL for handling interactions
+	InteractionsURL string `json:"interactions_url"`
+
+	// URL for terms of service
+	TermsOfServiceURL string `json:"terms_of_service_url"`
+
+	// URL for privacy policy
+	PrivacyPolicyURL string `json:"privacy_policy_url"`
+
+	// Enum of bot flags
+	Flags int `json:"flags"`
 }
 
-// Fetched bots struct.
+type PublicBot struct {
+	ID          string      `json:"_id"`
+	Username    string      `json:"username"`
+	Avatar      *Attachment `json:"avatar"`
+	Description string      `json:"description"`
+}
+
+type FetchedBot struct {
+	Bot  *Bot  `json:"bot"`
+	User *User `json:"user"`
+}
+
 type FetchedBots struct {
 	Bots  []*Bot  `json:"bots"`
 	Users []*User `json:"users"`
-}
-
-// Edit the bot.
-func (b *Bot) Edit(session *Session, eb *EditBot) error {
-	data, err := json.Marshal(eb)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = session.handleRequest(http.MethodPatch, "/bots/"+b.ID, data)
-	return err
-}
-
-// Delete the bot.
-func (b *Bot) Delete(session *Session) error {
-	_, err := session.handleRequest(http.MethodDelete, "/bots/"+b.ID, nil)
-	return err
 }

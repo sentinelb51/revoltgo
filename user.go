@@ -1,115 +1,69 @@
 package revoltgo
 
-import (
-	"encoding/json"
-	"net/http"
+type UserRelationsType string
+
+const (
+	UserRelationsTypeNone         = "None"
+	UserRelationsTypeUser         = "User"
+	UserRelationsTypeFriend       = "Friend"
+	UserRelationsTypeOutgoing     = "Outgoing"
+	UserRelationsTypeIncoming     = "Incoming"
+	UserRelationsTypeBlocked      = "Blocked"
+	UserRelationsTypeBlockedOther = "BlockedOther"
 )
 
-// User struct.
 type User struct {
-	ID             string           `json:"_id"`
-	Username       string           `json:"username"`
-	Avatar         *Attachment      `json:"avatar"`
-	Relations      []*UserRelations `json:"relations"`
-	Badges         int              `json:"badges"`
-	Status         *UserStatus      `json:"status"`
-	Relationship   string           `json:"relationship"`
-	IsOnline       bool             `json:"online"`
-	Flags          int              `json:"flags"`
-	BotInformation *BotInformation  `json:"bot"`
+	ID            string         `json:"_id"`
+	Username      string         `json:"username"`
+	Discriminator string         `json:"discriminator"`
+	DisplayName   string         `json:"display_name"`
+	Avatar        *Attachment    `json:"avatar"`
+	Relations     *UserRelations `json:"relations"`
+
+	// Bitfield of user badges
+	Badges int `json:"badges"`
+
+	// User's active status
+	Status *UserStatus `json:"status"`
+
+	// User's profile
+	Profile *UserProfile `json:"profile"`
+
+	// Enum of user flags
+	Flags int `json:"flags"`
+
+	// Racism?!1
+	Privileged bool `json:"privileged"`
+
+	// Bot information, if the user is a bot
+	Bot *Bot `json:"bot"`
+
+	Relationship string `json:"relationship"`
+
+	// Whether this user is currently online
+	Online bool `json:"online"`
 }
 
-// User relations struct.
+type UserProfile struct {
+	Content    string      `json:"content"`
+	Background *Attachment `json:"background"`
+}
+
 type UserRelations struct {
-	ID     string `json:"_id"`
-	Status string `json:"status"`
+	ID     string            `json:"_id"`
+	Status UserRelationsType `json:"status"`
 }
 
-// User status struct.
 type UserStatus struct {
 	Text     string `json:"text"`
 	Presence string `json:"presence"`
 }
 
-// Bot information struct.
 type BotInformation struct {
 	Owner string `json:"owner"`
 }
 
-// Create a mention format.
-func (u User) FormatMention() string {
-	return "<@" + u.ID + ">"
-}
-
-// Open a DM with the user.
-func (u User) OpenDirectMessage(session *Session) (*ServerChannel, error) {
-	dmChannel := &ServerChannel{}
-
-	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/dm", nil)
-
-	if err != nil {
-		return dmChannel, err
-	}
-
-	err = json.Unmarshal(response, dmChannel)
-	return dmChannel, err
-}
-
-// Fetch default user avatar.
-func (u User) FetchDefaultAvatar(session *Session) (*Binary, error) {
-	avatarData := &Binary{}
-
-	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/default_avatar", nil)
-
-	if err != nil {
-		return avatarData, err
-	}
-
-	avatarData.Data = response
-	return avatarData, nil
-}
-
-// Fetch user relationship.
-func (u User) FetchRelationship(session *Session) (*UserRelations, error) {
-	relationshipData := &UserRelations{}
-	relationshipData.ID = u.ID
-
-	response, err := session.handleRequest(http.MethodGet, "/users/"+u.ID+"/relationship", nil)
-
-	if err != nil {
-		return relationshipData, err
-	}
-
-	err = json.Unmarshal(response, relationshipData)
-	return relationshipData, err
-}
-
-// Block user.
-func (u User) Block(session *Session) (*UserRelations, error) {
-	relationshipData := &UserRelations{}
-	relationshipData.ID = u.ID
-
-	response, err := session.handleRequest(http.MethodPut, "/users/"+u.ID+"/block", nil)
-
-	if err != nil {
-		return relationshipData, err
-	}
-
-	err = json.Unmarshal(response, relationshipData)
-	return relationshipData, err
-}
-
-// Un-block user.
-func (u User) Unblock(session *Session) (*UserRelations, error) {
-	relationshipData := &UserRelations{}
-	relationshipData.ID = u.ID
-
-	response, err := session.handleRequest(http.MethodDelete, "/users/"+u.ID+"/block", nil)
-
-	if err != nil {
-		return relationshipData, err
-	}
-
-	err = json.Unmarshal(response, relationshipData)
-	return relationshipData, err
+type UserMutual struct {
+	Users   []string `json:"users"`
+	Servers []string `json:"servers"`
 }

@@ -1,32 +1,13 @@
 package revoltgo
 
 import (
-	"encoding/json"
-	"net/http"
+	"time"
 )
 
-// Message struct
-type Message struct {
-	ID          string          `json:"_id"`
-	Nonce       string          `json:"nonce"`
-	Channel     string          `json:"channel"`
-	Author      string          `json:"author"`
-	Webhook     Webhook         `json:"webhook"`
-	Content     string          `json:"content"`
-	System      MessageSystem   `json:"system"`
-	Attachments []*Attachment   `json:"attachments"`
-	Edited      string          `json:"edited"` // can this be $date?
-	Embeds      []*MessageEmbed `json:"embeds"`
-	Mentions    []string        `json:"mentions"`
-	Replies     []string        `json:"replies"`
-
-	//todo: add
-	Reactions    interface{} `json:"reactions"`
-	Interactions interface{} `json:"interactions"`
-	Masquerade   interface{} `json:"masquerade"`
-}
-
-type MessageSystemType string
+type (
+	MessageSystemType       string
+	MessageEmbedSpecialType string
+)
 
 const (
 	MessageSystemTypeText                      MessageSystemType = "text"
@@ -41,6 +22,47 @@ const (
 	MessageSystemTypeChannelIconChanged        MessageSystemType = "channel_icon_changed"
 	MessageSystemTypeChannelOwnershipChanged   MessageSystemType = "channel_ownership_changed"
 )
+
+const (
+	MessageEmbedSpecialTypeNone       = "None"
+	MessageEmbedSpecialTypeGIF        = "GIF"
+	MessageEmbedSpecialTypeYouTube    = "YouTube"
+	MessageEmbedSpecialTypeLightspeed = "Lightspeed"
+	MessageEmbedSpecialTypeTwitch     = "Twitch"
+	MessageEmbedSpecialTypeSpotify    = "Spotify"
+	MessageEmbedSpecialTypeSoundcloud = "Soundcloud"
+	MessageEmbedSpecialTypeBandcamp   = "Bandcamp"
+	MessageEmbedSpecialTypeStreamable = "Streamable"
+)
+
+// Message contains information about a message.
+type Message struct {
+	ID          string          `json:"_id"`
+	Nonce       string          `json:"nonce"`
+	Channel     string          `json:"channel"`
+	Author      string          `json:"author"`
+	Webhook     Webhook         `json:"webhook"`
+	Content     string          `json:"content"`
+	System      MessageSystem   `json:"system"`
+	Attachments []*Attachment   `json:"attachments"`
+	Edited      time.Time       `json:"edited"`
+	Embeds      []*MessageEmbed `json:"embeds"`
+	Mentions    []string        `json:"mentions"`
+	Replies     []string        `json:"replies"`
+
+	// Map of emoji ID to array of user ID who reacted to it
+	Reactions map[string][]string `json:"reactions"`
+
+	Interactions *MessageInteractions `json:"interactions"`
+	Masquerade   *MessageMasquerade   `json:"masquerade"`
+}
+
+type MessageInteractions struct {
+	Reactions []string `json:"reactions"`
+
+	// Whether reactions should be restricted to the given list
+	RestrictReactions bool `json:"restrict_reactions"`
+}
 
 type MessageSystem struct {
 	Type MessageSystemType `json:"type"`
@@ -58,98 +80,74 @@ type Attachment struct {
 	Deleted     bool   `json:"deleted"`
 	Reported    bool   `json:"reported"`
 	MessageID   string `json:"message"`
-	UserID      string `json:"user"`
-	ServerID    string `json:"server"`
+	uID         string `json:"user"`
+	sID         string `json:"server"`
 	ObjectID    string `json:"object_id"`
 }
 
-// Attachment metadata struct.
 type AttachmentMetadata struct {
 	Type   string `json:"type"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
 }
 
-// MessageEdited struct.
 type MessageEdited struct {
 	Date int `json:"$date"`
 }
 
-// Message embed struct.
 type MessageEmbed struct {
-	Type        string `json:"type"`
-	URL         string `json:"url"`
-	Special     *MessageSpecialEmbed
-	Title       string                `json:"title"`
-	Description string                `json:"description"`
-	Image       *MessageEmbeddedImage `json:"image"`
-	Video       *MessageEmbeddedVideo `json:"video"`
-	IconUrl     string                `json:"icon_url"`
-	Color       string                `json:"color"`
+	Type        string               `json:"type"`
+	URL         string               `json:"url,omitempty"`
+	OriginalURL string               `json:"original_url,omitempty"`
+	Special     *MessageEmbedSpecial `json:"special,omitempty"`
+	Title       string               `json:"title,omitempty"`
+	Description string               `json:"description,omitempty"`
+	Image       *MessageEmbedImage   `json:"image,omitempty"`
+	Video       *MessageEmbedVideo   `json:"video,omitempty"`
+	SiteName    string               `json:"site_name,omitempty"`
+	IconURL     string               `json:"icon_url,omitempty"`
+	Colour      string               `json:"colour,omitempty"`
 }
 
-// Message special embed struct.
-type MessageSpecialEmbed struct {
-	Type        string `json:"type"`
-	ID          string `json:"id"`
+type MessageEmbedSpecial struct {
+	Type      MessageEmbedSpecialType `json:"type"`
+	ID        string                  `json:"id"`
+	Timestamp time.Time               `json:"timestamp,omitempty"`
+
+	// Identifies the type of content for types: Lightspeed, Twitch, Spotify, and Bandcamp
 	ContentType string `json:"content_type"`
 }
 
-// Message embedded image struct
-type MessageEmbeddedImage struct {
+type MessageEmbedImage struct {
 	Size   string `json:"size"`
+	URL    string `json:"url"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+}
+
+type MessageEmbedVideo struct {
 	Url    string `json:"url"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
 }
 
-// Message embedded video struct
-type MessageEmbeddedVideo struct {
-	Url    string `json:"url"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
+// MessageSend is used for sending messages to channels
+type MessageSend struct {
+	Content      string               `json:"content"`
+	Attachments  []string             `json:"attachments,omitempty"`
+	Replies      []*MessageReplies    `json:"replies,omitempty"`
+	Embeds       []*MessageEmbed      `json:"embeds,omitempty"`
+	Masquerade   *MessageMasquerade   `json:"masquerade,omitempty"`
+	Interactions *MessageInteractions `json:"interactions,omitempty"`
 }
 
-// Edit message content.
-func (m *Message) Edit(session *Session, content string) error {
-	_, err := session.handleRequest(http.MethodPatch, "/channels/"+m.Channel+"/messages/"+m.ID, []byte("{\"content\": \""+content+"\"}"))
-
-	if err != nil {
-		return err
-	}
-
-	m.Content = content
-	return nil
+type MessageMasquerade struct {
+	Name   string `json:"name,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
+	Colour string `json:"colour,omitempty"`
 }
 
-// Delete the message.
-func (m Message) Delete(session *Session) error {
-	_, err := session.handleRequest(http.MethodDelete, "/channels/"+m.Channel+"/messages/"+m.ID, nil)
-	return err
-}
-
-// Reply to the message.
-func (m Message) Reply(session *Session, mention bool, sm *MessageSend) (*Message, error) {
-	if sm.Nonce == "" {
-		sm.CreateNonce()
-	}
-
-	sm.AddReply(m.ID, mention)
-
-	respMessage := &Message{}
-	msgData, err := json.Marshal(sm)
-
-	if err != nil {
-		return respMessage, err
-	}
-
-	response, err := session.handleRequest(http.MethodPost, "/channels/"+m.Channel+"/messages", msgData)
-
-	if err != nil {
-		return respMessage, err
-	}
-
-	err = json.Unmarshal(response, respMessage)
-
-	return respMessage, err
+type MessageReplies struct {
+	ID      string `json:"id"`
+	Mention bool   `json:"mention"`
 }

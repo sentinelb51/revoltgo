@@ -122,11 +122,11 @@ type EventPong struct {
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
-	Users    []*User          `json:"users"`
-	Servers  []*Server        `json:"servers"`
-	Channels []*ServerChannel `json:"channels"`
-	Members  []*Member        `json:"members"`
-	Emojis   []*Emoji         `json:"emojis"`
+	Users    []*User         `json:"users"`
+	Servers  []*Server       `json:"servers"`
+	Channels []*Channel      `json:"channels"`
+	Members  []*ServerMember `json:"members"`
+	Emojis   []*Emoji        `json:"emojis"`
 }
 
 // EventAuthenticated is sent after the client has authenticated.
@@ -162,7 +162,7 @@ type EventMessageDelete struct {
 type EventChannelStartTyping struct {
 	Event
 	ID   string `json:"id"`
-	User string `json:"user"`
+	User string `json:"user,omitempty"`
 }
 
 // EventChannelStopTyping is sent when a user stops typing in a channel.
@@ -191,9 +191,9 @@ type EventServerUpdate struct {
 // EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
 type EventChannelUpdate struct {
 	Event
-	ID    string        `json:"id"`
-	Data  ServerChannel `json:"data"`
-	Clear any           `json:"clear"` // TODO: what is this?
+	ID    string  `json:"id"`
+	Data  Channel `json:"data"`
+	Clear any     `json:"clear"` // TODO: what is this?
 }
 
 // EventChannelDelete is sent when a channel is deleted.
@@ -245,16 +245,16 @@ type EventServerDelete struct {
 // EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
 type EventServerMemberUpdate struct {
 	Event
-	ID    string  `json:"id"`
-	Data  *Member `json:"data"`
-	Clear any     `json:"clear"` // TODO: what is this?
+	ID    string        `json:"id"`
+	Data  *ServerMember `json:"data"`
+	Clear any           `json:"clear"` // TODO: what is this?
 }
 
 type EventMessageReact struct {
 	Event
 	ID        string `json:"id"`
 	ChannelID string `json:"channel_id"`
-	UserID    string `json:"user_id"`
+	uID       string `json:"user_id"`
 	EmojiID   string `json:"emoji_id"`
 }
 

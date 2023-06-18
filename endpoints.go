@@ -4,157 +4,204 @@ import (
 	"fmt"
 )
 
+// List of URLs for the Revolt API
 const (
-	wsURL   = "wss://ws.revolt.chat/"
-	baseURL = "https://api.revolt.chat"
-)
+	baseURL          = "https://api.revolt.chat"
+	URLUsersUsername = baseURL + "/users/me/username"
 
-// API Endpoints
-const (
 	URLUsers              = baseURL + "/users/%s"
+	URLUsersMutual        = URLUsers + "/mutual"
+	URLUsersDM            = URLUsers + "/dm"
+	URLUsersFlags         = URLUsers + "/flags"
 	URLUsersFriend        = URLUsers + "/friend"
-	URLUsersProfile       = URLUsers + "profile"
+	URLUsersBlock         = URLUsers + "/block"
+	URLUsersProfile       = URLUsers + "/profile"
 	URLUsersRelationships = URLUsers + "/relationships"
 	URLUsersMutualServers = URLUsers + "/mutual"
 	URLUsersAvatar        = URLUsers + "/avatar"
 	URLUsersBanner        = URLUsers + "/banner"
+	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
 
-	URLServers         = baseURL + "/servers/%s"
-	URLServersChannels = baseURL + "/servers/%s/channels"
-	URLServersMembers  = baseURL + "/servers/%s/members"
-	URLServersMember   = baseURL + "/servers/%s/members/%s"
-	URLServersBans     = baseURL + "/servers/%s/bans"
-	URLServersBan      = baseURL + "/servers/%s/bans/%s"
-	URLServersInvites  = baseURL + "/servers/%s/invites"
-	URLServersRoles    = baseURL + "/servers/%s/roles"
-	URLServersRole     = baseURL + "/servers/%s/roles/%s"
-	URLServersAvatar   = baseURL + "/servers/%s/avatar"
-	URLServersBanner   = baseURL + "/servers/%s/banner"
+	URLServers            = baseURL + "/servers/%s"
+	URLServersAck         = URLServers + "/ack"
+	URLServersChannels    = URLServers + "/channels"
+	URLServersMembers     = URLServers + "/members"
+	URLServersMember      = URLServersMembers + "/%s"
+	URLServersBans        = URLServers + "/bans"
+	URLServersBan         = URLServersBans + "/%s"
+	URLServersRoles       = URLServers + "/roles"
+	URLServersRole        = URLServers + "/roles/%s"
+	URLServersAvatar      = URLServers + "/avatar"
+	URLServersBanner      = URLServers + "/banner"
+	URLServersPermissions = URLServers + "/permissions/%s"
 
-	URLChannels         = baseURL + "/channels/%s"
-	URLChannelsMessages = baseURL + "/channels/%s/messages"
-	URLChannelsMessage  = baseURL + "/channels/%s/messages/%s"
-	URLChannelsTyping   = baseURL + "/channels/%s/typing"
-	URLChannelsInvites  = baseURL + "/channels/%s/invites"
-	URLChannelsInvite   = baseURL + "/channels/%s/invites/%s"
+	URLChannels            = baseURL + "/channels/%s"
+	URLChannelsMessages    = URLChannels + "/messages"
+	URLChannelsMessage     = URLChannelsMessages + "/%s"
+	URLChannelsTyping      = URLChannels + "/typing"
+	URLChannelsInvites     = URLChannels + "/invites"
+	URLChannelsInvite      = URLChannelsInvites + "/%s"
+	URLChannelsPermissions = URLChannels + "/permissions/%s"
+	URLChannelsRecipients  = URLChannels + "/recipients/%s"
 
-	URLInvite = baseURL + "/invites/%s"
+	URLInvites = baseURL + "/invites/%s"
 
 	URLBots         = baseURL + "/bots/%s"
-	URLBotsCommands = baseURL + "/bots/%s/commands"
-	URLBotsCommand  = baseURL + "/bots/%s/commands/%s"
+	URLBotsInvite   = URLBots + "/invite"
+	URLBotsCommands = URLBots + "/commands"
+	URLBotsCommand  = URLBotsCommands + "/%s"
 
-	URLAuth              = baseURL + "/auth/"
-	URLAuthSessions      = URLAuth + "sessions"
+	URLAuth              = baseURL + "/auth"
+	URLAuthSessions      = URLAuth + "/sessions"
 	URLAuthSessionsLogin = URLAuthSessions + "/login"
 )
 
-func EndpointUsers(userID string) string {
-	return fmt.Sprintf(URLUsers, userID)
+func EndpointUsers(uID string) string {
+	return fmt.Sprintf(URLUsers, uID)
 }
 
-func EndpointUsersFriend(userID string) string {
-	return fmt.Sprintf(URLUsersFriend, userID)
+func EndpointUsersBlock(uID string) string {
+	return fmt.Sprintf(URLUsersBlock, uID)
 }
 
-func EndpointUserProfile(userID string) string {
-	return fmt.Sprintf(URLUsersProfile, userID)
+func EndpointUsersMutual(uID string) string {
+	return fmt.Sprintf(URLUsersMutual, uID)
 }
 
-func EndpointUserMutualServers(userID string) string {
-	return fmt.Sprintf(URLUsersMutualServers, userID)
+func EndpointUsersDM(uID string) string {
+	return fmt.Sprintf(URLUsersDM, uID)
 }
 
-func EndpointUserAvatar(userID string) string {
-	return fmt.Sprintf(URLUsersAvatar, userID)
+func EndpointUsersDefaultAvatar(uID string) string {
+	return fmt.Sprintf(URLUsersDefaultAvatar, uID)
 }
 
-func EndpointUserBanner(userID string) string {
-	return fmt.Sprintf(URLUsersBanner, userID)
+func EndpointUsersFlags(uID string) string {
+	return fmt.Sprintf(URLUsersFlags, uID)
 }
 
-func EndpointServers(serverID string) string {
-	return fmt.Sprintf(URLServers, serverID)
+func EndpointUsersFriend(uID string) string {
+	return fmt.Sprintf(URLUsersFriend, uID)
 }
 
-func EndpointServersChannels(serverID string) string {
-	return fmt.Sprintf(URLServersChannels, serverID)
+func EndpointUsersProfile(uID string) string {
+	return fmt.Sprintf(URLUsersProfile, uID)
 }
 
-func EndpointServersMembers(serverID string) string {
-	return fmt.Sprintf(URLServersMembers, serverID)
+func EndpointUserMutualServers(uID string) string {
+	return fmt.Sprintf(URLUsersMutualServers, uID)
 }
 
-func EndpointServersMember(serverID, userID string) string {
-	return fmt.Sprintf(URLServersMember, serverID, userID)
+func EndpointUserAvatar(uID string) string {
+	return fmt.Sprintf(URLUsersAvatar, uID)
 }
 
-func EndpointServersBans(serverID string) string {
-	return fmt.Sprintf(URLServersBans, serverID)
+func EndpointUserBanner(uID string) string {
+	return fmt.Sprintf(URLUsersBanner, uID)
 }
 
-func EndpointServersBan(serverID, userID string) string {
-	return fmt.Sprintf(URLServersBan, serverID, userID)
+func EndpointServers(sID string) string {
+	return fmt.Sprintf(URLServers, sID)
 }
 
-func EndpointServersInvites(serverID string) string {
-	return fmt.Sprintf(URLServersInvites, serverID)
+func EndpointServersAck(sID string) string {
+	return fmt.Sprintf(URLServersAck, sID)
 }
 
-func EndpointServersRoles(serverID string) string {
-	return fmt.Sprintf(URLServersRoles, serverID)
+func EndpointServersChannels(sID string) string {
+	return fmt.Sprintf(URLServersChannels, sID)
 }
 
-func EndpointServersRole(serverID, roleID string) string {
-	return fmt.Sprintf(URLServersRole, serverID, roleID)
+func EndpointChannelsPermissions(sID, cID string) string {
+	return fmt.Sprintf(URLChannelsPermissions, sID, cID)
 }
 
-func EndpointServersAvatar(serverID string) string {
-	return fmt.Sprintf(URLServersAvatar, serverID)
+func EndpointServersMembers(sID string) string {
+	return fmt.Sprintf(URLServersMembers, sID)
 }
 
-func EndpointServersBanner(serverID string) string {
-	return fmt.Sprintf(URLServersBanner, serverID)
+func EndpointServersMember(sID, mID string) string {
+	return fmt.Sprintf(URLServersMember, sID, mID)
 }
 
-func EndpointChannels(channelID string) string {
-	return fmt.Sprintf(URLChannels, channelID)
+func EndpointServersBans(sID string) string {
+	return fmt.Sprintf(URLServersBans, sID)
 }
 
-func EndpointChannelMessages(channelID string) string {
-	return fmt.Sprintf(URLChannelsMessages, channelID)
+func EndpointServersBan(sID, uID string) string {
+	return fmt.Sprintf(URLServersBan, sID, uID)
 }
 
-func EndpointChannelMessagesMessage(channelID, messageID string) string {
-	return fmt.Sprintf(URLChannelsMessage, channelID, messageID)
+func EndpointInvites(sID string) string {
+	return fmt.Sprintf(URLInvites, sID)
 }
 
-func EndpointChannelTyping(channelID string) string {
-	return fmt.Sprintf(URLChannelsTyping, channelID)
+func EndpointServersRoles(sID string) string {
+	return fmt.Sprintf(URLServersRoles, sID)
 }
 
-func EndpointChannelInvites(channelID string) string {
-	return fmt.Sprintf(URLChannelsInvites, channelID)
+func EndpointServersRole(sID, rID string) string {
+	return fmt.Sprintf(URLServersRole, sID, rID)
 }
 
-func EndpointChannelInvite(channelID, inviteID string) string {
-	return fmt.Sprintf(URLChannelsInvite, channelID, inviteID)
+func EndpointServersAvatar(sID string) string {
+	return fmt.Sprintf(URLServersAvatar, sID)
 }
 
-func EndpointInvite(inviteID string) string {
-	return fmt.Sprintf(URLInvite, inviteID)
+func EndpointServersBanner(sID string) string {
+	return fmt.Sprintf(URLServersBanner, sID)
+}
+
+func EndpointChannels(cID string) string {
+	return fmt.Sprintf(URLChannels, cID)
+}
+
+func EndpointChannelsRecipients(cID, mID string) string {
+	return fmt.Sprintf(URLChannelsRecipients, cID, mID)
+}
+
+func EndpointPermissions(sID, rID string) string {
+	return fmt.Sprintf(URLServersPermissions, sID, rID)
+}
+
+func EndpointChannelMessages(cID string) string {
+	return fmt.Sprintf(URLChannelsMessages, cID)
+}
+
+func EndpointChannelMessagesMessage(cID, mID string) string {
+	return fmt.Sprintf(URLChannelsMessage, cID, mID)
+}
+
+func EndpointChannelTyping(cID string) string {
+	return fmt.Sprintf(URLChannelsTyping, cID)
+}
+
+func EndpointChannelInvites(cID string) string {
+	return fmt.Sprintf(URLChannelsInvites, cID)
+}
+
+func EndpointChannelInvite(cID, iID string) string {
+	return fmt.Sprintf(URLChannelsInvite, cID, iID)
+}
+
+func EndpointInvite(iID string) string {
+	return fmt.Sprintf(URLInvites, iID)
 }
 
 /* Bot endpoints */
 
-func EndpointBots(botID string) string {
-	return fmt.Sprintf(URLBots, botID)
+func EndpointBots(bID string) string {
+	return fmt.Sprintf(URLBots, bID)
 }
 
-func EndpointBotsCommands(botID string) string {
-	return fmt.Sprintf(URLBotsCommands, botID)
+func EndpointBotsInvite(bID string) string {
+	return fmt.Sprintf(URLBotsInvite, bID)
 }
 
-func EndpointBotsCommand(botID, commandID string) string {
-	return fmt.Sprintf(URLBotsCommand, botID, commandID)
+func EndpointBotsCommands(bID string) string {
+	return fmt.Sprintf(URLBotsCommands, bID)
+}
+
+func EndpointBotsCommand(bID, cmdID string) string {
+	return fmt.Sprintf(URLBotsCommand, bID, cmdID)
 }

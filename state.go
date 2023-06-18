@@ -3,7 +3,7 @@ package revoltgo
 type State struct {
 	Users    map[string]*User
 	Servers  map[string]*Server
-	Channels map[string]*ServerChannel
-	Members  map[string]*Member
+	Channels map[string]*Channel
+	Members  map[string]*ServerMember
 	Emojis   map[string]*Emoji
 }
