@@ -1,4 +1,4 @@
-module github.com/ben-forster/revolt
+module github.com/sentinelb51/revoltgo
 
 go 1.20
 
