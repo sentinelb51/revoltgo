@@ -16,7 +16,7 @@ Another reason this project is being developed is because as someone who comes f
 
 ### Installation
 Assuming that you have a working Go environment ready, all you have to do is run the following command:
-```
+```go
 go get github.com/sentinelb51/revoltgo
 ```
 If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
@@ -24,13 +24,13 @@ If you do not have a Go environment ready, **[see how to set it up here](https:/
 ### Usage
 Now that the package is installed, you will have to import it
 ```go
-import "github.com/sentinelb51/revoltgo
+import "github.com/sentinelb51/revoltgo"
 ```
 
 Then, construct a new **session** using your bot's token, and store it in a variable.
 This "session" is a centralised store of all API and websocket methods at your fingertips, relevant to the bot you're about to connect with.
 ```go
-session := revoltgo.New("your token here"
+session := revoltgo.New("your token here")
 ```
 
 Finally, open the websocket connection to Revolt API. Your bot will attempt to login, and if successful, will receive events from the Revolt websocket about the world it's in.
