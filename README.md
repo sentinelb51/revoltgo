@@ -2,21 +2,30 @@
 Go package that provides low-level bindings to the Revolt API, just like discordgo
 
 ## Still in production
-This project has not yet been finalised. However, it is already completely usable, and easily superior in terms of performance and consistency compared to other Revolt Go packages
+This project has not yet been finalised. However, it is already completely usable.
 
 ## Support server
 [We have a Revolt server dedicated to this project.](https://rvlt.gg/2Qn0ctjm)
 
-## Why this project is being made
-After a brief skim through libraries for Revolt's API in Go, it became evident that everyone is writing suboptimal, garbage code with poor design choices and missing features, which are probably the result of the poor design making it hard to add on-to. Ofcourse nobody is perfect, and I may end up writing garbage as well, but at least the baseline quality will be much higher.
+## Why use revoltgo
+At the time of writing, other [few] Revolt Go packages were simply unfeasible. They had:
+- Hardcoded JSON payloads
+- Poor API coverage and consistency
+- Interface{} shoved in fields they were too lazy to add a struct for
+- Hard-to-maintain codebase and odd design choices (wrapping Client and Time for each struct)
+- ... this list can go on
 
-Another reason this project is being developed is because as someone who comes from discordgo, it would be nice to see something familiar. This would make it easier for new developers coming from Discord[go] to transition into Revolt[go].
+### This project provides
+- Broader API coverage compared to other Revolt Go projects
+- Extensive customisability due to low-level bindings
+- Consistent, cleaner and maintainable codebase
+- More up-to-date functionality with the API
 
 ## Getting started
 
 ### Installation
 Assuming that you have a working Go environment ready, all you have to do is run the following command:
-```go
+```bash
 go get github.com/sentinelb51/revoltgo
 ```
 If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
@@ -107,12 +116,13 @@ func main() {
 		var send revoltgo.MessageSend
 
 		// If the last heartbeat ack is zero, we can't do maths to get the latency.
-		if session.LastHeartbeatAck.IsZero() {
+		if !session.LastHeartbeatAck.IsZero() {
+  			latency := session.LastHeartbeatAck.Sub(session.LastHeartbeatSent)
+			send.Content = fmt.Sprintf("Latency: %s", latency)
 			send.Content = "Latency data unavailable"
-			return
+		} else {
+  			send.Content = "Latency data unavailable"
 		}
-
-		send.Content = fmt.Sprintf("Latency: %s", session.LastHeartbeatAck.Sub(session.LastHeartbeatSent))
 
 		// Send the message to the channel.
 		message, err := session.ChannelMessageSend(m.Channel, send)
