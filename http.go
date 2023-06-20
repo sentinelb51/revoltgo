@@ -141,6 +141,48 @@ type BotCreateData struct {
 	Name string `json:"name"`
 }
 
+type AccountCreateData struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Invite   string `json:"invite"`
+	Captcha  string `json:"captcha"`
+}
+
+type AccountReverifyData struct {
+	Email   string `json:"email"`
+	Captcha string `json:"captcha"`
+}
+
+type OnboardingCompleteData struct {
+	Username string `json:"username"`
+}
+
+type SessionEditData struct {
+	FriendlyName string `json:"friendly_name"`
+}
+
+type PasswordResetConfirmData struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+
+	// Whether to log out of all sessions
+	RemoveSessions bool `json:"remove_sessions"`
+}
+
+type AccountChangePasswordData struct {
+	Password        string `json:"password"`
+	CurrentPassword string `json:"current_password"`
+}
+
+type AccountChangeEmailData struct {
+	Email           string `json:"email"`
+	CurrentPassword string `json:"current_password"`
+}
+
+type AccountDeleteConfirmData struct {
+	Token string `json:"token"`
+}
+
 type UserEditData struct {
 	DisplayName string       `json:"display_name"`
 	Avatar      string       `json:"avatar"`
@@ -200,6 +242,12 @@ type ServerMemberEditData struct {
 type MessageEditData struct {
 	Content string          `json:"content,omitempty"`
 	Embeds  []*MessageEmbed `json:"embeds,omitempty"`
+}
+
+type EmojiCreateData struct {
+	Name   string       `json:"name"`
+	Parent *EmojiParent `json:"parent"`
+	Nsfw   bool         `json:"nsfw"`
 }
 
 type ChannelMessagesParamsSortType string

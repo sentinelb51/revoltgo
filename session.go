@@ -2,9 +2,11 @@ package revoltgo
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gobwas/ws/wsutil"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -95,6 +97,23 @@ func (s *Session) WriteSocket(data any) error {
 	}
 
 	return wsutil.WriteClientText(s.Socket, payload)
+}
+
+func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
+	endpoint := EndpointEmoji(eID)
+	err = s.request(http.MethodGet, endpoint, nil, &emoji)
+	return
+}
+
+func (s *Session) EmojiCreate(eID string, data EmojiCreateData) (emoji *Emoji, err error) {
+	endpoint := EndpointEmoji(eID)
+	err = s.request(http.MethodPut, endpoint, data, &emoji)
+	return
+}
+
+func (s *Session) EmojiDelete(eID string) error {
+	endpoint := EndpointEmoji(eID)
+	return s.request(http.MethodDelete, endpoint, nil, nil)
 }
 
 // Channel fetches a channel using an API call
@@ -389,23 +408,118 @@ func (s *Session) ChannelMessageDelete(cID, mID string) error {
 	return s.request(http.MethodDelete, endpoint, nil, nil)
 }
 
-// Login as a regular user; this is for self-bots only
-// friendlyName is an optional parameter that helps identify the session later
-func (s *Session) Login(email, password, friendlyName string) (sb *SelfBot, err error) {
+func (s *Session) AccountCreate(data AccountCreateData) error {
+	endpoint := EndpointAuthAccount("create")
+	return s.request(http.MethodPost, endpoint, data, nil)
+}
 
-	if s.SelfBot == nil {
-		panic("method restricted to self-bots")
-	}
+func (s *Session) AccountReverify(data AccountReverifyData) error {
+	endpoint := EndpointAuthAccount("reverify")
+	return s.request(http.MethodPost, endpoint, data, nil)
+}
 
-	payload := &LoginData{
-		Email:        email,
-		Password:     password,
-		FriendlyName: friendlyName,
-	}
+func (s *Session) AccountDeleteConfirm(data AccountDeleteConfirmData) error {
+	endpoint := EndpointAuthAccount("delete")
+	return s.request(http.MethodPut, endpoint, data, nil)
+}
 
-	endpoint := URLAuthSessionsLogin
-	err = s.request(http.MethodPost, endpoint, payload, &sb)
+func (s *Session) AccountDelete() error {
+	endpoint := EndpointAuthAccount("delete")
+	return s.request(http.MethodPost, endpoint, nil, nil)
+}
+
+func (s *Session) Account() (account *Account, err error) {
+	endpoint := EndpointAuthAccount("")
+	err = s.request(http.MethodGet, endpoint, nil, &account)
 	return
+}
+
+func (s *Session) AccountDisable() error {
+	endpoint := EndpointAuthAccount("disable")
+	return s.request(http.MethodPost, endpoint, nil, nil)
+}
+
+func (s *Session) AccountChangePassword(data AccountChangePasswordData) error {
+	endpoint := EndpointAuthAccountChange("password")
+	return s.request(http.MethodPatch, endpoint, data, nil)
+}
+
+func (s *Session) AccountChangeEmail(data AccountChangeEmailData) error {
+	endpoint := EndpointAuthAccountChange("email")
+	return s.request(http.MethodPatch, endpoint, data, nil)
+}
+
+func (s *Session) VerifyEmail(code string) (ticket ChangeEmail, err error) {
+	endpoint := EndpointAuthAccountVerify(code)
+	err = s.request(http.MethodPost, endpoint, nil, &ticket)
+	return
+}
+
+// PasswordReset requests a password reset, which is sent to the email provided
+func (s *Session) PasswordReset(data AccountReverifyData) error {
+	endpoint := EndpointAuthAccount("reset_password")
+	return s.request(http.MethodPost, endpoint, data, nil)
+}
+
+// PasswordResetConfirm confirms a password reset
+func (s *Session) PasswordResetConfirm(data PasswordResetConfirmData) error {
+	endpoint := EndpointAuthAccount("reset_password")
+	return s.request(http.MethodPatch, endpoint, data, nil)
+}
+
+// Login as a regular user instead of bot. Friendly name is used to identify the session via MFA
+func (s *Session) Login(data LoginData) (mfa MFA, err error) {
+	endpoint := EndpointAuthSession("login")
+	err = s.request(http.MethodPost, endpoint, data, &mfa)
+	return
+}
+
+func (s *Session) Sessions() (sessions []*Sessions, err error) {
+	endpoint := EndpointAuthSession("all")
+	err = s.request(http.MethodGet, endpoint, nil, &sessions)
+	return
+}
+
+func (s *Session) SessionEdit(id string, data SessionEditData) (session SessionEditData, err error) {
+	endpoint := EndpointAuthSession(id)
+	err = s.request(http.MethodPatch, endpoint, data, &session)
+	return
+}
+
+// Onboarding returns whether the current account requires onboarding or whether you can continue to send requests as usual
+func (s *Session) Onboarding() (onboarding Onboarding, err error) {
+	endpoint := EndpointOnboard("hello")
+	err = s.request(http.MethodGet, endpoint, nil, &onboarding)
+	return
+}
+
+// OnboardingComplete sets a new username, completes onboarding and allows a user to start using Revolt.
+func (s *Session) OnboardingComplete(data OnboardingCompleteData) error {
+	endpoint := EndpointOnboard("complete")
+	return s.request(http.MethodPost, endpoint, data, nil)
+}
+
+// SessionsDelete invalidates a session with the provided ID
+func (s *Session) SessionsDelete(id string) error {
+	endpoint := EndpointAuthSession(id)
+	return s.request(http.MethodDelete, endpoint, nil, nil)
+}
+
+// SessionsDeleteAll invalidates all sessions, including this one if revokeSelf is true
+func (s *Session) SessionsDeleteAll(revokeSelf bool) error {
+	endpoint := EndpointAuthSession("all")
+	if revokeSelf {
+		values := url.Values{}
+		values.Set("revoke_self", "true")
+		endpoint += fmt.Sprintf("?%s", values.Encode())
+	}
+
+	return s.request(http.MethodDelete, endpoint, nil, nil)
+}
+
+func (s *Session) Logout() error {
+	endpoint := EndpointAuthSession("logout")
+	return s.request(http.MethodPost, endpoint, nil, nil)
 }
 
 func (s *Session) UserMutual(uID string) (mutual []*UserMutual, err error) {

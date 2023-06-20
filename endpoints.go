@@ -51,10 +51,39 @@ const (
 	URLBotsCommands = URLBots + "/commands"
 	URLBotsCommand  = URLBotsCommands + "/%s"
 
-	URLAuth              = baseURL + "/auth"
-	URLAuthSessions      = URLAuth + "/sessions"
-	URLAuthSessionsLogin = URLAuthSessions + "/login"
+	URLAuth         = baseURL + "/auth"
+	URLAuthAccount  = URLAuth + "/account/%s"
+	URLAuthSessions = URLAuth + "/sessions/%s"
+
+	URLCustom      = baseURL + "/custom"
+	URLCustomEmoji = URLCustom + "/emoji/%s"
+
+	URLOnboard = baseURL + "/onboard/%s"
 )
+
+func EndpointOnboard(action string) string {
+	return fmt.Sprintf(URLOnboard, action)
+}
+
+func EndpointAuthSession(action string) string {
+	return fmt.Sprintf(URLAuthSessions, action)
+}
+
+func EndpointAuthAccountVerify(code string) string {
+	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("verify/%s", code))
+}
+
+func EndpointAuthAccount(action string) string {
+	return fmt.Sprintf(URLAuthAccount, action)
+}
+
+func EndpointAuthAccountChange(detail string) string {
+	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("change/%s", detail))
+}
+
+func EndpointEmoji(eID string) string {
+	return fmt.Sprintf(URLCustomEmoji, eID)
+}
 
 func EndpointUsers(uID string) string {
 	return fmt.Sprintf(URLUsers, uID)
