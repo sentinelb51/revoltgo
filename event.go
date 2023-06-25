@@ -59,7 +59,7 @@ func (et EventType) Unmarshal(data []byte) (result any) {
 	case EventTypeReady:
 		result = new(EventReady)
 	case EventTypeAuthenticated:
-		return EventAuthenticated{Event: Event{Type: et}}
+		return &EventAuthenticated{Event: Event{Type: et}}
 	case EventTypePong:
 		result = new(EventPong)
 
