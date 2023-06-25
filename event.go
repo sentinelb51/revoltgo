@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 )
@@ -11,9 +12,11 @@ type EventType string
 const (
 	EventTypeReady         EventType = "Ready"
 	EventTypePong          EventType = "Pong"
+	EventTypeAuth          EventType = "Auth"
 	EventTypeAuthenticated EventType = "Authenticated"
 
 	EventTypeMessage        EventType = "Message"
+	EventTypeMessageAppend  EventType = "MessageAppend"
 	EventTypeMessageUpdate  EventType = "MessageUpdate"
 	EventTypeMessageDelete  EventType = "MessageDelete"
 	EventTypeMessageReact   EventType = "MessageReact"
@@ -23,8 +26,9 @@ const (
 	EventTypeChannelUpdate EventType = "ChannelUpdate"
 	EventTypeChannelDelete EventType = "ChannelDelete"
 
-	EventTypeChannelGroupJoin  EventType = "GroupCreate"
-	EventTypeChannelGroupLeave EventType = "GroupLeave"
+	EventTypeGroupJoin  EventType = "GroupCreate"
+	EventTypeGroupLeave EventType = "GroupLeave"
+	EventTypeChannelAck EventType = "ChannelAck"
 
 	EventTypeChannelStartTyping EventType = "ChannelStartTyping"
 	EventTypeChannelStopTyping  EventType = "ChannelStopTyping"
@@ -39,6 +43,8 @@ const (
 	EventTypeServerMemberUpdate EventType = "ServerMemberUpdate"
 	EventTypeServerMemberJoin   EventType = "ServerMemberJoin"
 	EventTypeServerMemberLeave  EventType = "ServerMemberLeave"
+
+	EventTypeUserUpdate EventType = "UserUpdate"
 )
 
 func (et EventType) String() string {
@@ -48,16 +54,19 @@ func (et EventType) String() string {
 func (et EventType) Unmarshal(data []byte) (result any) {
 
 	switch et {
+	case EventTypeAuth:
+		result = new(EventAuth)
 	case EventTypeReady:
 		result = new(EventReady)
 	case EventTypeAuthenticated:
-		// maybe: optimise by skipping unmarshal, cast instead?
-		result = new(EventAuthenticated)
+		return EventAuthenticated{Event: Event{Type: et}}
 	case EventTypePong:
 		result = new(EventPong)
 
 	case EventTypeMessage:
 		result = new(EventMessage)
+	case EventTypeMessageAppend:
+		result = new(EventMessageAppend)
 	case EventTypeMessageUpdate:
 		result = new(EventMessageUpdate)
 	case EventTypeMessageDelete:
@@ -73,6 +82,8 @@ func (et EventType) Unmarshal(data []byte) (result any) {
 		result = new(EventChannelUpdate)
 	case EventTypeChannelDelete:
 		result = new(EventChannelDelete)
+	case EventTypeChannelAck:
+		result = new(EventChannelAck)
 
 	case EventTypeServerUpdate:
 		result = new(EventServerUpdate)
@@ -98,8 +109,11 @@ func (et EventType) Unmarshal(data []byte) (result any) {
 	case EventTypeChannelStopTyping:
 		result = new(EventChannelStopTyping)
 
+	case EventTypeUserUpdate:
+		result = new(EventUserUpdate)
+
 	default:
-		log.Printf("unknown event type: %s", et)
+		panic(fmt.Errorf("unknown event type: %s", et))
 	}
 
 	if err := json.Unmarshal(data, &result); err != nil {
@@ -129,6 +143,23 @@ type EventReady struct {
 	Emojis   []*Emoji        `json:"emojis"`
 }
 
+type EventAuth struct {
+	Event
+	EventType EventAuthType `json:"event_type"`
+	UserID    string        `json:"user_id"`
+	SessionID string        `json:"session_id"`
+
+	// Only present when
+	ExcludeSessionID string `json:"exclude_session_id"`
+}
+
+type EventAuthType string
+
+const (
+	EventTypeAuthDeleteSession     EventAuthType = "DeleteSession"
+	EventTypeAuthDeleteAllSessions EventAuthType = "DeleteAllSessions"
+)
+
 // EventAuthenticated is sent after the client has authenticated.
 type EventAuthenticated struct {
 	Event
@@ -144,6 +175,12 @@ type EventMessageUpdate struct {
 	ID      string                 `json:"id"`
 	Channel string                 `json:"channel"`
 	Data    EventMessageUpdateData `json:"data"`
+}
+
+type EventMessageAppend struct {
+	ID      string   `json:"id"`
+	Channel string   `json:"channel"`
+	Append  *Message `json:"append"`
 }
 
 type EventMessageUpdateData struct {
@@ -170,6 +207,13 @@ type EventChannelStopTyping struct {
 	EventChannelStartTyping
 }
 
+type EventChannelAck struct {
+	Event
+	ID        string `json:"id"`
+	User      string `json:"user"`
+	MessageID string `json:"message_id"`
+}
+
 // EventChannelCreate is sent when a channel is created.
 // This is dispatched in conjunction with EventServerUpdate
 type EventChannelCreate struct {
@@ -183,17 +227,17 @@ type EventChannelCreate struct {
 // EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
 type EventServerUpdate struct {
 	Event
-	ID    string `json:"id"`
-	Data  Server `json:"data"`
-	Clear any    `json:"clear"` // TODO: what is this?
+	ID    string   `json:"id"`
+	Data  *Server  `json:"data"`
+	Clear []string `json:"clear"`
 }
 
 // EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
 type EventChannelUpdate struct {
 	Event
-	ID    string  `json:"id"`
-	Data  Channel `json:"data"`
-	Clear any     `json:"clear"` // TODO: what is this?
+	ID    string   `json:"id"`
+	Data  *Channel `json:"data"`
+	Clear []string `json:"clear"`
 }
 
 // EventChannelDelete is sent when a channel is deleted.
@@ -219,10 +263,10 @@ type EventServerCreate struct {
 // EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
 type EventServerRoleUpdate struct {
 	Event
-	ID     string     `json:"id"`
-	RoleID string     `json:"role_id"`
-	Data   ServerRole `json:"data"`
-	Clear  any        `json:"clear"` // TODO: what is this?
+	ID     string      `json:"id"`
+	RoleID string      `json:"role_id"`
+	Data   *ServerRole `json:"data"`
+	Clear  []string    `json:"clear"`
 }
 
 type EventServerRoleDelete struct {
@@ -247,14 +291,14 @@ type EventServerMemberUpdate struct {
 	Event
 	ID    string        `json:"id"`
 	Data  *ServerMember `json:"data"`
-	Clear any           `json:"clear"` // TODO: what is this?
+	Clear []string      `json:"clear"`
 }
 
 type EventMessageReact struct {
 	Event
 	ID        string `json:"id"`
 	ChannelID string `json:"channel_id"`
-	uID       string `json:"user_id"`
+	UserID    string `json:"user_id"`
 	EmojiID   string `json:"emoji_id"`
 }
 
@@ -262,12 +306,19 @@ type EventMessageUnreact struct {
 	EventMessageReact
 }
 
-type EventChannelGroupJoin struct {
+type EventGroupJoin struct {
 	Event
 	ID   string `json:"id"`
 	User string `json:"user"`
 }
 
-type EventChannelGroupLeave struct {
-	EventChannelGroupJoin
+type EventGroupLeave struct {
+	EventGroupJoin
+}
+
+type EventUserUpdate struct {
+	Event
+	ID    string   `json:"id"`
+	Data  *User    `json:"data"`
+	Clear []string `json:"clear"`
 }
