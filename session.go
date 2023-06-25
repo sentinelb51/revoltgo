@@ -21,11 +21,11 @@ func New(token string) *Session {
 
 // Session struct.
 type Session struct {
-	SelfBot *SelfBot
-	Token   string
-	Socket  net.Conn
-	HTTP    *http.Client
-	State   *State
+	MFA    *MFA
+	Token  string
+	Socket net.Conn
+	HTTP   *http.Client
+	State  *State
 
 	// The user agent used for REST APIs
 	UserAgent string
@@ -45,48 +45,46 @@ type Session struct {
 	/* Event handlers */
 
 	// Authentication-related handlers
-	OnReadyHandlers         []func(*Session, *EventReady)
-	OnPongHandlers          []func(*Session, *EventPong)
-	OnAuthenticatedHandlers []func(*Session, *EventAuthenticated)
+	HandlersReady         []func(*Session, *EventReady)
+	HandlersAuth          []func(*Session, *EventAuth)
+	HandlersPong          []func(*Session, *EventPong)
+	HandlersAuthenticated []func(*Session, *EventAuthenticated)
+
+	// User-related handlers
+	HandlersUserUpdate []func(*Session, *EventUserUpdate)
 
 	// Message-related handlers
-	OnMessageHandlers        []func(*Session, *EventMessage)
-	OnMessageUpdateHandlers  []func(*Session, *EventMessageUpdate)
-	OnMessageDeleteHandlers  []func(*Session, *EventMessageDelete)
-	OnMessageReactHandlers   []func(*Session, *EventMessageReact)
-	OnMessageUnreactHandlers []func(*Session, *EventMessageUnreact)
+	HandlersMessage        []func(*Session, *EventMessage)
+	HandlersMessageAppend  []func(*Session, *EventMessageAppend)
+	HandlersMessageUpdate  []func(*Session, *EventMessageUpdate)
+	HandlersMessageDelete  []func(*Session, *EventMessageDelete)
+	HandlersMessageReact   []func(*Session, *EventMessageReact)
+	HandlersMessageUnreact []func(*Session, *EventMessageUnreact)
 
 	// Channel-related handlers
-	OnChannelCreateHandlers      []func(*Session, *EventChannelCreate)
-	OnChannelUpdateHandlers      []func(*Session, *EventChannelUpdate)
-	OnChannelDeleteHandlers      []func(*Session, *EventChannelDelete)
-	OnChannelStartTypingHandlers []func(*Session, *EventChannelStartTyping)
-	OnChannelStopTypingHandlers  []func(*Session, *EventChannelStopTyping)
+	HandlersChannelCreate      []func(*Session, *EventChannelCreate)
+	HandlersChannelUpdate      []func(*Session, *EventChannelUpdate)
+	HandlersChannelDelete      []func(*Session, *EventChannelDelete)
+	HandlersChannelStartTyping []func(*Session, *EventChannelStartTyping)
+	HandlersChannelStopTyping  []func(*Session, *EventChannelStopTyping)
+	HandlersChannelAck         []func(*Session, *EventChannelAck)
 
 	// Group-related handlers
-	OnChannelGroupJoinHandlers  []func(*Session, *EventChannelGroupJoin)
-	OnChannelGroupLeaveHandlers []func(*Session, *EventChannelGroupLeave)
+	HandlersGroupJoin  []func(*Session, *EventGroupJoin)
+	HandlersGroupLeave []func(*Session, *EventGroupLeave)
 
 	// Server-related handlers
-	OnServerCreateHandlers []func(*Session, *EventServerCreate)
-	OnServerUpdateHandlers []func(*Session, *EventServerUpdate)
-	OnServerDeleteHandlers []func(*Session, *EventServerDelete)
+	HandlersServerCreate []func(*Session, *EventServerCreate)
+	HandlersServerUpdate []func(*Session, *EventServerUpdate)
+	HandlersServerDelete []func(*Session, *EventServerDelete)
 
 	// ServerMember-related handlers
-	OnServerMemberUpdateHandlers []func(*Session, *EventServerMemberUpdate)
-	OnServerMemberJoinHandlers   []func(*Session, *EventServerMemberJoin)
-	OnServerMemberLeaveHandlers  []func(*Session, *EventServerMemberLeave)
+	HandlersServerMemberUpdate []func(*Session, *EventServerMemberUpdate)
+	HandlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
+	HandlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
 
 	// Unknown event handler. Useful for debugging purposes
-	OnUnknownEventHandlers []func(session *Session, message string)
-}
-
-//todo: remove SelfBot and make Login() function accept such parameters
-
-type SelfBot struct {
-	ID           string `json:"id"`
-	UID          string `json:"uid"`
-	SessionToken string `json:"token"`
+	HandlersUnknown []func(session *Session, message string)
 }
 
 // WriteSocket writes data to the websocket in JSON
@@ -468,7 +466,7 @@ func (s *Session) PasswordResetConfirm(data PasswordResetConfirmData) error {
 }
 
 // Login as a regular user instead of bot. Friendly name is used to identify the session via MFA
-func (s *Session) Login(data LoginData) (mfa MFA, err error) {
+func (s *Session) Login(data LoginData) (mfa LoginResponse, err error) {
 	endpoint := EndpointAuthSession("login")
 	err = s.request(http.MethodPost, endpoint, data, &mfa)
 	return

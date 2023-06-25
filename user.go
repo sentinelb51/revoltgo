@@ -21,7 +21,7 @@ type User struct {
 	Relations     *UserRelations `json:"relations"`
 
 	// Bitfield of user badges
-	Badges int `json:"badges"`
+	Badges *int `json:"badges"`
 
 	// User's active status
 	Status *UserStatus `json:"status"`
@@ -30,10 +30,10 @@ type User struct {
 	Profile *UserProfile `json:"profile"`
 
 	// Enum of user flags
-	Flags int `json:"flags"`
+	Flags *int `json:"flags"`
 
 	// Racism?!1
-	Privileged bool `json:"privileged"`
+	Privileged *bool `json:"privileged"`
 
 	// Bot information, if the user is a bot
 	Bot *Bot `json:"bot"`
@@ -41,7 +41,7 @@ type User struct {
 	Relationship string `json:"relationship"`
 
 	// Whether this user is currently online
-	Online bool `json:"online"`
+	Online *bool `json:"online"`
 }
 
 type UserProfile struct {

@@ -1,24 +1,42 @@
 # RevoltGo
+
 Go package that provides low-level bindings to the Revolt API, just like discordgo
 
 ## Still in production
-This project has not yet been finalised. However, it is already completely usable, and easily superior in terms of performance and consistency compared to other Revolt Go packages
+
+This project has not yet been finalised. However, it is already completely usable.
 
 ## Support server
+
 [We have a Revolt server dedicated to this project.](https://rvlt.gg/2Qn0ctjm)
 
-## Why this project is being made
-After a brief skim through libraries for Revolt's API in Go, it became evident that everyone is writing suboptimal, garbage code with poor design choices and missing features, which are probably the result of the poor design making it hard to add on-to. Ofcourse nobody is perfect, and I may end up writing garbage as well, but at least the baseline quality will be much higher.
+## Why use revoltgo
 
-Another reason this project is being developed is because as someone who comes from discordgo, it would be nice to see something familiar. This would make it easier for new developers coming from Discord[go] to transition into Revolt[go].
+At the time of writing, other [few] Revolt Go packages were simply unfeasible. They had:
+
+- Hardcoded JSON payloads
+- Poor API coverage and consistency
+- Interface{} shoved in fields they were too lazy to add a struct for
+- Hard-to-maintain codebase and odd design choices (wrapping Client and Time for each struct)
+- ... this list can go on
+
+### This project provides
+
+- Broader API coverage compared to other Revolt Go projects
+- Extensive customisability due to low-level bindings
+- Consistent, cleaner and maintainable codebase
+- More up-to-date functionality with the API
 
 ## Getting started
 
 ### Installation
+
 Assuming that you have a working Go environment ready, all you have to do is run the following command:
-```go
+
+```bash
 go get github.com/sentinelb51/revoltgo
 ```
+
 If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
 
 ### Usage
@@ -76,19 +94,19 @@ func main() {
 
 	// Append a function that handles authenticated events.
 	// This is just to see when the authentication is complete.
-	session.OnAuthenticatedHandlers = append(session.OnAuthenticatedHandlers, func(session *revoltgo.Session, r *revoltgo.EventAuthenticated) {
+	session.HandlersAuthenticated = append(session.HandlersAuthenticated, func(session *revoltgo.Session, r *revoltgo.EventAuthenticated) {
 		fmt.Println("Authentication complete")
 	})
 
 	// Append a function that handles ready events.
 	// We will print some details from the event to the console when we receive EventReady.
-	session.OnReadyHandlers = append(session.OnReadyHandlers, func(session *revoltgo.Session, r *revoltgo.EventReady) {
+	session.HandlersReady = append(session.HandlersReady, func(session *revoltgo.Session, r *revoltgo.EventReady) {
 		fmt.Printf("Ready to process commands from %d user(s) across %d server(s)\n", len(r.Users), len(r.Servers))
 	})
 
 	// Append a function that handles message events. We will process any message that is "!ping"
 	// and respond with the latency of the websocket connection, if possible.
-	session.OnMessageHandlers = append(session.OnMessageHandlers, func(session *revoltgo.Session, m *revoltgo.EventMessage) {
+	session.HandlersMessage = append(session.HandlersMessage, func(session *revoltgo.Session, m *revoltgo.EventMessage) {
 
 		// If the message content is not "!ping", ignore the message.
 		if m.Content != "!ping" {
@@ -107,12 +125,12 @@ func main() {
 		var send revoltgo.MessageSend
 
 		// If the last heartbeat ack is zero, we can't do maths to get the latency.
-		if session.LastHeartbeatAck.IsZero() {
+		if !session.LastHeartbeatAck.IsZero() {
+			latency := session.LastHeartbeatAck.Sub(session.LastHeartbeatSent)
+			send.Content = fmt.Sprintf("Latency: %s", latency)
+		} else {
 			send.Content = "Latency data unavailable"
-			return
 		}
-
-		send.Content = fmt.Sprintf("Latency: %s", session.LastHeartbeatAck.Sub(session.LastHeartbeatSent))
 
 		// Send the message to the channel.
 		message, err := session.ChannelMessageSend(m.Channel, send)

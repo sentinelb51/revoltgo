@@ -17,13 +17,13 @@ type Server struct {
 	// Roles is a map of role ID to ServerRole structs.
 	Roles map[string]*ServerRole `json:"roles"`
 
-	DefaultPermissions uint        `json:"default_permissions"`
+	DefaultPermissions *uint       `json:"default_permissions"`
 	Icon               *Attachment `json:"icon"`
 	Banner             *Attachment `json:"banner"`
-	Flags              uint        `json:"flags"`
-	NSFW               bool        `json:"nsfw"`
-	Analytics          bool        `json:"analytics"`
-	Discoverable       bool        `json:"discoverable"`
+	Flags              *uint       `json:"flags"`
+	NSFW               *bool       `json:"nsfw"`
+	Analytics          *bool       `json:"analytics"`
+	Discoverable       *bool       `json:"discoverable"`
 }
 
 type ServerRole struct {

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var events = make(chan []byte)
+var Events = make(chan []byte)
 
 type WebsocketMessageType string
 
@@ -25,11 +25,11 @@ type WebsocketMessageAuthenticate struct {
 	Type  WebsocketMessageType `json:"type"`
 	Token string               `json:"token"`
 
-	// Everything below is for self-bot authentication
-	ID     string `json:"_id,omitempty"`
-	UID    string `json:"uid,omitempty"`
-	Name   string `json:"name,omitempty"` // Always "revolt"?
-	Result string `json:"result,omitempty"`
+	// These fields may be completely redundant
+	//ID     string `json:"_id,omitempty"`
+	//UID    string `json:"uid,omitempty"`
+	//Name   string `json:"name,omitempty"` // Always "revolt"?
+	//Result string `json:"result,omitempty"`
 }
 
 type WebsocketMessagePing struct {
@@ -66,28 +66,9 @@ func (s *Session) Open() error {
 	}
 	s.Socket = connection
 
-	// Login the user if self-bot.
-	// if s.SelfBot != nil {
-	// s.Login()
-	// }
-
-	fmt.Println("websocket/connect: connected")
-
 	wsAuth := WebsocketMessageAuthenticate{
-		Type: WebsocketMessageTypeAuthenticate,
-	}
-
-	// Populate fields for self-bots if specified, default to bots only
-	switch {
-	case s.SelfBot != nil:
-		wsAuth.Token = s.SelfBot.SessionToken
-		wsAuth.ID = s.SelfBot.ID
-		wsAuth.UID = s.SelfBot.UID
-		wsAuth.Name = "revolt"
-		wsAuth.Result = "Success"
-		wsAuth.Token = s.Token
-	default:
-		wsAuth.Token = s.Token
+		Type:  WebsocketMessageTypeAuthenticate,
+		Token: s.Token,
 	}
 
 	// Send initial authentication message
@@ -105,7 +86,7 @@ func (s *Session) Open() error {
 // listen reads messages from the websocket
 func (s *Session) listen() {
 
-	defer close(events)
+	defer close(Events)
 
 	for {
 		message, op, err := wsutil.ReadServerData(s.Socket)
@@ -118,7 +99,7 @@ func (s *Session) listen() {
 			continue
 		}
 
-		events <- message
+		Events <- message
 	}
 }
 
@@ -126,148 +107,192 @@ func (s *Session) eventHandler() {
 
 	for {
 		select {
-		case raw := <-events:
-			fmt.Println("websocket/message ->", string(raw))
+		case raw := <-Events:
+			// fmt.Println("websocket/message ->", string(raw))
 
 			var data Event
 			err := json.Unmarshal(raw, &data)
 			if err != nil {
-				s.Close()
 				panic(err)
 			}
 
 			switch data.Type {
 			case EventTypePong:
-
-				pong := data.Type.Unmarshal(raw).(*EventPong)
+				event := data.Type.Unmarshal(raw).(*EventPong)
 				s.LastHeartbeatAck = time.Now()
 
-				fmt.Println("Websocket latency:", s.LastHeartbeatAck.Sub(s.LastHeartbeatSent), "Data:", pong.Data)
-
+				for _, h := range s.HandlersPong {
+					h(s, event)
+				}
 			case EventTypeAuthenticated:
-				// Ignore if already connected.
-				if s.Connected {
-					return
+				event := data.Type.Unmarshal(raw).(*EventAuthenticated)
+
+				for _, h := range s.HandlersAuthenticated {
+					h(s, event)
 				}
 
 				go s.ping()
+			case EventTypeAuth:
+				event := data.Type.Unmarshal(raw).(*EventAuth)
+
+				for _, h := range s.HandlersAuth {
+					h(s, event)
+				}
 			case EventTypeReady:
 				event := data.Type.Unmarshal(raw).(*EventReady)
 				s.handleCache(event)
 
-				for _, h := range s.OnReadyHandlers {
+				for _, h := range s.HandlersReady {
 					h(s, event)
 				}
 			case EventTypeMessage:
 				event := data.Type.Unmarshal(raw).(*EventMessage)
 
-				for _, h := range s.OnMessageHandlers {
+				for _, h := range s.HandlersMessage {
+					h(s, event)
+				}
+			case EventTypeMessageAppend:
+				event := data.Type.Unmarshal(raw).(*EventMessageAppend)
+
+				for _, h := range s.HandlersMessageAppend {
 					h(s, event)
 				}
 			case EventTypeMessageUpdate:
 				event := data.Type.Unmarshal(raw).(*EventMessageUpdate)
 
-				for _, h := range s.OnMessageUpdateHandlers {
+				for _, h := range s.HandlersMessageUpdate {
 					h(s, event)
 				}
 			case EventTypeMessageDelete:
 				event := data.Type.Unmarshal(raw).(*EventMessageDelete)
 
-				for _, h := range s.OnMessageDeleteHandlers {
+				for _, h := range s.HandlersMessageDelete {
 					h(s, event)
 				}
 			case EventTypeMessageReact:
 				event := data.Type.Unmarshal(raw).(*EventMessageReact)
 
-				for _, h := range s.OnMessageReactHandlers {
+				for _, h := range s.HandlersMessageReact {
 					h(s, event)
 				}
 			case EventTypeMessageUnreact:
 				event := data.Type.Unmarshal(raw).(*EventMessageUnreact)
 
-				for _, h := range s.OnMessageUnreactHandlers {
+				for _, h := range s.HandlersMessageUnreact {
 					h(s, event)
 				}
 			case EventTypeChannelCreate:
 				event := data.Type.Unmarshal(raw).(*EventChannelCreate)
 
-				for _, h := range s.OnChannelCreateHandlers {
+				for _, h := range s.HandlersChannelCreate {
 					h(s, event)
 				}
 			case EventTypeChannelUpdate:
 				event := data.Type.Unmarshal(raw).(*EventChannelUpdate)
 
-				for _, h := range s.OnChannelUpdateHandlers {
+				if value, exists := s.State.Channels[event.ID]; exists {
+					value = merge(value, event.Data).(*Channel)
+				}
+
+				for _, h := range s.HandlersChannelUpdate {
 					h(s, event)
 				}
 			case EventTypeChannelDelete:
 				event := data.Type.Unmarshal(raw).(*EventChannelDelete)
 
-				for _, h := range s.OnChannelDeleteHandlers {
+				for _, h := range s.HandlersChannelDelete {
 					h(s, event)
 				}
-			case EventTypeChannelGroupJoin:
-				event := data.Type.Unmarshal(raw).(*EventChannelGroupJoin)
+			case EventTypeGroupJoin:
+				event := data.Type.Unmarshal(raw).(*EventGroupJoin)
 
-				for _, h := range s.OnChannelGroupJoinHandlers {
+				for _, h := range s.HandlersGroupJoin {
 					h(s, event)
 				}
-			case EventTypeChannelGroupLeave:
-				event := data.Type.Unmarshal(raw).(*EventChannelGroupLeave)
+			case EventTypeGroupLeave:
+				event := data.Type.Unmarshal(raw).(*EventGroupLeave)
 
-				for _, h := range s.OnChannelGroupLeaveHandlers {
+				for _, h := range s.HandlersGroupLeave {
 					h(s, event)
 				}
 			case EventTypeChannelStartTyping:
 				event := data.Type.Unmarshal(raw).(*EventChannelStartTyping)
 
-				for _, h := range s.OnChannelStartTypingHandlers {
+				for _, h := range s.HandlersChannelStartTyping {
 					h(s, event)
 				}
 			case EventTypeChannelStopTyping:
 				event := data.Type.Unmarshal(raw).(*EventChannelStopTyping)
 
-				for _, h := range s.OnChannelStopTypingHandlers {
+				for _, h := range s.HandlersChannelStopTyping {
 					h(s, event)
 				}
 			case EventTypeServerCreate:
 				event := data.Type.Unmarshal(raw).(*EventServerCreate)
 
-				for _, h := range s.OnServerCreateHandlers {
+				s.State.Servers[event.Server.ID] = event.Server
+
+				for _, h := range s.HandlersServerCreate {
 					h(s, event)
 				}
 			case EventTypeServerUpdate:
 				event := data.Type.Unmarshal(raw).(*EventServerUpdate)
 
-				for _, h := range s.OnServerUpdateHandlers {
+				if value, exists := s.State.Servers[event.ID]; exists {
+					value = merge(value, event.Data).(*Server)
+				}
+
+				for _, h := range s.HandlersServerUpdate {
 					h(s, event)
 				}
 			case EventTypeServerDelete:
 				event := data.Type.Unmarshal(raw).(*EventServerDelete)
 
-				for _, h := range s.OnServerDeleteHandlers {
+				delete(s.State.Servers, event.ID)
+
+				for _, h := range s.HandlersServerDelete {
 					h(s, event)
 				}
 			case EventTypeServerMemberUpdate:
 				event := data.Type.Unmarshal(raw).(*EventServerMemberUpdate)
 
-				for _, h := range s.OnServerMemberUpdateHandlers {
+				if value, exists := s.State.Members[event.ID]; exists {
+					value = merge(value, event.Data).(*ServerMember)
+				}
+
+				for _, h := range s.HandlersServerMemberUpdate {
 					h(s, event)
 				}
 			case EventTypeServerMemberJoin:
 				event := data.Type.Unmarshal(raw).(*EventServerMemberJoin)
 
-				for _, h := range s.OnServerMemberJoinHandlers {
+				for _, h := range s.HandlersServerMemberJoin {
 					h(s, event)
 				}
 			case EventTypeServerMemberLeave:
 				event := data.Type.Unmarshal(raw).(*EventServerMemberLeave)
 
-				for _, h := range s.OnServerMemberLeaveHandlers {
+				for _, h := range s.HandlersServerMemberLeave {
+					h(s, event)
+				}
+			case EventTypeUserUpdate:
+				event := data.Type.Unmarshal(raw).(*EventUserUpdate)
+
+				if value, exists := s.State.Users[event.ID]; exists {
+					value = merge(value, event.Data).(*User)
+				}
+
+				for _, h := range s.HandlersUserUpdate {
+					h(s, event)
+				}
+			case EventTypeChannelAck:
+				event := data.Type.Unmarshal(raw).(*EventChannelAck)
+
+				for _, h := range s.HandlersChannelAck {
 					h(s, event)
 				}
 			default:
-				for _, h := range s.OnUnknownEventHandlers {
+				for _, h := range s.HandlersUnknown {
 					h(s, string(raw))
 				}
 			}
@@ -282,6 +307,11 @@ func (s *Session) Close() error {
 
 // ping pings the websocket every websocketHeartbeatInterval interval
 func (s *Session) ping() {
+
+	// Avoid duplicate ping goroutines
+	if s.Connected {
+		return
+	}
 
 	wsPing := WebsocketMessagePing{
 		Type: WebsocketMessageTypeHeartbeat,
@@ -330,7 +360,6 @@ func (s *Session) handleCache(ready *EventReady) {
 	}
 
 	for _, member := range ready.Members {
-		fmt.Println(member.ID)
 		state.Members[member.ID.User] = member
 	}
 

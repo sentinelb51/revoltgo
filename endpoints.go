@@ -53,7 +53,7 @@ const (
 
 	URLAuth         = baseURL + "/auth"
 	URLAuthAccount  = URLAuth + "/account/%s"
-	URLAuthSessions = URLAuth + "/sessions/%s"
+	URLAuthSessions = URLAuth + "/session/%s"
 
 	URLCustom      = baseURL + "/custom"
 	URLCustomEmoji = URLCustom + "/emoji/%s"

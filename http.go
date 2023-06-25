@@ -36,23 +36,22 @@ func (s *Session) request(method, url string, data, result any) error {
 	request.Header.Set("Content-Type", "application/json")
 
 	// Set auth headers
-	if s.SelfBot == nil {
-		request.Header.Set("X-Bot-Token", s.Token)
-	} else if s.SelfBot.SessionToken != "" {
-		request.Header.Set("X-Session-Token", s.SelfBot.SessionToken)
-	}
+	request.Header.Set("X-Session-Token", s.Token)
 
 	if data != nil {
-		bodyBuffer := bufferPool.Get().(*bytes.Buffer)
-		bodyBuffer.Reset()               // Reset the buffer to clear any previous data
-		defer bufferPool.Put(bodyBuffer) // Return the buffer to the pool for reuse
+		buffer := bufferPool.Get().(*bytes.Buffer)
 
-		encoder := json.NewEncoder(bodyBuffer)
-		if err = encoder.Encode(data); err != nil {
+		// Reset the buffer to clear any previous data
+		buffer.Reset()
+
+		// Return the buffer to the pool for reuse
+		defer bufferPool.Put(buffer)
+
+		if err = json.NewEncoder(buffer).Encode(data); err != nil {
 			return fmt.Errorf("request: json.Encode: %s", err)
 		}
 
-		request.Body = io.NopCloser(bodyBuffer)
+		request.Body = io.NopCloser(buffer)
 	}
 
 	response, err := s.HTTP.Do(request)
