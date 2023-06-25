@@ -155,6 +155,6 @@ func main() {
 	<-sc
 
 	// Close session.
-	session.Close()
+	err = session.Close()
 }
 ```
