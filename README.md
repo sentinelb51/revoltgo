@@ -158,3 +158,25 @@ func main() {
 	err = session.Close()
 }
 ```
+
+### Authenticating as a user (self-bot)
+The logic is exactly the same as the above example, except the authentication flow is slightly different. In this case, you create a token by logging in using your credentials, then set it to the session, and finally open the websocket connection:
+
+```go
+data := revoltgo.LoginData{
+	Email: "youremail@company.com",
+	Password: "yourpassword",
+	FriendlyName: "RevoltGo",
+}
+
+mfa, err := session.Login(data)
+if err != nil {
+	panic(err)
+}
+
+session.Token = mfa.Token
+
+// ... the rest of the logic is exactly the same
+
+session.Open()
+```
