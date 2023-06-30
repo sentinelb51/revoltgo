@@ -4,7 +4,19 @@ import (
 	"fmt"
 )
 
-// List of URLs for the Revolt API
+const (
+	baseURLAutumn = "https://autumn.revolt.chat/"
+	URLIcons      = baseURLAutumn + "icons/%s"
+)
+
+func EndpointIcon(id string, size string) (url string) {
+	url = fmt.Sprintf(URLIcons, id)
+	if size != "" {
+		url += "?max_side=" + size
+	}
+	return
+}
+
 const (
 	baseURL          = "https://api.revolt.chat"
 	URLUsersUsername = baseURL + "/users/me/username"

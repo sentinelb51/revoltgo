@@ -21,7 +21,6 @@ func New(token string) *Session {
 
 // Session struct.
 type Session struct {
-	MFA    *MFA
 	Token  string
 	Socket net.Conn
 	HTTP   *http.Client
@@ -78,10 +77,18 @@ type Session struct {
 	HandlersServerUpdate []func(*Session, *EventServerUpdate)
 	HandlersServerDelete []func(*Session, *EventServerDelete)
 
+	// ServerRole-related handlers
+	HandlersServerRoleUpdate []func(*Session, *EventServerRoleUpdate)
+	HandlersServerRoleDelete []func(*Session, *EventServerRoleDelete)
+
 	// ServerMember-related handlers
 	HandlersServerMemberUpdate []func(*Session, *EventServerMemberUpdate)
 	HandlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
 	HandlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
+
+	// Emoji-related handlers
+	HandlersEmojiCreate []func(*Session, *EventEmojiCreate)
+	HandlersEmojiDelete []func(*Session, *EventEmojiDelete)
 
 	// Unknown event handler. Useful for debugging purposes
 	HandlersUnknown []func(session *Session, message string)

@@ -44,6 +44,9 @@ const (
 	EventTypeServerMemberJoin   EventType = "ServerMemberJoin"
 	EventTypeServerMemberLeave  EventType = "ServerMemberLeave"
 
+	EventTypeEmojiCreate EventType = "EmojiCreate"
+	EventTypeEmojiDelete EventType = "EmojiDelete"
+
 	EventTypeUserUpdate EventType = "UserUpdate"
 )
 
@@ -108,6 +111,11 @@ func (et EventType) Unmarshal(data []byte) (result any) {
 		result = new(EventChannelStartTyping)
 	case EventTypeChannelStopTyping:
 		result = new(EventChannelStopTyping)
+
+	case EventTypeEmojiCreate:
+		result = new(EventEmojiCreate)
+	case EventTypeEmojiDelete:
+		result = new(EventEmojiDelete)
 
 	case EventTypeUserUpdate:
 		result = new(EventUserUpdate)
@@ -178,9 +186,9 @@ type EventMessageUpdate struct {
 }
 
 type EventMessageAppend struct {
-	ID      string   `json:"id"`
-	Channel string   `json:"channel"`
-	Append  *Message `json:"append"`
+	ID      string  `json:"id"`
+	Channel string  `json:"channel"`
+	Append  Message `json:"append"`
 }
 
 type EventMessageUpdateData struct {
@@ -289,9 +297,9 @@ type EventServerDelete struct {
 // EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
 type EventServerMemberUpdate struct {
 	Event
-	ID    string        `json:"id"`
-	Data  *ServerMember `json:"data"`
-	Clear []string      `json:"clear"`
+	ID    MemberCompoundID `json:"id"`
+	Data  *ServerMember    `json:"data"`
+	Clear []string         `json:"clear"`
 }
 
 type EventMessageReact struct {
@@ -321,4 +329,14 @@ type EventUserUpdate struct {
 	ID    string   `json:"id"`
 	Data  *User    `json:"data"`
 	Clear []string `json:"clear"`
+}
+
+type EventEmojiCreate struct {
+	Event
+	*Emoji
+}
+
+type EventEmojiDelete struct {
+	Event
+	ID string `json:"id"`
 }

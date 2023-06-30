@@ -1,6 +1,6 @@
 package revoltgo
 
-type UserRelationsType string
+type UserRelationshipType string
 
 const (
 	UserRelationsTypeNone         = "None"
@@ -38,7 +38,7 @@ type User struct {
 	// Bot information, if the user is a bot
 	Bot *Bot `json:"bot"`
 
-	Relationship string `json:"relationship"`
+	Relationship UserRelationshipType `json:"relationship"`
 
 	// Whether this user is currently online
 	Online *bool `json:"online"`
@@ -50,8 +50,8 @@ type UserProfile struct {
 }
 
 type UserRelations struct {
-	ID     string            `json:"_id"`
-	Status UserRelationsType `json:"status"`
+	ID     string               `json:"_id"`
+	Status UserRelationshipType `json:"status"`
 }
 
 type UserStatus struct {

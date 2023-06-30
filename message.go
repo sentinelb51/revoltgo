@@ -41,9 +41,9 @@ type Message struct {
 	Nonce       string          `json:"nonce"`
 	Channel     string          `json:"channel"`
 	Author      string          `json:"author"`
-	Webhook     Webhook         `json:"webhook"`
+	Webhook     *MessageWebhook `json:"webhook"`
 	Content     string          `json:"content"`
-	System      MessageSystem   `json:"system"`
+	System      *MessageSystem  `json:"system"`
 	Attachments []*Attachment   `json:"attachments"`
 	Edited      time.Time       `json:"edited"`
 	Embeds      []*MessageEmbed `json:"embeds"`
@@ -57,6 +57,11 @@ type Message struct {
 	Masquerade   *MessageMasquerade   `json:"masquerade"`
 }
 
+type MessageWebhook struct {
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+}
+
 type MessageInteractions struct {
 	Reactions []string `json:"reactions"`
 
@@ -67,28 +72,6 @@ type MessageInteractions struct {
 type MessageSystem struct {
 	Type MessageSystemType `json:"type"`
 	ID   string            `json:"id"`
-}
-
-// Attachment struct.
-type Attachment struct {
-	ID          string `json:"_id"`
-	Tag         string `json:"tag"`
-	FileName    string `json:"filename"`
-	Metadata    *AttachmentMetadata
-	ContentType string `json:"content_type"`
-	Size        int    `json:"size"`
-	Deleted     bool   `json:"deleted"`
-	Reported    bool   `json:"reported"`
-	MessageID   string `json:"message"`
-	uID         string `json:"user"`
-	sID         string `json:"server"`
-	ObjectID    string `json:"object_id"`
-}
-
-type AttachmentMetadata struct {
-	Type   string `json:"type"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
 }
 
 type MessageEdited struct {

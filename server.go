@@ -27,11 +27,11 @@ type Server struct {
 }
 
 type ServerRole struct {
-	Name        string       `json:"name"`
-	Permissions PermissionAD `json:"permissions"`
-	Colour      string       `json:"colour"`
-	Hoist       bool         `json:"hoist"`
-	Rank        uint         `json:"rank"`
+	Name        string        `json:"name"`
+	Permissions *PermissionAD `json:"permissions"`
+	Colour      string        `json:"colour"`
+	Hoist       bool          `json:"hoist"`
+	Rank        uint          `json:"rank"`
 }
 
 // ServerCategory Server categories struct.
@@ -51,6 +51,7 @@ type ServerSystemMessages struct {
 
 type ServerMember struct {
 	ID       MemberCompoundID `json:"_id"`
+	JoinedAt time.Time        `json:"joined_at"`
 	Nickname string           `json:"nickname"`
 	Avatar   *Attachment      `json:"avatar"`
 	Roles    []string         `json:"roles"`
@@ -60,6 +61,10 @@ type ServerMember struct {
 type MemberCompoundID struct {
 	User   string `json:"user"`
 	Server string `json:"server"`
+}
+
+func (m MemberCompoundID) String() string {
+	return m.Server + m.User
 }
 
 type ServerMembers struct {
