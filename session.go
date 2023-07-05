@@ -13,8 +13,9 @@ import (
 func New(token string) *Session {
 	return &Session{
 		Token:             token,
-		HeartbeatInterval: 30 * time.Second,
-		UserAgent:         "RevoltGo/pre-release",
+		HeartbeatInterval: 5 * time.Second,
+		ReconnectInterval: 5 * time.Second,
+		UserAgent:         "RevoltGo/1.0.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
 }
@@ -24,7 +25,9 @@ type Session struct {
 	Token  string
 	Socket net.Conn
 	HTTP   *http.Client
-	State  *State
+
+	// State is a central store for all data received from the API
+	State *State
 
 	// The user agent used for REST APIs
 	UserAgent string
@@ -34,6 +37,9 @@ type Session struct {
 
 	// Interval between sending heartbeats
 	HeartbeatInterval time.Duration
+
+	// Interval between reconnecting, if connection fails
+	ReconnectInterval time.Duration
 
 	// Last time a ping was sent
 	LastHeartbeatSent time.Time

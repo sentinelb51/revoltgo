@@ -12,23 +12,28 @@ const (
 
 // Channel struct.
 type Channel struct {
-	ChannelType        ChannelType  `json:"channel_type"`
-	ID                 string       `json:"_id"`
-	Server             string       `json:"server"`
-	Name               string       `json:"name"`
-	Description        string       `json:"description"`
-	Icon               *Attachment  `json:"icon"`
-	DefaultPermissions PermissionAD `json:"default_permissions"`
+	ChannelType        ChannelType   `json:"channel_type"`
+	ID                 string        `json:"_id"`
+	Server             string        `json:"server"`
+	Name               string        `json:"name"`
+	Description        string        `json:"description"`
+	Icon               *Attachment   `json:"icon"`
+	DefaultPermissions *PermissionAD `json:"default_permissions"`
+	NSFW               bool          `json:"nsfw"`
 
 	// ID of the last message sent in this channel
 	LastMessageID string `json:"last_message_id"`
 
 	// RolePermissions is a map of role ID to PermissionAD structs.
-	RolePermissions map[string]PermissionAD `json:"role_permissions"`
+	RolePermissions map[string]*PermissionAD `json:"role_permissions"`
 
-	NSFW bool `json:"nsfw"`
+	// Direct messages/groups only
 
-	// Direct messages only
+	// Permissions assigned to members of this group (does not apply to the owner of the group)
+	Permissions *uint `json:"permissions"`
+
+	// User ID of the owner of the group
+	Owner string `json:"owner"`
 
 	// [2-tuple of] user IDs participating in this channel
 	Recipients []string `json:"recipients"`

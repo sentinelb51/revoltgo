@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"fmt"
 	"math/rand"
 	"reflect"
 	"strings"
@@ -53,6 +54,32 @@ func merge(base, contrast any) any {
 		}
 
 		if shouldUpdate {
+			baseValues.Field(i).Set(contrastValuesField)
+		}
+	}
+
+	return base
+}
+
+func mergeChannel(base, contrast any) any {
+	baseValues := reflect.ValueOf(base).Elem()
+	contrastValues := reflect.ValueOf(contrast).Elem()
+
+	for i := 0; i < baseValues.NumField(); i++ {
+		contrastValuesField := contrastValues.Field(i)
+		shouldUpdate := false
+
+		fmt.Println("Field name:", baseValues.Type().Field(i).Name)
+		if contrastValuesField.Kind() == reflect.Ptr {
+			fmt.Printf("Is nil: %v\n", contrastValuesField.IsNil())
+			shouldUpdate = !contrastValuesField.IsNil()
+		} else {
+			fmt.Printf("Is zero: %v\n", contrastValuesField.IsZero())
+			shouldUpdate = !contrastValuesField.IsZero()
+		}
+
+		if shouldUpdate {
+			fmt.Printf("Updating field: %v with value: %v\n", baseValues.Type().Field(i).Name, contrastValuesField)
 			baseValues.Field(i).Set(contrastValuesField)
 		}
 	}

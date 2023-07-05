@@ -9,7 +9,7 @@ type Server struct {
 	ID             string                `json:"_id"`
 	Owner          string                `json:"owner"`
 	Name           string                `json:"name"`
-	Description    string                `json:"description"`
+	Description    *string               `json:"description"` // clear field does not include description
 	Channels       []string              `json:"channels"`
 	Categories     []*ServerCategory     `json:"categories"`
 	SystemMessages *ServerSystemMessages `json:"system_messages"`
@@ -52,10 +52,10 @@ type ServerSystemMessages struct {
 type ServerMember struct {
 	ID       MemberCompoundID `json:"_id"`
 	JoinedAt time.Time        `json:"joined_at"`
-	Nickname string           `json:"nickname"`
+	Nickname *string          `json:"nickname"`
 	Avatar   *Attachment      `json:"avatar"`
 	Roles    []string         `json:"roles"`
-	Timeout  time.Time        `json:"timeout"`
+	Timeout  *time.Time       `json:"timeout"`
 }
 
 type MemberCompoundID struct {
