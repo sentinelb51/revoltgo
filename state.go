@@ -134,7 +134,7 @@ func (s *State) updateChannels(event any) {
 		}
 	case *EventChannelUpdate:
 		if value, exists := s.Channels[data.ID]; exists {
-			value = mergeChannel(value, data.Data).(*Channel)
+			value = merge(value, data.Data).(*Channel)
 			for _, field := range data.Clear {
 				clear(value, field)
 			}
@@ -177,6 +177,9 @@ func (s *State) updateServers(event any) {
 	case *EventServerUpdate:
 		if value, exists := s.Servers[data.ID]; exists {
 			value = merge(value, data.Data).(*Server)
+			for _, field := range data.Clear {
+				clear(value, field)
+			}
 		} else {
 			data.Data.ID = data.ID
 			s.Servers[data.ID] = data.Data
