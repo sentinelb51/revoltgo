@@ -1,23 +1,9 @@
 package revoltgo
 
 import (
-	"fmt"
-	"math/rand"
 	"reflect"
 	"strings"
-	"time"
-
-	"github.com/oklog/ulid/v2"
 )
-
-var (
-	entropySrc = rand.New(rand.NewSource(time.Now().UnixNano()))
-	entropy    = ulid.Monotonic(entropySrc, 0)
-)
-
-func NewULID() string {
-	return ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
-}
 
 // clear will clear the value of a field based on its json tag.
 func clear(object any, query string) {
@@ -61,34 +47,8 @@ func merge(base, contrast any) any {
 	return base
 }
 
-func mergeChannel(base, contrast any) any {
-	baseValues := reflect.ValueOf(base).Elem()
-	contrastValues := reflect.ValueOf(contrast).Elem()
-
-	for i := 0; i < baseValues.NumField(); i++ {
-		contrastValuesField := contrastValues.Field(i)
-		shouldUpdate := false
-
-		fmt.Println("Field name:", baseValues.Type().Field(i).Name)
-		if contrastValuesField.Kind() == reflect.Ptr {
-			fmt.Printf("Is nil: %v\n", contrastValuesField.IsNil())
-			shouldUpdate = !contrastValuesField.IsNil()
-		} else {
-			fmt.Printf("Is zero: %v\n", contrastValuesField.IsZero())
-			shouldUpdate = !contrastValuesField.IsZero()
-		}
-
-		if shouldUpdate {
-			fmt.Printf("Updating field: %v with value: %v\n", baseValues.Type().Field(i).Name, contrastValuesField)
-			baseValues.Field(i).Set(contrastValuesField)
-		}
-	}
-
-	return base
-}
-
 // sliceRemoveIndex removes the element at the specified index from slice.
-// If index is out of bounds, slice is returned unchanged.
+// If the index is out of bounds, slice is returned unchanged.
 func sliceRemoveIndex[T any](slice []T, index int) []T {
 
 	if index < 0 {

@@ -47,7 +47,7 @@ func (s *Session) Open() (err error) {
 	}
 
 	// Determine the websocket URL
-	var query QueryNode
+	var query RevoltAPI
 	err = s.request(http.MethodGet, baseURL, nil, &query)
 	if err != nil {
 		return
@@ -95,7 +95,6 @@ func (s *Session) listen() {
 			continue
 		}
 
-		fmt.Println(string(message))
 		go s.handle(message)
 	}
 }
@@ -107,7 +106,7 @@ func (s *Session) Close() error {
 }
 
 // ping pings the websocket every HeartbeatInterval interval
-// It keeps the websocket connection alive, and triggers a reconnect if a problem occurs
+// It keeps the websocket connection alive, and triggers a re-connect if a problem occurs
 func (s *Session) ping() {
 
 	wsPing := WebsocketMessagePing{

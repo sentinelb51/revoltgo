@@ -12,20 +12,21 @@ import (
 	"time"
 )
 
-/*
-	This file contains structs and functions related to interacting with Revolt's REST API
-*/
-
 var bufferPool = sync.Pool{
-	New: func() any {
+	New: func() interface{} {
 		return new(bytes.Buffer)
 	},
 }
 
-// request is a helper function to send HTTP requests, handle responses, and unmarshal JSON data
-// * data is a struct that will be encoded to JSON and sent as the request body
-// * result must be a pointer to a struct that the JSON response will be decoded into
 func (s *Session) request(method, url string, data, result any) error {
+	rl := s.Ratelimiter.get(method, url)
+
+	if !rl.resetAfter.IsZero() {
+		if wait := rl.delay(); wait > 0 {
+			time.Sleep(wait)
+		}
+	}
+
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return err
@@ -34,8 +35,6 @@ func (s *Session) request(method, url string, data, result any) error {
 	// This may be problematic for Cloudflare if blank user agents are blocked
 	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", "application/json")
-
-	// Set auth headers
 	request.Header.Set("X-Session-Token", s.Token)
 
 	if data != nil {
@@ -65,6 +64,11 @@ func (s *Session) request(method, url string, data, result any) error {
 		return err
 	}
 
+	err = rl.update(response.Header)
+	if err != nil {
+		return err
+	}
+
 	switch response.StatusCode {
 	case http.StatusOK:
 	case http.StatusCreated:
@@ -73,10 +77,9 @@ func (s *Session) request(method, url string, data, result any) error {
 	case http.StatusBadGateway:
 		// TODO: Implement re-tries with sequences
 		fallthrough
-	case http.StatusTooManyRequests:
-		// TODO: Implement rate-limit handling
-		fallthrough
 	case http.StatusUnauthorized:
+		fallthrough
+	case http.StatusTooManyRequests:
 		fallthrough
 	default: // Error condition
 		return fmt.Errorf("bad status code %d: %s", response.StatusCode, body)
@@ -91,7 +94,7 @@ func (s *Session) request(method, url string, data, result any) error {
 	return nil
 }
 
-type QueryNode struct {
+type RevoltAPI struct {
 	Revolt   string `json:"revolt"`
 	Features struct {
 		Captcha struct {
