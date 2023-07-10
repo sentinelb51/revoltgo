@@ -1,15 +1,11 @@
 
-## Still in production
-
-This project has not yet been finalised. However, it is already completely usable.
-
 ## Support server
 
 [We have a Revolt server dedicated to this project.](https://rvlt.gg/2Qn0ctjm)
 
 ## Why use revoltgo
 
-At the time of writing, other [few] Revolt Go packages were simply unfeasible. They had:
+At the time of writing, other (few) Revolt Go packages were simply unfeasible. They had:
 
 - Hardcoded JSON payloads
 - Poor API coverage and consistency
@@ -17,12 +13,20 @@ At the time of writing, other [few] Revolt Go packages were simply unfeasible. T
 - Hard-to-maintain codebase and odd design choices (wrapping Client and Time for each struct)
 - ... this list can go on
 
-### This project provides
+## Features
 
-- Broader API coverage compared to other Revolt Go projects
+RevoltGo as a project provides:
+
+- Broader, up-to-date API coverage and functionality compared to other Revolt Go projects
 - Extensive customisability due to low-level bindings
-- Consistent, cleaner and maintainable codebase
-- More up-to-date functionality with the API
+- Consistent, cleaner, and maintainable codebase
+
+Additionally, revoltgo provides quality-of-life features such as:
+
+- Permission calculator
+- Lightweight ratelimit handling
+- Automatic re-connects on websocket failures
+- State/cache updates for members, roles, channels, and servers
 
 ## Getting started
 
