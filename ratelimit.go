@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -42,6 +43,9 @@ func newRatelimiter() *Ratelimiter {
 func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
 	r.Lock()
 	defer r.Unlock()
+
+	// Split to remove query parameters
+	endpoint = strings.SplitN(endpoint, "?", 2)[0]
 
 	// To reduce key size, we truncate the base URL from the endpoint
 	// The HTTP method is prepended to the endpoint as ratelimits may differ between methods
