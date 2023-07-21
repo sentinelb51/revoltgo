@@ -141,7 +141,7 @@ func (s *Session) Channel(cID string) (channel *Channel, err error) {
 }
 
 // User fetches a user by their ID
-// To fetch self, supply "me" as the ID
+// To fetch self, supply "@me" as the ID
 func (s *Session) User(uID string) (user *User, err error) {
 	endpoint := EndpointUsers(uID)
 	err = s.request(http.MethodGet, endpoint, nil, &user)

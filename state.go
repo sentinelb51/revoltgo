@@ -18,15 +18,21 @@ type State struct {
 	Emojis   map[string]*Emoji
 }
 
-func newState(ready *EventReady) *State {
+func (s *Session) newState(ready *EventReady) *State {
 
 	state := &State{
-		User:     ready.Users[0].ID, // The first user is always us
 		Users:    make(map[string]*User, len(ready.Users)),
 		Servers:  make(map[string]*Server, len(ready.Servers)),
 		Channels: make(map[string]*Channel, len(ready.Channels)),
 		Members:  make(map[string]*ServerMember, len(ready.Members)),
 		Emojis:   make(map[string]*Emoji, len(ready.Emojis)),
+	}
+
+	self, err := s.User("@me")
+	if err != nil {
+		log.Println("state: failed to get self:", err)
+	} else {
+		state.User = self.ID
 	}
 
 	// Populate the caches

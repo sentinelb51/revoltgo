@@ -171,7 +171,7 @@ func (s *Session) handle(raw []byte) {
 		}
 	case EventTypeReady:
 		event := data.Type.Unmarshal(raw).(*EventReady)
-		s.State = newState(event)
+		s.State = s.newState(event)
 
 		for _, h := range s.HandlersReady {
 			h(s, event)
