@@ -261,8 +261,6 @@ func (s *Session) handle(raw []byte) {
 		event := data.Type.Unmarshal(raw).(*EventServerCreate)
 		s.State.updateServers(event)
 
-		s.State.Servers[event.Server.ID] = event.Server
-
 		for _, h := range s.HandlersServerCreate {
 			h(s, event)
 		}
@@ -276,8 +274,6 @@ func (s *Session) handle(raw []byte) {
 	case EventTypeServerDelete:
 		event := data.Type.Unmarshal(raw).(*EventServerDelete)
 		s.State.updateServers(event)
-
-		delete(s.State.Servers, event.ID)
 
 		for _, h := range s.HandlersServerDelete {
 			h(s, event)
