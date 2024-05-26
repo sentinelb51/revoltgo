@@ -58,7 +58,10 @@ func (s *Session) Open() (err error) {
 		Timeout: s.ReconnectInterval,
 	}
 
-	connection, _, _, err := dialer.Dial(context.Background(), query.Ws)
+	ctx, cancel := context.WithTimeout(context.Background(), s.ReconnectInterval)
+	defer cancel()
+
+	connection, _, _, err := dialer.Dial(ctx, query.Ws)
 	if err != nil {
 		return
 	}
@@ -148,7 +151,21 @@ func (s *Session) handle(raw []byte) {
 		return
 	}
 
-	event := data.Unmarshal(raw)
+	eventConstructor, ok := eventToStruct[data.Type]
+	if !ok {
+		log.Printf("unknown event type: %s", data.Type)
+		for _, h := range s.HandlersUnknown {
+			h(s, string(raw))
+		}
+		return
+	}
+
+	event := eventConstructor()
+	if err = json.Unmarshal(raw, &event); err != nil {
+		log.Printf("unmarshal event: %s", err)
+		return
+	}
+
 	switch e := event.(type) {
 	case *EventPong:
 		if e.Data != s.heartbeatCount {
@@ -173,7 +190,6 @@ func (s *Session) handle(raw []byte) {
 		}
 	case *EventReady:
 		s.State = newState(e)
-		s.State.fetchSelf(s)
 		for _, h := range s.HandlersReady {
 			h(s, e)
 		}
@@ -302,10 +318,6 @@ func (s *Session) handle(raw []byte) {
 		s.State.platformWipe(e)
 		for _, h := range s.HandlersUserPlatformWipe {
 			h(s, e)
-		}
-	default:
-		for _, h := range s.HandlersUnknown {
-			h(s, string(raw))
 		}
 	}
 }

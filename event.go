@@ -1,8 +1,6 @@
 package revoltgo
 
 import (
-	"encoding/json"
-	"log"
 	"time"
 )
 
@@ -10,9 +8,7 @@ type Event struct {
 	Type string `json:"type"`
 }
 
-type constructor func() any
-
-var constructors = map[string]constructor{
+var eventToStruct = map[string]func() any{
 	"Authenticated":      func() any { return new(EventAuthenticated) },
 	"Ready":              func() any { return new(EventReady) },
 	"Pong":               func() any { return new(EventPong) },
@@ -45,21 +41,6 @@ var constructors = map[string]constructor{
 	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
 	"UserRelationship":   func() any { return new(EventUserRelationship) },
 	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
-}
-
-func (e Event) Unmarshal(data []byte) (result any) {
-	constructor, ok := constructors[e.Type]
-	if !ok {
-		log.Printf("unknown event type: %s", e.Type)
-		return
-	}
-
-	result = constructor()
-	if err := json.Unmarshal(data, &result); err != nil {
-		log.Printf("%s: unmarshal: %s", e.Type, err)
-	}
-
-	return
 }
 
 type EventPong struct {
