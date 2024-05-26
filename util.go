@@ -7,12 +7,12 @@ import (
 
 // clearByJSON will clear the value of a field based on its json tag.
 func clearByJSON(object any, query string) {
-	values := reflect.ValueOf(object).Elem()
-	valuesType := values.Type()
+	objectValue := reflect.ValueOf(object).Elem()
+	objectType := objectValue.Type()
 
-	for i := 0; i < values.NumField(); i++ {
-		field := values.Field(i)
-		structField := valuesType.Field(i)
+	for i := 0; i < objectValue.NumField(); i++ {
+		field := objectValue.Field(i)
+		structField := objectType.Field(i)
 		tag := structField.Tag.Get("json")
 
 		if !strings.EqualFold(tag, query) {
@@ -26,22 +26,19 @@ func clearByJSON(object any, query string) {
 }
 
 func merge[T any](base T, contrast any) T {
-	baseValues := reflect.ValueOf(base).Elem()
-	contrastValues := reflect.ValueOf(contrast).Elem()
+	baseValue := reflect.ValueOf(base).Elem()
+	contrastValue := reflect.ValueOf(contrast).Elem()
 
-	for i := 0; i < baseValues.NumField(); i++ {
-		contrastValuesField := contrastValues.Field(i)
-		shouldUpdate := false
+	for i := 0; i < baseValue.NumField(); i++ {
+		contrastValuesField := contrastValue.Field(i)
 
-		if contrastValuesField.Kind() == reflect.Ptr {
-			shouldUpdate = !contrastValuesField.IsNil()
-		} else {
-			shouldUpdate = !contrastValuesField.IsZero()
+		// Skip if the contrast value is nil or zero
+		if contrastValuesField.Kind() == reflect.Ptr && contrastValuesField.IsNil() ||
+			contrastValuesField.IsZero() {
+			continue
 		}
 
-		if shouldUpdate {
-			baseValues.Field(i).Set(contrastValuesField)
-		}
+		baseValue.Field(i).Set(contrastValuesField)
 	}
 
 	return base
