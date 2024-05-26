@@ -47,14 +47,17 @@ const (
 	URLServersBanner      = URLServers + "/banner"
 	URLServersPermissions = URLServers + "/permissions/%s"
 
-	URLChannels            = baseURL + "/channels/%s"
-	URLChannelsMessages    = URLChannels + "/messages"
-	URLChannelsMessage     = URLChannelsMessages + "/%s"
-	URLChannelsTyping      = URLChannels + "/typing"
-	URLChannelsInvites     = URLChannels + "/invites"
-	URLChannelsInvite      = URLChannelsInvites + "/%s"
-	URLChannelsPermissions = URLChannels + "/permissions/%s"
-	URLChannelsRecipients  = URLChannels + "/recipients/%s"
+	URLChannels                 = baseURL + "/channels/%s"
+	URLChannelsMessages         = URLChannels + "/messages"
+	URLChannelsMessage          = URLChannelsMessages + "/%s"
+	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
+	URLChannelMessageReaction   = URLChannelsMessageReactions + "/%s"
+	URLChannelsTyping           = URLChannels + "/typing"
+	URLChannelsInvites          = URLChannels + "/invites"
+	URLChannelsInvite           = URLChannelsInvites + "/%s"
+	URLChannelsPermissions      = URLChannels + "/permissions/%s"
+	URLChannelsRecipients       = URLChannels + "/recipients/%s"
+	URLChannelsWebhooks         = URLChannels + "/webhooks"
 
 	URLInvites = baseURL + "/invites/%s"
 
@@ -205,24 +208,36 @@ func EndpointPermissions(sID, rID string) string {
 	return fmt.Sprintf(URLServersPermissions, sID, rID)
 }
 
-func EndpointChannelMessages(cID string) string {
+func EndpointChannelsMessages(cID string) string {
 	return fmt.Sprintf(URLChannelsMessages, cID)
 }
 
-func EndpointChannelMessagesMessage(cID, mID string) string {
+func EndpointChannelsMessageReaction(cID, mID, rID string) string {
+	return fmt.Sprintf(URLChannelMessageReaction, cID, mID, rID)
+}
+
+func EndpointChannelsMessageReactions(cID, mID string) string {
+	return fmt.Sprintf(URLChannelsMessageReactions, cID, mID)
+}
+
+func EndpointChannelsMessagesMessage(cID, mID string) string {
 	return fmt.Sprintf(URLChannelsMessage, cID, mID)
 }
 
-func EndpointChannelTyping(cID string) string {
+func EndpointChannelsTyping(cID string) string {
 	return fmt.Sprintf(URLChannelsTyping, cID)
 }
 
-func EndpointChannelInvites(cID string) string {
+func EndpointChannelsInvites(cID string) string {
 	return fmt.Sprintf(URLChannelsInvites, cID)
 }
 
-func EndpointChannelInvite(cID, iID string) string {
+func EndpointChannelsInvite(cID, iID string) string {
 	return fmt.Sprintf(URLChannelsInvite, cID, iID)
+}
+
+func EndpointChannelsWebhooks(cID string) string {
+	return fmt.Sprintf(URLChannelsWebhooks, cID)
 }
 
 func EndpointInvite(iID string) string {
