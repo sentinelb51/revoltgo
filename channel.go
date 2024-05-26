@@ -10,10 +10,10 @@ const (
 	ChannelTypeGroup         ChannelType = "Group"
 )
 
-// Channel struct.
+// Channel holds information about a channel.
 type Channel struct {
-	ChannelType        ChannelType   `json:"channel_type"`
 	ID                 string        `json:"_id"`
+	ChannelType        ChannelType   `json:"channel_type"`
 	Server             string        `json:"server"`
 	Name               string        `json:"name"`
 	Description        string        `json:"description"`
@@ -27,7 +27,7 @@ type Channel struct {
 	// RolePermissions is a map of role ID to PermissionAD structs.
 	RolePermissions map[string]*PermissionAD `json:"role_permissions"`
 
-	// Direct messages/groups only
+	/* Direct messages/groups only */
 
 	// Permissions assigned to members of this group (does not apply to the owner of the group)
 	Permissions *uint `json:"permissions"`

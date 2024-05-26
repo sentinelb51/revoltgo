@@ -8,8 +8,8 @@ import (
 type State struct {
 	sync.RWMutex
 
-	// The current user's ID
-	User string
+	// The current user, also present in Users
+	User *User
 
 	Users    map[string]*User
 	Servers  map[string]*Server
@@ -28,7 +28,10 @@ func newState(ready *EventReady) *State {
 		Emojis:   make(map[string]*Emoji, len(ready.Emojis)),
 	}
 
-	// Populate the caches
+	// The last user in the ready event is the current user
+	state.User = ready.Users[len(ready.Users)-1]
+
+	/* Populate the caches */
 
 	for _, user := range ready.Users {
 		state.Users[user.ID] = user
@@ -51,16 +54,6 @@ func newState(ready *EventReady) *State {
 	}
 
 	return state
-}
-
-func (s *State) fetchSelf(session *Session) {
-	self, err := session.User("@me")
-	if err != nil {
-		log.Println("failed to get self:", err)
-		return
-	}
-
-	s.User = self.ID
 }
 
 func (s *State) platformWipe(event *EventUserPlatformWipe) {

@@ -78,7 +78,7 @@ func (s *Session) request(method, url string, data, result any) error {
 		// TODO: Implement re-tries with sequences
 		fallthrough
 	case http.StatusUnauthorized:
-		fallthrough
+		return fmt.Errorf("401: %s", body)
 	case http.StatusTooManyRequests:
 		fallthrough
 	default: // Error condition
