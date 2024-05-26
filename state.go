@@ -18,7 +18,7 @@ type State struct {
 	Emojis   map[string]*Emoji
 }
 
-func (s *Session) newState(ready *EventReady) *State {
+func newState(ready *EventReady) *State {
 
 	state := &State{
 		Users:    make(map[string]*User, len(ready.Users)),
@@ -26,13 +26,6 @@ func (s *Session) newState(ready *EventReady) *State {
 		Channels: make(map[string]*Channel, len(ready.Channels)),
 		Members:  make(map[string]*ServerMember, len(ready.Members)),
 		Emojis:   make(map[string]*Emoji, len(ready.Emojis)),
-	}
-
-	self, err := s.User("@me")
-	if err != nil {
-		log.Println("state: failed to get self:", err)
-	} else {
-		state.User = self.ID
 	}
 
 	// Populate the caches
@@ -60,141 +53,175 @@ func (s *Session) newState(ready *EventReady) *State {
 	return state
 }
 
-// updateRoles updates the state's roles cache
-func (s *State) updateRoles(event any) {
+func (s *State) fetchSelf(session *Session) {
+	self, err := session.User("@me")
+	if err != nil {
+		log.Println("failed to get self:", err)
+		return
+	}
+
+	s.User = self.ID
+}
+
+func (s *State) platformWipe(event *EventUserPlatformWipe) {
+	delete(s.Users, event.UserID)
+}
+
+func (s *State) updateRole(data *EventServerRoleUpdate) {
 
 	s.Lock()
 	defer s.Unlock()
 
-	switch data := event.(type) {
-	case *EventServerRoleUpdate:
-		server, exists := s.Servers[data.ID]
-		if !exists {
-			log.Printf("received update for role %s in unknown server %s\n", data.RoleID, data.ID)
-			return
-		}
+	server, exists := s.Servers[data.ID]
+	if !exists {
+		log.Printf("update for role %s in unknown server %s\n", data.RoleID, data.ID)
+		return
+	}
 
-		if value, exists := server.Roles[data.RoleID]; exists {
-			value = merge(value, data.Data).(*ServerRole)
-			for _, field := range data.Clear {
-				clear(value, field)
-			}
-		} else {
-			server.Roles[data.RoleID] = data.Data
-		}
-	case *EventServerRoleDelete:
-		server, exists := s.Servers[data.ID]
-		if exists {
-			delete(server.Roles, data.RoleID)
-		}
-	default:
-		panic("cannot process this event type")
+	role, exists := server.Roles[data.RoleID]
+	if !exists {
+		server.Roles[data.RoleID] = data.Data
+		return
+	}
+
+	role = merge[*ServerRole](role, data.Data)
+	for _, field := range data.Clear {
+		clearByJSON(role, field)
 	}
 }
 
-// updateMembers updates the state's members cache
-func (s *State) updateMembers(event any) {
+func (s *State) deleteRole(data *EventServerRoleDelete) {
 
 	s.Lock()
 	defer s.Unlock()
 
-	switch data := event.(type) {
-	case *EventServerMemberJoin:
-		id := MemberCompoundID{User: data.User, Server: data.ID}
-		s.Members[id.String()] = &ServerMember{ID: id}
-	case *EventServerMemberUpdate:
-		if value, exists := s.Members[data.ID.String()]; exists {
-			value = merge(value, data.Data).(*ServerMember)
-			for _, field := range data.Clear {
-				clear(value, field)
-			}
-		} else {
-			data.Data.ID = data.ID
-			s.Members[data.ID.String()] = data.Data
-		}
-	case *EventServerMemberLeave:
-		id := MemberCompoundID{User: data.User, Server: data.ID}
-		delete(s.Members, id.String())
-	default:
-		panic("cannot process this event type")
+	server, exists := s.Servers[data.ID]
+	if exists {
+		delete(server.Roles, data.RoleID)
 	}
 }
 
-func (s *State) updateChannels(event any) {
+func (s *State) createServerMember(data *EventServerMemberJoin) {
 
 	s.Lock()
 	defer s.Unlock()
 
-	switch data := event.(type) {
-	case *EventChannelCreate:
-		s.Channels[data.ID] = &Channel{
-			ID:          data.ID,
-			Server:      data.Server,
-			ChannelType: data.ChannelType,
-			Name:        data.Name,
-		}
+	id := MemberCompoundID{User: data.User, Server: data.ID}
+	s.Members[id.String()] = &ServerMember{ID: id}
+}
 
-		server, exists := s.Servers[data.Server]
-		if exists {
-			server.Channels = append(server.Channels, data.ID)
-		}
-	case *EventChannelUpdate:
-		if value, exists := s.Channels[data.ID]; exists {
-			value = merge(value, data.Data).(*Channel)
-			for _, field := range data.Clear {
-				clear(value, field)
-			}
-		} else {
-			data.Data.ID = data.ID
-			s.Channels[data.ID] = data.Data
-		}
-	case *EventChannelDelete:
-		channel, exists := s.Channels[data.ID]
-		if !exists {
-			return
-		}
+func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 
-		server, exists := s.Servers[channel.Server]
-		delete(s.Channels, data.ID)
+	s.Lock()
+	defer s.Unlock()
 
-		if !exists {
-			return
-		}
+	id := MemberCompoundID{User: data.User, Server: data.ID}
+	delete(s.Members, id.String())
+}
 
+func (s *State) updateServerMember(data *EventServerMemberUpdate) {
+
+	s.Lock()
+	defer s.Unlock()
+
+	member, exists := s.Members[data.ID.String()]
+	if !exists {
+		data.Data.ID = data.ID
+		s.Members[data.ID.String()] = data.Data
+		return
+	}
+
+	member = merge[*ServerMember](member, data.Data)
+	for _, field := range data.Clear {
+		clearByJSON(member, field)
+	}
+}
+
+func (s *State) createChannel(event *EventChannelCreate) {
+	s.Lock()
+	defer s.Unlock()
+
+	server, exists := s.Servers[event.Server]
+	if !exists {
+		return
+	}
+
+	s.Channels[event.ID] = &Channel{
+		ID:          event.ID,
+		Server:      event.Server,
+		ChannelType: event.ChannelType,
+		Name:        event.Name,
+	}
+
+	server.Channels = append(server.Channels, event.ID)
+}
+
+func (s *State) updateChannel(event *EventChannelUpdate) {
+	s.Lock()
+	defer s.Unlock()
+
+	server, exist := s.Servers[event.ID]
+	if !exist {
+		event.Data.ID = event.ID
+		s.Channels[event.ID] = event.Data
+		return
+	}
+
+	server = merge[*Server](server, event.Data)
+	for _, field := range event.Clear {
+		clearByJSON(server, field)
+	}
+}
+
+func (s *State) deleteChannel(event *EventChannelDelete) {
+	s.Lock()
+	defer s.Unlock()
+
+	channel, exists := s.Channels[event.ID]
+	if exists {
+		delete(s.Channels, event.ID)
+	}
+
+	server, exists := s.Servers[channel.Server]
+	if exists {
 		for i, cID := range server.Channels {
-			if cID == data.ID {
+			if cID == event.ID {
 				server.Channels = sliceRemoveIndex(server.Channels, i)
 				return
 			}
 		}
-	default:
-		panic("cannot process this event type")
 	}
 }
 
-func (s *State) updateServers(event any) {
-
+func (s *State) createServer(event *EventServerCreate) {
 	s.Lock()
 	defer s.Unlock()
 
-	switch data := event.(type) {
-	case *EventServerCreate:
-		s.Servers[data.ID] = data.Server
-	case *EventServerUpdate:
-		if value, exists := s.Servers[data.ID]; exists {
-			value = merge(value, data.Data).(*Server)
-			for _, field := range data.Clear {
-				clear(value, field)
-			}
-		} else {
-			data.Data.ID = data.ID
-			s.Servers[data.ID] = data.Data
-		}
-	case *EventServerDelete:
-		delete(s.Servers, data.ID)
-	default:
-		panic("cannot process this event type")
+	s.Servers[event.ID] = event.Server
+}
+
+func (s *State) updateServer(event *EventServerUpdate) {
+	s.Lock()
+	defer s.Unlock()
+
+	server, exists := s.Servers[event.ID]
+	if !exists {
+		event.Data.ID = event.ID
+		s.Servers[event.ID] = event.Data
+		return
 	}
+
+	server = merge[*Server](server, event.Data)
+	for _, field := range event.Clear {
+		clearByJSON(server, field)
+	}
+}
+
+func (s *State) deleteServer(event *EventServerDelete) {
+	s.Lock()
+	defer s.Unlock()
+
+	delete(s.Servers, event.ID)
 }
 
 func (s *State) updateUsers(event any) {
@@ -205,7 +232,7 @@ func (s *State) updateUsers(event any) {
 	switch data := event.(type) {
 	case *EventUserUpdate:
 		if value, exists := s.Users[data.ID]; exists {
-			value = merge(value, data.Data).(*User)
+			value = merge[*User](value, data.Data)
 		} else {
 			data.Data.ID = data.ID
 			s.Users[data.ID] = data.Data
@@ -215,17 +242,16 @@ func (s *State) updateUsers(event any) {
 	}
 }
 
-func (s *State) updateEmojis(event any) {
-
+func (s *State) createEmoji(event *EventEmojiCreate) {
 	s.Lock()
 	defer s.Unlock()
 
-	switch data := event.(type) {
-	case *EventEmojiCreate:
-		s.Emojis[data.ID] = data.Emoji
-	case *EventEmojiDelete:
-		delete(s.Emojis, data.ID)
-	default:
-		panic("cannot process this event type")
-	}
+	s.Emojis[event.ID] = event.Emoji
+}
+
+func (s *State) deleteEmoji(event *EventEmojiDelete) {
+	s.Lock()
+	defer s.Unlock()
+
+	delete(s.Emojis, event.ID)
 }
