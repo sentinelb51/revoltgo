@@ -67,3 +67,9 @@ type UserMutual struct {
 	Users   []string `json:"users"`
 	Servers []string `json:"servers"`
 }
+
+// UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason
+type UserSettings struct {
+	Updated int
+	Data    string
+}
