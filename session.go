@@ -21,6 +21,18 @@ func New(token string) *Session {
 	}
 }
 
+// NewWithLogin exchanges an email and password for a session token, and then creates a new session.
+// You are expected to store and re-use the token for future sessions.
+func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
+	session := New("")
+	mfa, err := session.Login(data)
+	if err == nil {
+		session.Token = mfa.Token
+	}
+
+	return session, mfa, err
+}
+
 // Session struct.
 type Session struct {
 	Token  string
@@ -44,6 +56,9 @@ type Session struct {
 	// Interval between sending heartbeats
 	HeartbeatInterval time.Duration
 
+	// Heartbeat counter
+	heartbeatCount int
+
 	// Interval between reconnecting, if connection fails
 	ReconnectInterval time.Duration
 
@@ -62,7 +77,10 @@ type Session struct {
 	HandlersAuthenticated []func(*Session, *EventAuthenticated)
 
 	// User-related handlers
-	HandlersUserUpdate []func(*Session, *EventUserUpdate)
+	HandlersUserUpdate         []func(*Session, *EventUserUpdate)
+	HandlersUserSettingsUpdate []func(*Session, *EventUserSettingsUpdate)
+	HandlersUserRelationship   []func(*Session, *EventUserRelationship)
+	HandlersUserPlatformWipe   []func(*Session, *EventUserPlatformWipe)
 
 	// Message-related handlers
 	HandlersMessage        []func(*Session, *EventMessage)
@@ -221,6 +239,18 @@ func (s *Session) ChannelEndTyping(cID string) (err error) {
 	return s.WriteSocket(data)
 }
 
+func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
+	endpoint := EndpointChannelsWebhooks(cID)
+	err = s.request(http.MethodGet, endpoint, nil, &webhooks)
+	return
+}
+
+func (s *Session) ChannelWebhooksCreate(cID string, data WebhookCreate) (webhook *Webhook, err error) {
+	endpoint := EndpointChannelsWebhooks(cID)
+	err = s.request(http.MethodPost, endpoint, data, &webhook)
+	return
+}
+
 // GroupCreate creates a group based on the data provided
 // "Users" field is a list of user IDs that will be in the group
 func (s *Session) GroupCreate(data GroupCreateData) (group *Group, err error) {
@@ -248,7 +278,7 @@ func (s *Session) GroupMembers(cID string) (users []*User, err error) {
 }
 
 func (s *Session) ChannelInviteCreate(cID string) (invite *InviteCreate, err error) {
-	endpoint := EndpointChannelInvites(cID)
+	endpoint := EndpointChannelsInvites(cID)
 	err = s.request(http.MethodPost, endpoint, nil, &invite)
 	return
 }
@@ -381,8 +411,29 @@ func (s *Session) ServerMembers(sID string) (members []*ServerMembers, err error
 }
 
 func (s *Session) ChannelMessage(cID, mID string) (message *Message, err error) {
-	endpoint := EndpointChannelMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessagesMessage(cID, mID)
 	err = s.request(http.MethodGet, endpoint, nil, &message)
+	return
+}
+
+// ChannelMessageReactionCreate adds a reaction (emoji ID) to a message
+func (s *Session) ChannelMessageReactionCreate(cID, mID, eID string) (err error) {
+	endpoint := EndpointChannelsMessageReaction(cID, mID, eID)
+	err = s.request(http.MethodPut, endpoint, nil, nil)
+	return
+}
+
+// ChannelMessageReactionDelete deletes a singular reaction on a message
+func (s *Session) ChannelMessageReactionDelete(cID, mID, eID string) (err error) {
+	endpoint := EndpointChannelsMessageReaction(cID, mID, eID)
+	err = s.request(http.MethodDelete, endpoint, nil, nil)
+	return
+}
+
+// ChannelMessageReactionClear clears all reactions on a message
+func (s *Session) ChannelMessageReactionClear(cID, mID string) (err error) {
+	endpoint := EndpointChannelsMessageReactions(cID, mID)
+	err = s.request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
@@ -398,7 +449,7 @@ func (s *Session) ServerDelete(sID string) error {
 }
 
 func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages []*Message, err error) {
-	endpoint := EndpointChannelMessages(cID)
+	endpoint := EndpointChannelsMessages(cID)
 
 	if len(params) > 0 {
 		endpoint += params[0].Encode()
@@ -409,19 +460,19 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 }
 
 func (s *Session) ChannelMessageEdit(cID, mID string, data MessageEditData) (message *Message, err error) {
-	endpoint := EndpointChannelMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessagesMessage(cID, mID)
 	err = s.request(http.MethodPatch, endpoint, data, &message)
 	return
 }
 
-func (s *Session) ChannelMessageSend(cID string, ms MessageSend) (message *Message, err error) {
-	endpoint := EndpointChannelMessages(cID)
-	err = s.request(http.MethodPost, endpoint, ms, &message)
+func (s *Session) ChannelMessageSend(cID string, data MessageSend) (message *Message, err error) {
+	endpoint := EndpointChannelsMessages(cID)
+	err = s.request(http.MethodPost, endpoint, data, &message)
 	return
 }
 
 func (s *Session) ChannelMessageDelete(cID, mID string) error {
-	endpoint := EndpointChannelMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessagesMessage(cID, mID)
 	return s.request(http.MethodDelete, endpoint, nil, nil)
 }
 
