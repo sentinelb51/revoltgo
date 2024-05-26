@@ -12,7 +12,8 @@ import (
 )
 
 func init() {
-	log.SetPrefix("[rgo] ")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetPrefix("[R-GO] ")
 }
 
 type WebsocketMessageType string
@@ -109,20 +110,20 @@ func (s *Session) Close() error {
 // It keeps the websocket connection alive, and triggers a re-connect if a problem occurs
 func (s *Session) ping() {
 
-	wsPing := WebsocketMessagePing{
-		Type: WebsocketMessageTypeHeartbeat,
-		Data: 1337,
-	}
-
-	// Look into making WriteSocketRaw; avoid marshalling
-
 	for s.Connected {
 		time.Sleep(s.HeartbeatInterval)
-		err := s.WriteSocket(wsPing)
+
+		ping := WebsocketMessagePing{
+			Type: WebsocketMessageTypeHeartbeat,
+			Data: s.heartbeatCount,
+		}
+
+		err := s.WriteSocket(ping)
 		if err != nil {
 			log.Printf("heartbeat failed: %s\n", err)
 			break
 		}
+
 		s.LastHeartbeatSent = time.Now()
 	}
 
@@ -147,198 +148,160 @@ func (s *Session) handle(raw []byte) {
 		return
 	}
 
-	switch data.Type {
-	case EventTypePong:
-		event := data.Type.Unmarshal(raw).(*EventPong)
+	event := data.Unmarshal(raw)
+	switch e := event.(type) {
+	case *EventPong:
+		if e.Data != s.heartbeatCount {
+			log.Printf("heartbeat fibrillation %d != %d\n", e.Data, s.heartbeatCount)
+			break
+		}
+
+		s.heartbeatCount++
 		s.LastHeartbeatAck = time.Now()
 
 		for _, h := range s.HandlersPong {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeAuthenticated:
-		event := data.Type.Unmarshal(raw).(*EventAuthenticated)
-
-		for _, h := range s.HandlersAuthenticated {
-			h(s, event)
-		}
-
+	case *EventAuthenticated:
 		go s.ping()
-	case EventTypeAuth:
-		event := data.Type.Unmarshal(raw).(*EventAuth)
-
+		for _, h := range s.HandlersAuthenticated {
+			h(s, e)
+		}
+	case *EventAuth:
 		for _, h := range s.HandlersAuth {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeReady:
-		event := data.Type.Unmarshal(raw).(*EventReady)
-		s.State = s.newState(event)
-
+	case *EventReady:
+		s.State = newState(e)
+		s.State.fetchSelf(s)
 		for _, h := range s.HandlersReady {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessage:
-		event := data.Type.Unmarshal(raw).(*EventMessage)
-
+	case *EventMessage:
 		for _, h := range s.HandlersMessage {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessageAppend:
-		event := data.Type.Unmarshal(raw).(*EventMessageAppend)
-
+	case *EventMessageAppend:
 		for _, h := range s.HandlersMessageAppend {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessageUpdate:
-		event := data.Type.Unmarshal(raw).(*EventMessageUpdate)
-
+	case *EventMessageUpdate:
 		for _, h := range s.HandlersMessageUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessageDelete:
-		event := data.Type.Unmarshal(raw).(*EventMessageDelete)
-
+	case *EventMessageDelete:
 		for _, h := range s.HandlersMessageDelete {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessageReact:
-		event := data.Type.Unmarshal(raw).(*EventMessageReact)
-
+	case *EventMessageReact:
 		for _, h := range s.HandlersMessageReact {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeMessageUnreact:
-		event := data.Type.Unmarshal(raw).(*EventMessageUnreact)
-
+	case *EventMessageUnreact:
 		for _, h := range s.HandlersMessageUnreact {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelCreate:
-		event := data.Type.Unmarshal(raw).(*EventChannelCreate)
-		s.State.updateChannels(event)
-
+	case *EventChannelCreate:
+		s.State.createChannel(e)
 		for _, h := range s.HandlersChannelCreate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelUpdate:
-		event := data.Type.Unmarshal(raw).(*EventChannelUpdate)
-		s.State.updateChannels(event)
-
+	case *EventChannelUpdate:
+		s.State.updateChannel(e)
 		for _, h := range s.HandlersChannelUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelDelete:
-		event := data.Type.Unmarshal(raw).(*EventChannelDelete)
-		s.State.updateChannels(event)
-
+	case *EventChannelDelete:
+		s.State.deleteChannel(e)
 		for _, h := range s.HandlersChannelDelete {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeGroupJoin:
-		event := data.Type.Unmarshal(raw).(*EventGroupJoin)
-
+	case *EventGroupJoin:
 		for _, h := range s.HandlersGroupJoin {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeGroupLeave:
-		event := data.Type.Unmarshal(raw).(*EventGroupLeave)
-
+	case *EventGroupLeave:
 		for _, h := range s.HandlersGroupLeave {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelStartTyping:
-		event := data.Type.Unmarshal(raw).(*EventChannelStartTyping)
-
+	case *EventChannelStartTyping:
 		for _, h := range s.HandlersChannelStartTyping {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelStopTyping:
-		event := data.Type.Unmarshal(raw).(*EventChannelStopTyping)
-
+	case *EventChannelStopTyping:
 		for _, h := range s.HandlersChannelStopTyping {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerCreate:
-		event := data.Type.Unmarshal(raw).(*EventServerCreate)
-		s.State.updateServers(event)
-
+	case *EventServerCreate:
+		s.State.createServer(e)
 		for _, h := range s.HandlersServerCreate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerUpdate:
-		event := data.Type.Unmarshal(raw).(*EventServerUpdate)
-		s.State.updateServers(event)
-
+	case *EventServerUpdate:
+		s.State.updateServer(e)
 		for _, h := range s.HandlersServerUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerDelete:
-		event := data.Type.Unmarshal(raw).(*EventServerDelete)
-		s.State.updateServers(event)
-
+	case *EventServerDelete:
+		s.State.deleteServer(e)
 		for _, h := range s.HandlersServerDelete {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerMemberUpdate:
-		event := data.Type.Unmarshal(raw).(*EventServerMemberUpdate)
-		s.State.updateMembers(event)
-
+	case *EventServerMemberUpdate:
+		s.State.updateServerMember(e)
 		for _, h := range s.HandlersServerMemberUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerMemberJoin:
-		event := data.Type.Unmarshal(raw).(*EventServerMemberJoin)
-		s.State.updateMembers(event)
-
+	case *EventServerMemberJoin:
+		s.State.createServerMember(e)
 		for _, h := range s.HandlersServerMemberJoin {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerMemberLeave:
-		event := data.Type.Unmarshal(raw).(*EventServerMemberLeave)
-		s.State.updateMembers(event)
-
+	case *EventServerMemberLeave:
+		s.State.deleteServerMember(e)
 		for _, h := range s.HandlersServerMemberLeave {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeUserUpdate:
-		event := data.Type.Unmarshal(raw).(*EventUserUpdate)
-		s.State.updateUsers(event)
-
+	case *EventUserUpdate:
 		for _, h := range s.HandlersUserUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeChannelAck:
-		event := data.Type.Unmarshal(raw).(*EventChannelAck)
-
+	case *EventChannelAck:
 		for _, h := range s.HandlersChannelAck {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerRoleUpdate:
-		event := data.Type.Unmarshal(raw).(*EventServerRoleUpdate)
-		s.State.updateRoles(event)
-
+	case *EventServerRoleUpdate:
+		s.State.updateRole(e)
 		for _, h := range s.HandlersServerRoleUpdate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeServerRoleDelete:
-		event := data.Type.Unmarshal(raw).(*EventServerRoleDelete)
-		s.State.updateRoles(event)
-
+	case *EventServerRoleDelete:
+		s.State.deleteRole(e)
 		for _, h := range s.HandlersServerRoleDelete {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeEmojiCreate:
-		event := data.Type.Unmarshal(raw).(*EventEmojiCreate)
-		s.State.updateEmojis(event)
-
+	case *EventEmojiCreate:
+		s.State.createEmoji(e)
 		for _, h := range s.HandlersEmojiCreate {
-			h(s, event)
+			h(s, e)
 		}
-	case EventTypeEmojiDelete:
-		event := data.Type.Unmarshal(raw).(*EventEmojiDelete)
-		s.State.updateEmojis(event)
-
+	case *EventEmojiDelete:
+		s.State.deleteEmoji(e)
 		for _, h := range s.HandlersEmojiDelete {
-			h(s, event)
+			h(s, e)
+		}
+	case *EventUserSettingsUpdate:
+		for _, h := range s.HandlersUserSettingsUpdate {
+			h(s, e)
+		}
+	case *EventUserRelationship:
+		for _, h := range s.HandlersUserRelationship {
+			h(s, e)
+		}
+	case *EventUserPlatformWipe:
+		s.State.platformWipe(e)
+		for _, h := range s.HandlersUserPlatformWipe {
+			h(s, e)
 		}
 	default:
 		for _, h := range s.HandlersUnknown {
