@@ -2,137 +2,64 @@ package revoltgo
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 )
 
-type EventType string
-
-const (
-	EventTypeReady         EventType = "Ready"
-	EventTypePong          EventType = "Pong"
-	EventTypeAuth          EventType = "Auth"
-	EventTypeAuthenticated EventType = "Authenticated"
-
-	EventTypeMessage        EventType = "Message"
-	EventTypeMessageAppend  EventType = "MessageAppend"
-	EventTypeMessageUpdate  EventType = "MessageUpdate"
-	EventTypeMessageDelete  EventType = "MessageDelete"
-	EventTypeMessageReact   EventType = "MessageReact"
-	EventTypeMessageUnreact EventType = "MessageUnreact"
-
-	EventTypeChannelCreate EventType = "ChannelCreate"
-	EventTypeChannelUpdate EventType = "ChannelUpdate"
-	EventTypeChannelDelete EventType = "ChannelDelete"
-
-	EventTypeGroupJoin  EventType = "GroupCreate"
-	EventTypeGroupLeave EventType = "GroupLeave"
-	EventTypeChannelAck EventType = "ChannelAck"
-
-	EventTypeChannelStartTyping EventType = "ChannelStartTyping"
-	EventTypeChannelStopTyping  EventType = "ChannelStopTyping"
-
-	EventTypeServerCreate EventType = "ServerCreate"
-	EventTypeServerUpdate EventType = "ServerUpdate"
-	EventTypeServerDelete EventType = "ServerDelete"
-
-	EventTypeServerRoleDelete EventType = "ServerRoleDelete"
-	EventTypeServerRoleUpdate EventType = "ServerRoleUpdate"
-
-	EventTypeServerMemberUpdate EventType = "ServerMemberUpdate"
-	EventTypeServerMemberJoin   EventType = "ServerMemberJoin"
-	EventTypeServerMemberLeave  EventType = "ServerMemberLeave"
-
-	EventTypeEmojiCreate EventType = "EmojiCreate"
-	EventTypeEmojiDelete EventType = "EmojiDelete"
-
-	EventTypeUserUpdate EventType = "UserUpdate"
-)
-
-func (et EventType) String() string {
-	return string(et)
+type Event struct {
+	Type string `json:"type"`
 }
 
-func (et EventType) Unmarshal(data []byte) (result any) {
+type constructor func() any
 
-	switch et {
-	case EventTypeAuth:
-		result = new(EventAuth)
-	case EventTypeReady:
-		result = new(EventReady)
-	case EventTypeAuthenticated:
-		return &EventAuthenticated{Event: Event{Type: et}}
-	case EventTypePong:
-		result = new(EventPong)
+var constructors = map[string]constructor{
+	"Authenticated":      func() any { return new(EventAuthenticated) },
+	"Ready":              func() any { return new(EventReady) },
+	"Pong":               func() any { return new(EventPong) },
+	"Auth":               func() any { return new(EventAuth) },
+	"Message":            func() any { return new(EventMessage) },
+	"MessageAppend":      func() any { return new(EventMessageAppend) },
+	"MessageUpdate":      func() any { return new(EventMessageUpdate) },
+	"MessageDelete":      func() any { return new(EventMessageDelete) },
+	"MessageReact":       func() any { return new(EventMessageReact) },
+	"MessageUnreact":     func() any { return new(EventMessageUnreact) },
+	"ChannelCreate":      func() any { return new(EventChannelCreate) },
+	"ChannelUpdate":      func() any { return new(EventChannelUpdate) },
+	"ChannelDelete":      func() any { return new(EventChannelDelete) },
+	"GroupJoin":          func() any { return new(EventGroupJoin) },
+	"GroupLeave":         func() any { return new(EventGroupLeave) },
+	"ChannelAck":         func() any { return new(EventChannelAck) },
+	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
+	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
+	"ServerCreate":       func() any { return new(EventServerCreate) },
+	"ServerUpdate":       func() any { return new(EventServerUpdate) },
+	"ServerDelete":       func() any { return new(EventServerDelete) },
+	"ServerRoleDelete":   func() any { return new(EventServerRoleDelete) },
+	"ServerRoleUpdate":   func() any { return new(EventServerRoleUpdate) },
+	"ServerMemberUpdate": func() any { return new(EventServerMemberUpdate) },
+	"ServerMemberJoin":   func() any { return new(EventServerMemberJoin) },
+	"ServerMemberLeave":  func() any { return new(EventServerMemberLeave) },
+	"EmojiCreate":        func() any { return new(EventEmojiCreate) },
+	"EmojiDelete":        func() any { return new(EventEmojiDelete) },
+	"UserUpdate":         func() any { return new(EventUserUpdate) },
+	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
+	"UserRelationship":   func() any { return new(EventUserRelationship) },
+	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
+}
 
-	case EventTypeMessage:
-		result = new(EventMessage)
-	case EventTypeMessageAppend:
-		result = new(EventMessageAppend)
-	case EventTypeMessageUpdate:
-		result = new(EventMessageUpdate)
-	case EventTypeMessageDelete:
-		result = new(EventMessageDelete)
-	case EventTypeMessageReact:
-		result = new(EventMessageReact)
-	case EventTypeMessageUnreact:
-		result = new(EventMessageUnreact)
-
-	case EventTypeChannelCreate:
-		result = new(EventChannelCreate)
-	case EventTypeChannelUpdate:
-		result = new(EventChannelUpdate)
-	case EventTypeChannelDelete:
-		result = new(EventChannelDelete)
-	case EventTypeChannelAck:
-		result = new(EventChannelAck)
-
-	case EventTypeServerUpdate:
-		result = new(EventServerUpdate)
-	case EventTypeServerCreate:
-		result = new(EventServerCreate)
-	case EventTypeServerDelete:
-		result = new(EventServerDelete)
-
-	case EventTypeServerRoleUpdate:
-		result = new(EventServerRoleUpdate)
-	case EventTypeServerRoleDelete:
-		result = new(EventServerRoleDelete)
-
-	case EventTypeServerMemberUpdate:
-		result = new(EventServerMemberUpdate)
-	case EventTypeServerMemberJoin:
-		result = new(EventServerMemberJoin)
-	case EventTypeServerMemberLeave:
-		result = new(EventServerMemberLeave)
-
-	case EventTypeChannelStartTyping:
-		result = new(EventChannelStartTyping)
-	case EventTypeChannelStopTyping:
-		result = new(EventChannelStopTyping)
-
-	case EventTypeEmojiCreate:
-		result = new(EventEmojiCreate)
-	case EventTypeEmojiDelete:
-		result = new(EventEmojiDelete)
-
-	case EventTypeUserUpdate:
-		result = new(EventUserUpdate)
-
-	default:
-		panic(fmt.Errorf("unknown event type: %s", et))
+func (e Event) Unmarshal(data []byte) (result any) {
+	constructor, ok := constructors[e.Type]
+	if !ok {
+		log.Printf("unknown event type: %s", e.Type)
+		return
 	}
 
+	result = constructor()
 	if err := json.Unmarshal(data, &result); err != nil {
-		log.Printf("%s: unmarshal: %s", et, err)
+		log.Printf("%s: unmarshal: %s", e.Type, err)
 	}
 
 	return
-}
-
-type Event struct {
-	Type EventType `json:"type"`
 }
 
 type EventPong struct {
@@ -151,22 +78,22 @@ type EventReady struct {
 	Emojis   []*Emoji        `json:"emojis"`
 }
 
-type EventAuth struct {
-	Event
-	EventType EventAuthType `json:"event_type"`
-	UserID    string        `json:"user_id"`
-	SessionID string        `json:"session_id"`
-
-	// Only present when
-	ExcludeSessionID string `json:"exclude_session_id"`
-}
-
-type EventAuthType string
+type AuthType string
 
 const (
-	EventTypeAuthDeleteSession     EventAuthType = "DeleteSession"
-	EventTypeAuthDeleteAllSessions EventAuthType = "DeleteAllSessions"
+	EventTypeAuthDeleteSession     AuthType = "DeleteSession"
+	EventTypeAuthDeleteAllSessions AuthType = "DeleteAllSessions"
 )
+
+type EventAuth struct {
+	Event
+	EventType AuthType `json:"event_type"`
+	UserID    string   `json:"user_id"`
+	SessionID string   `json:"session_id"`
+
+	// Only present when... I forgot.
+	ExcludeSessionID string `json:"exclude_session_id"`
+}
 
 // EventAuthenticated is sent after the client has authenticated.
 type EventAuthenticated struct {
@@ -339,4 +266,21 @@ type EventEmojiCreate struct {
 type EventEmojiDelete struct {
 	Event
 	ID string `json:"id"`
+}
+
+type EventUserRelationship struct {
+	Event
+	ID   string `json:"id"`
+	User *User  `json:"user"`
+}
+
+type EventUserPlatformWipe struct {
+	Event
+	UserID string `json:"user_id"`
+	Flags  int    `json:"flags"`
+}
+
+type EventUserSettingsUpdate struct {
+	Event
+	Update map[string]*UserSettings `json:"update"`
 }
