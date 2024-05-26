@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// clear will clear the value of a field based on its json tag.
-func clear(object any, query string) {
+// clearByJSON will clear the value of a field based on its json tag.
+func clearByJSON(object any, query string) {
 	values := reflect.ValueOf(object).Elem()
 	valuesType := values.Type()
 
@@ -25,7 +25,7 @@ func clear(object any, query string) {
 	}
 }
 
-func merge(base, contrast any) any {
+func merge[T any](base T, contrast any) T {
 	baseValues := reflect.ValueOf(base).Elem()
 	contrastValues := reflect.ValueOf(contrast).Elem()
 
@@ -50,14 +50,18 @@ func merge(base, contrast any) any {
 // sliceRemoveIndex removes the element at the specified index from slice.
 // If the index is out of bounds, slice is returned unchanged.
 func sliceRemoveIndex[T any](slice []T, index int) []T {
-
 	if index < 0 {
 		panic("index must be >= 0")
+	} else if index >= len(slice) {
+		panic("index must be < len(slice)")
 	}
 
-	if index >= len(slice) {
-		return slice
-	}
+	// Pre-calculate size to avoid unnecessary len() calls
+	size := len(slice) - 1
 
-	return append(slice[:index], slice[index+1:]...)
+	// Swap the element to be removed with the last element
+	slice[index], slice[size] = slice[size], slice[index]
+
+	// Exclude last element, effectively removing it
+	return slice[:size]
 }
