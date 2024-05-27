@@ -1,7 +1,9 @@
 
 ## Support server
 
-[We have a Revolt server dedicated to this project.](https://rvlt.gg/2Qn0ctjm)
+We have a Revolt server dedicated to this project, where you can discuss the project, 
+suggest features, or highlight issues.
+[**Join our community.**](https://rvlt.gg/RJ44Wq4x)
 
 ## Why use revoltgo
 
