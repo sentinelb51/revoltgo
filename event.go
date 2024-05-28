@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -9,24 +10,28 @@ type Event struct {
 }
 
 var eventToStruct = map[string]func() any{
-	"Authenticated":      func() any { return new(EventAuthenticated) },
-	"Ready":              func() any { return new(EventReady) },
-	"Pong":               func() any { return new(EventPong) },
-	"Auth":               func() any { return new(EventAuth) },
-	"Message":            func() any { return new(EventMessage) },
-	"MessageAppend":      func() any { return new(EventMessageAppend) },
-	"MessageUpdate":      func() any { return new(EventMessageUpdate) },
-	"MessageDelete":      func() any { return new(EventMessageDelete) },
-	"MessageReact":       func() any { return new(EventMessageReact) },
-	"MessageUnreact":     func() any { return new(EventMessageUnreact) },
+	"Authenticated": func() any { return new(EventAuthenticated) },
+	"Ready":         func() any { return new(EventReady) },
+	"Pong":          func() any { return new(EventPong) },
+	"Auth":          func() any { return new(EventAuth) },
+
+	"Message":        func() any { return new(EventMessage) },
+	"MessageAppend":  func() any { return new(EventMessageAppend) },
+	"MessageUpdate":  func() any { return new(EventMessageUpdate) },
+	"MessageDelete":  func() any { return new(EventMessageDelete) },
+	"MessageReact":   func() any { return new(EventMessageReact) },
+	"MessageUnreact": func() any { return new(EventMessageUnreact) },
+
 	"ChannelCreate":      func() any { return new(EventChannelCreate) },
 	"ChannelUpdate":      func() any { return new(EventChannelUpdate) },
 	"ChannelDelete":      func() any { return new(EventChannelDelete) },
-	"GroupJoin":          func() any { return new(EventGroupJoin) },
-	"GroupLeave":         func() any { return new(EventGroupLeave) },
 	"ChannelAck":         func() any { return new(EventChannelAck) },
 	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
 	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
+
+	"GroupJoin":  func() any { return new(EventGroupJoin) },
+	"GroupLeave": func() any { return new(EventGroupLeave) },
+
 	"ServerCreate":       func() any { return new(EventServerCreate) },
 	"ServerUpdate":       func() any { return new(EventServerUpdate) },
 	"ServerDelete":       func() any { return new(EventServerDelete) },
@@ -35,12 +40,20 @@ var eventToStruct = map[string]func() any{
 	"ServerMemberUpdate": func() any { return new(EventServerMemberUpdate) },
 	"ServerMemberJoin":   func() any { return new(EventServerMemberJoin) },
 	"ServerMemberLeave":  func() any { return new(EventServerMemberLeave) },
-	"EmojiCreate":        func() any { return new(EventEmojiCreate) },
-	"EmojiDelete":        func() any { return new(EventEmojiDelete) },
+
+	"EmojiCreate": func() any { return new(EventEmojiCreate) },
+	"EmojiDelete": func() any { return new(EventEmojiDelete) },
+
 	"UserUpdate":         func() any { return new(EventUserUpdate) },
 	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
 	"UserRelationship":   func() any { return new(EventUserRelationship) },
 	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
+
+	"WebhookCreate": func() any { return new(EventWebhookCreate) },
+	"WebhookUpdate": func() any { return new(EventWebhookUpdate) },
+	"WebhookDelete": func() any { return new(EventWebhookDelete) },
+
+	"ReportCreate": func() any { return new(EventReportCreate) },
 }
 
 type EventPong struct {
@@ -93,16 +106,16 @@ type EventMessageUpdate struct {
 	Data    EventMessageUpdateData `json:"data"`
 }
 
-type EventMessageAppend struct {
-	ID      string  `json:"id"`
-	Channel string  `json:"channel"`
-	Append  Message `json:"append"`
-}
-
 type EventMessageUpdateData struct {
 	Content string         `json:"content"`
 	Edited  time.Time      `json:"edited"`
 	Embeds  []MessageEmbed `json:"embeds"`
+}
+
+type EventMessageAppend struct {
+	ID      string  `json:"id"`
+	Channel string  `json:"channel"`
+	Append  Message `json:"append"`
 }
 
 type EventMessageDelete struct {
@@ -263,5 +276,29 @@ type EventUserPlatformWipe struct {
 
 type EventUserSettingsUpdate struct {
 	Event
-	Update map[string]*UserSettings `json:"update"`
+	// Update is a tuple of (int, string); update time, and the data in JSON
+	Update map[string][2]json.RawMessage `json:"update"`
+}
+
+type EventWebhookCreate struct {
+	Event
+	*Webhook
+}
+
+type EventWebhookUpdate struct {
+	Event
+	ID     string   `json:"id"`
+	Data   *Webhook `json:"data"`
+	Remove []string `json:"remove"`
+}
+
+type EventWebhookDelete struct {
+	Event
+	ID string `json:"id"`
+}
+
+// EventReportCreate might not be broadcasted in the websocket for everyone
+type EventReportCreate struct {
+	Event
+	*Report
 }
