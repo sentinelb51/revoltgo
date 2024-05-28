@@ -13,9 +13,10 @@ import (
 func New(token string) *Session {
 	return &Session{
 		Token:             token,
+		State:             newState(),
+		Ratelimiter:       newRatelimiter(),
 		HeartbeatInterval: 15 * time.Second,
 		ReconnectInterval: 5 * time.Second,
-		Ratelimiter:       newRatelimiter(),
 		UserAgent:         "RevoltGo/1.0.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
@@ -119,6 +120,14 @@ type Session struct {
 	// Emoji-related handlers
 	HandlersEmojiCreate []func(*Session, *EventEmojiCreate)
 	HandlersEmojiDelete []func(*Session, *EventEmojiDelete)
+
+	// Webhook-related handlers
+	HandlersWebhookCreate []func(*Session, *EventWebhookCreate)
+	HandlersWebhookUpdate []func(*Session, *EventWebhookUpdate)
+	HandlersWebhookDelete []func(*Session, *EventWebhookDelete)
+
+	// [Websocket does not seem to emit] Report handler
+	HandlersReportCreate []func(*Session, *EventReportCreate)
 
 	// Unknown event handler. Useful for debugging purposes
 	HandlersUnknown []func(session *Session, message string)
@@ -437,7 +446,7 @@ func (s *Session) ChannelMessageReactionClear(cID, mID string) (err error) {
 	return
 }
 
-func (s *Session) ChannelCreate(sID string, data ChannelCreateData) (channel *Channel, err error) {
+func (s *Session) ServerChannelCreate(sID string, data ServerChannelCreateData) (channel *Channel, err error) {
 	endpoint := EndpointServersChannels(sID)
 	err = s.request(http.MethodPost, endpoint, data, &channel)
 	return

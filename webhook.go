@@ -9,6 +9,6 @@ type Webhook struct {
 }
 
 type WebhookCreate struct {
-	Name   string
-	Avatar string
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
 }

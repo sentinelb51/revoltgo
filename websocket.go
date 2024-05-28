@@ -189,7 +189,7 @@ func (s *Session) handle(raw []byte) {
 			h(s, e)
 		}
 	case *EventReady:
-		s.State = newState(e)
+		s.State.populate(e)
 		for _, h := range s.HandlersReady {
 			h(s, e)
 		}
@@ -279,6 +279,7 @@ func (s *Session) handle(raw []byte) {
 			h(s, e)
 		}
 	case *EventUserUpdate:
+		s.State.updateUser(e)
 		for _, h := range s.HandlersUserUpdate {
 			h(s, e)
 		}
@@ -287,12 +288,12 @@ func (s *Session) handle(raw []byte) {
 			h(s, e)
 		}
 	case *EventServerRoleUpdate:
-		s.State.updateRole(e)
+		s.State.updateServerRole(e)
 		for _, h := range s.HandlersServerRoleUpdate {
 			h(s, e)
 		}
 	case *EventServerRoleDelete:
-		s.State.deleteRole(e)
+		s.State.deleteServerRole(e)
 		for _, h := range s.HandlersServerRoleDelete {
 			h(s, e)
 		}
@@ -317,6 +318,25 @@ func (s *Session) handle(raw []byte) {
 	case *EventUserPlatformWipe:
 		s.State.platformWipe(e)
 		for _, h := range s.HandlersUserPlatformWipe {
+			h(s, e)
+		}
+	case *EventWebhookCreate:
+		s.State.createWebhook(e)
+		for _, h := range s.HandlersWebhookCreate {
+			h(s, e)
+		}
+	case *EventWebhookUpdate:
+		s.State.updateWebhook(e)
+		for _, h := range s.HandlersWebhookUpdate {
+			h(s, e)
+		}
+	case *EventWebhookDelete:
+		s.State.deleteWebhook(e)
+		for _, h := range s.HandlersWebhookDelete {
+			h(s, e)
+		}
+	case *EventReportCreate:
+		for _, h := range s.HandlersReportCreate {
 			h(s, e)
 		}
 	}
