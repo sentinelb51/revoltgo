@@ -213,24 +213,41 @@ type ServerCreateData struct {
 	Description string `json:"description,omitempty"`
 }
 
+type ServerEditDataRemove string
+
+const (
+	ServerEditDataRemoveIcon           ServerEditDataRemove = "Icon"
+	ServerEditDataRemoveBanner         ServerEditDataRemove = "Banner"
+	ServerEditDataRemoveCategories     ServerEditDataRemove = "Categories"
+	ServerEditDataRemoveDescription    ServerEditDataRemove = "Description"
+	ServerEditDataRemoveSystemMessages ServerEditDataRemove = "SystemMessages"
+)
+
 type ServerEditData struct {
-	Name           string               `json:"name,omitempty"`
-	Description    string               `json:"description,omitempty"`
-	Icon           string               `json:"icon,omitempty"`
-	Banner         string               `json:"banner,omitempty"`
-	Categories     []*ServerCategory    `json:"categories,omitempty"`
-	SystemMessages ServerSystemMessages `json:"system_messages,omitempty"`
-	Flags          int                  `json:"flags"`
-	Discoverable   bool                 `json:"discoverable"`
-	Analytics      bool                 `json:"analytics"`
-	Remove         []string             `json:"remove"`
+	Name           string                 `json:"name,omitempty"`
+	Description    string                 `json:"description,omitempty"`
+	Icon           string                 `json:"icon,omitempty"`
+	Banner         string                 `json:"banner,omitempty"`
+	Categories     []*ServerCategory      `json:"categories,omitempty"`
+	SystemMessages *ServerSystemMessages  `json:"system_messages,omitempty"`
+	Flags          int                    `json:"flags,omitempty"`
+	Discoverable   *bool                  `json:"discoverable,omitempty"`
+	Analytics      *bool                  `json:"analytics,omitempty"`
+	Remove         []ServerEditDataRemove `json:"remove"`
 }
 
-type ChannelCreateData struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	NSFW        bool   `json:"nsfw"`
+type ServerChannelCreateDataType string
+
+const (
+	ServerChannelCreateDataTypeText  ServerChannelCreateDataType = "Text"
+	ServerChannelCreateDataTypeVoice ServerChannelCreateDataType = "Voice"
+)
+
+type ServerChannelCreateData struct {
+	Type        ServerChannelCreateDataType `json:"type"`
+	Name        string                      `json:"name"`
+	Description string                      `json:"description,omitempty"`
+	NSFW        bool                        `json:"nsfw,omitempty"`
 }
 
 type ServerMemberEditData struct {
