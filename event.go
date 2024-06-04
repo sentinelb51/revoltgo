@@ -1,12 +1,44 @@
 package revoltgo
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"time"
 )
 
 type Event struct {
 	Type string `json:"type"`
+}
+
+type AbstractEventUpdateID struct {
+	StringID string
+	MemberID MemberCompoundID
+}
+
+func (id *AbstractEventUpdateID) UnmarshalJSON(data []byte) (err error) {
+
+	if err = json.Unmarshal(data, &id.StringID); err != nil {
+		err = json.Unmarshal(data, &id.MemberID)
+	}
+
+	return
+}
+
+// AbstractEventUpdate is a generic event for all update events.
+// This is mainly used to update the cache, and is not a low-level event.
+type AbstractEventUpdate struct {
+	Event
+
+	// ID can either be a simple string or a MemberCompoundID.
+	ID AbstractEventUpdateID `json:"id"`
+
+	// RoleID is only present in ServerRoleUpdate events.
+	RoleID string `json:"role_id"`
+
+	// The updated data for a specific event
+	Data map[string]any `json:"data"`
+
+	// Clear is a list of keys to clear from the cache.
+	Clear []string `json:"clear"`
 }
 
 var eventToStruct = map[string]func() any{
@@ -15,15 +47,24 @@ var eventToStruct = map[string]func() any{
 	"Pong":          func() any { return new(EventPong) },
 	"Auth":          func() any { return new(EventAuth) },
 
+	/* All update events are abstracted away. */
+	"MessageUpdate":    func() any { return new(AbstractEventUpdate) },
+	"ServerUpdate":     func() any { return new(AbstractEventUpdate) },
+	"ChannelUpdate":    func() any { return new(AbstractEventUpdate) },
+	"ServerRoleUpdate": func() any { return new(AbstractEventUpdate) },
+	"WebhookUpdate":    func() any { return new(AbstractEventUpdate) },
+	"UserUpdate":       func() any { return new(AbstractEventUpdate) },
+	"ServerMemberUpdate": func() any {
+		return new(AbstractEventUpdate)
+	},
+
 	"Message":        func() any { return new(EventMessage) },
 	"MessageAppend":  func() any { return new(EventMessageAppend) },
-	"MessageUpdate":  func() any { return new(EventMessageUpdate) },
 	"MessageDelete":  func() any { return new(EventMessageDelete) },
 	"MessageReact":   func() any { return new(EventMessageReact) },
 	"MessageUnreact": func() any { return new(EventMessageUnreact) },
 
 	"ChannelCreate":      func() any { return new(EventChannelCreate) },
-	"ChannelUpdate":      func() any { return new(EventChannelUpdate) },
 	"ChannelDelete":      func() any { return new(EventChannelDelete) },
 	"ChannelAck":         func() any { return new(EventChannelAck) },
 	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
@@ -32,25 +73,20 @@ var eventToStruct = map[string]func() any{
 	"GroupJoin":  func() any { return new(EventGroupJoin) },
 	"GroupLeave": func() any { return new(EventGroupLeave) },
 
-	"ServerCreate":       func() any { return new(EventServerCreate) },
-	"ServerUpdate":       func() any { return new(EventServerUpdate) },
-	"ServerDelete":       func() any { return new(EventServerDelete) },
-	"ServerRoleDelete":   func() any { return new(EventServerRoleDelete) },
-	"ServerRoleUpdate":   func() any { return new(EventServerRoleUpdate) },
-	"ServerMemberUpdate": func() any { return new(EventServerMemberUpdate) },
-	"ServerMemberJoin":   func() any { return new(EventServerMemberJoin) },
-	"ServerMemberLeave":  func() any { return new(EventServerMemberLeave) },
+	"ServerCreate":      func() any { return new(EventServerCreate) },
+	"ServerDelete":      func() any { return new(EventServerDelete) },
+	"ServerRoleDelete":  func() any { return new(EventServerRoleDelete) },
+	"ServerMemberJoin":  func() any { return new(EventServerMemberJoin) },
+	"ServerMemberLeave": func() any { return new(EventServerMemberLeave) },
 
 	"EmojiCreate": func() any { return new(EventEmojiCreate) },
 	"EmojiDelete": func() any { return new(EventEmojiDelete) },
 
-	"UserUpdate":         func() any { return new(EventUserUpdate) },
 	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
 	"UserRelationship":   func() any { return new(EventUserRelationship) },
 	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
 
 	"WebhookCreate": func() any { return new(EventWebhookCreate) },
-	"WebhookUpdate": func() any { return new(EventWebhookUpdate) },
 	"WebhookDelete": func() any { return new(EventWebhookDelete) },
 
 	"ReportCreate": func() any { return new(EventReportCreate) },
@@ -147,26 +183,10 @@ type EventChannelAck struct {
 // This is dispatched in conjunction with EventServerUpdate
 type EventChannelCreate struct {
 	Event
-	ChannelType ChannelType `json:"channel_type"`
-	ID          string      `json:"_id"`
-	Server      string      `json:"server"`
-	Name        string      `json:"name"`
-}
-
-// EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
-type EventServerUpdate struct {
-	Event
-	ID    string   `json:"id"`
-	Data  *Server  `json:"data"`
-	Clear []string `json:"clear"`
-}
-
-// EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
-type EventChannelUpdate struct {
-	Event
-	ID    string   `json:"id"`
-	Data  *Channel `json:"data"`
-	Clear []string `json:"clear"`
+	Type   ChannelType `json:"channel_type"`
+	ID     string      `json:"_id"`
+	Server string      `json:"server"`
+	Name   string      `json:"name"`
 }
 
 // EventChannelDelete is sent when a channel is deleted.
@@ -189,15 +209,6 @@ type EventServerCreate struct {
 	Server *Server `json:"server"`
 }
 
-// EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
-type EventServerRoleUpdate struct {
-	Event
-	ID     string      `json:"id"`
-	RoleID string      `json:"role_id"`
-	Data   *ServerRole `json:"data"`
-	Clear  []string    `json:"clear"`
-}
-
 type EventServerRoleDelete struct {
 	Event
 	ID     string `json:"id"`
@@ -213,14 +224,6 @@ type EventServerMemberJoin struct {
 type EventServerDelete struct {
 	Event
 	ID string `json:"id"`
-}
-
-// EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
-type EventServerMemberUpdate struct {
-	Event
-	ID    MemberCompoundID `json:"id"`
-	Data  *ServerMember    `json:"data"`
-	Clear []string         `json:"clear"`
 }
 
 type EventMessageReact struct {
@@ -243,13 +246,6 @@ type EventGroupJoin struct {
 
 type EventGroupLeave struct {
 	EventGroupJoin
-}
-
-type EventUserUpdate struct {
-	Event
-	ID    string   `json:"id"`
-	Data  *User    `json:"data"`
-	Clear []string `json:"clear"`
 }
 
 type EventEmojiCreate struct {
@@ -283,13 +279,6 @@ type EventUserSettingsUpdate struct {
 type EventWebhookCreate struct {
 	Event
 	*Webhook
-}
-
-type EventWebhookUpdate struct {
-	Event
-	ID     string   `json:"id"`
-	Data   *Webhook `json:"data"`
-	Remove []string `json:"remove"`
 }
 
 type EventWebhookDelete struct {

@@ -13,7 +13,7 @@ const (
 // Channel holds information about a channel.
 type Channel struct {
 	ID                 string        `json:"_id"`
-	ChannelType        ChannelType   `json:"channel_type"`
+	Type               ChannelType   `json:"channel_type"`
 	Server             string        `json:"server"`
 	Name               string        `json:"name"`
 	Description        string        `json:"description"`
