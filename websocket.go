@@ -1,13 +1,10 @@
 package revoltgo
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/goccy/go-json"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -38,51 +35,6 @@ type WebsocketMessagePing struct {
 type WebsocketChannelTyping struct {
 	Type    WebsocketMessageType `json:"type"`
 	Channel string               `json:"channel"`
-}
-
-// Open initiates the websocket connection to the Revolt API
-func (s *Session) Open() (err error) {
-
-	if s.Connected {
-		return fmt.Errorf("already connected")
-	}
-
-	// Determine the websocket URL
-	var query RevoltAPI
-	err = s.request(http.MethodGet, baseURL, nil, &query)
-	if err != nil {
-		return
-	}
-
-	dialer := ws.Dialer{
-		Timeout: s.ReconnectInterval,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), s.ReconnectInterval)
-	defer cancel()
-
-	connection, _, _, err := dialer.Dial(ctx, query.Ws)
-	if err != nil {
-		return
-	}
-
-	s.Socket = connection
-
-	wsAuth := WebsocketMessageAuthenticate{
-		Type:  WebsocketMessageTypeAuthenticate,
-		Token: s.Token,
-	}
-
-	// Send an initial authentication message
-	err = s.WriteSocket(wsAuth)
-	if err != nil {
-		return err
-	}
-
-	// Assume we have a successful connection, until we don't
-	s.Connected = true
-	go s.listen()
-	return
 }
 
 // listen reads messages from the websocket
@@ -179,6 +131,40 @@ func (s *Session) handle(raw []byte) {
 		for _, h := range s.HandlersPong {
 			h(s, e)
 		}
+	case *AbstractEventUpdate:
+
+		switch e.Type {
+		case "ServerUpdate":
+			s.State.updateServer(e)
+			for _, h := range s.HandlersServerUpdate {
+				h(s, e)
+			}
+		case "ServerMemberUpdate":
+			s.State.updateServerMember(e)
+			for _, h := range s.HandlersServerMemberUpdate {
+				h(s, e)
+			}
+		case "ChannelUpdate":
+			s.State.updateChannel(e)
+			for _, h := range s.HandlersChannelUpdate {
+				h(s, e)
+			}
+		case "UserUpdate":
+			s.State.updateUser(e)
+			for _, h := range s.HandlersUserUpdate {
+				h(s, e)
+			}
+		case "ServerRoleUpdate":
+			s.State.updateServerRole(e)
+			for _, h := range s.HandlersServerRoleUpdate {
+				h(s, e)
+			}
+		case "WebhookUpdate":
+			s.State.updateWebhook(e)
+			for _, h := range s.HandlersWebhookUpdate {
+				h(s, e)
+			}
+		}
 	case *EventAuthenticated:
 		go s.ping()
 		for _, h := range s.HandlersAuthenticated {
@@ -222,11 +208,6 @@ func (s *Session) handle(raw []byte) {
 		for _, h := range s.HandlersChannelCreate {
 			h(s, e)
 		}
-	case *EventChannelUpdate:
-		s.State.updateChannel(e)
-		for _, h := range s.HandlersChannelUpdate {
-			h(s, e)
-		}
 	case *EventChannelDelete:
 		s.State.deleteChannel(e)
 		for _, h := range s.HandlersChannelDelete {
@@ -253,19 +234,9 @@ func (s *Session) handle(raw []byte) {
 		for _, h := range s.HandlersServerCreate {
 			h(s, e)
 		}
-	case *EventServerUpdate:
-		s.State.updateServer(e)
-		for _, h := range s.HandlersServerUpdate {
-			h(s, e)
-		}
 	case *EventServerDelete:
 		s.State.deleteServer(e)
 		for _, h := range s.HandlersServerDelete {
-			h(s, e)
-		}
-	case *EventServerMemberUpdate:
-		s.State.updateServerMember(e)
-		for _, h := range s.HandlersServerMemberUpdate {
 			h(s, e)
 		}
 	case *EventServerMemberJoin:
@@ -278,18 +249,8 @@ func (s *Session) handle(raw []byte) {
 		for _, h := range s.HandlersServerMemberLeave {
 			h(s, e)
 		}
-	case *EventUserUpdate:
-		s.State.updateUser(e)
-		for _, h := range s.HandlersUserUpdate {
-			h(s, e)
-		}
 	case *EventChannelAck:
 		for _, h := range s.HandlersChannelAck {
-			h(s, e)
-		}
-	case *EventServerRoleUpdate:
-		s.State.updateServerRole(e)
-		for _, h := range s.HandlersServerRoleUpdate {
 			h(s, e)
 		}
 	case *EventServerRoleDelete:
@@ -323,11 +284,6 @@ func (s *Session) handle(raw []byte) {
 	case *EventWebhookCreate:
 		s.State.createWebhook(e)
 		for _, h := range s.HandlersWebhookCreate {
-			h(s, e)
-		}
-	case *EventWebhookUpdate:
-		s.State.updateWebhook(e)
-		for _, h := range s.HandlersWebhookUpdate {
 			h(s, e)
 		}
 	case *EventWebhookDelete:

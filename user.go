@@ -38,6 +38,7 @@ type User struct {
 	// Bot information, if the user is a bot
 	Bot *Bot `json:"bot"`
 
+	// Your relationship to this user
 	Relationship UserRelationshipType `json:"relationship"`
 
 	// Whether this user is currently online

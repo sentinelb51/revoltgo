@@ -4,7 +4,7 @@ type Webhook struct {
 	ID        string      `json:"id"`
 	Name      string      `json:"name"`
 	Avatar    *Attachment `json:"avatar"`
-	ChannelId string      `json:"channel_id"`
+	ChannelID string      `json:"channel_id"`
 	Token     string      `json:"token"`
 }
 

@@ -6,13 +6,13 @@ import (
 
 // Server holds information about a server.
 type Server struct {
-	ID             string                `json:"_id"`
-	Owner          string                `json:"owner"`
-	Name           string                `json:"name"`
-	Description    *string               `json:"description"` // clear field does not include description
-	Channels       []string              `json:"channels"`
-	Categories     []*ServerCategory     `json:"categories"`
-	SystemMessages *ServerSystemMessages `json:"system_messages"`
+	ID             string               `json:"_id"`
+	Owner          string               `json:"owner"`
+	Name           string               `json:"name"`
+	Description    string               `json:"description"`
+	Channels       []string             `json:"channels"`
+	Categories     []*ServerCategory    `json:"categories"`
+	SystemMessages ServerSystemMessages `json:"system_messages"`
 
 	// Roles is a map of role ID to ServerRole structs.
 	Roles map[string]*ServerRole `json:"roles"`

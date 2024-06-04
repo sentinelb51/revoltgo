@@ -65,10 +65,9 @@ func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
 	}
 
 	// Get member
-	key := MemberCompoundID{User: user.ID, Server: server.ID}
-	member, exists := s.Members[key.String()]
-	if !exists {
-		return 0, fmt.Errorf("member %s not found", key.String())
+	member := s.Member(user.ID, server.ID)
+	if member == nil {
+		return 0, fmt.Errorf("member %s not found in %s", user.ID, server.ID)
 	}
 
 	permissions := *server.DefaultPermissions
@@ -94,7 +93,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
 
 // ChannelPermissions is a utility function to calculate permissions for a user in a Channel
 func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
-	switch channel.ChannelType {
+	switch channel.Type {
 	case ChannelTypeSavedMessages:
 		return PermissionGrantAllSafe, nil
 	case ChannelTypeDM:
@@ -114,7 +113,7 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
 
 		return PermissionPresetDM, nil
 	case ChannelTypeText, ChannelTypeVoice:
-		server := s.Servers[channel.Server]
+		server := s.Server(channel.Server)
 		if server == nil {
 			return 0, fmt.Errorf("server %s not found", channel.Server)
 		}
@@ -136,6 +135,6 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
 
 		return permissions, nil
 	default:
-		return 0, fmt.Errorf("unknown channel type %v", channel.ChannelType)
+		return 0, fmt.Errorf("unknown channel type %v", channel.Type)
 	}
 }

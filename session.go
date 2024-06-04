@@ -1,9 +1,11 @@
 package revoltgo
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/goccy/go-json"
 	"net"
 	"net/http"
 	"net/url"
@@ -78,7 +80,7 @@ type Session struct {
 	HandlersAuthenticated []func(*Session, *EventAuthenticated)
 
 	// User-related handlers
-	HandlersUserUpdate         []func(*Session, *EventUserUpdate)
+	HandlersUserUpdate         []func(*Session, *AbstractEventUpdate)
 	HandlersUserSettingsUpdate []func(*Session, *EventUserSettingsUpdate)
 	HandlersUserRelationship   []func(*Session, *EventUserRelationship)
 	HandlersUserPlatformWipe   []func(*Session, *EventUserPlatformWipe)
@@ -93,7 +95,7 @@ type Session struct {
 
 	// Channel-related handlers
 	HandlersChannelCreate      []func(*Session, *EventChannelCreate)
-	HandlersChannelUpdate      []func(*Session, *EventChannelUpdate)
+	HandlersChannelUpdate      []func(*Session, *AbstractEventUpdate)
 	HandlersChannelDelete      []func(*Session, *EventChannelDelete)
 	HandlersChannelStartTyping []func(*Session, *EventChannelStartTyping)
 	HandlersChannelStopTyping  []func(*Session, *EventChannelStopTyping)
@@ -105,15 +107,15 @@ type Session struct {
 
 	// Server-related handlers
 	HandlersServerCreate []func(*Session, *EventServerCreate)
-	HandlersServerUpdate []func(*Session, *EventServerUpdate)
+	HandlersServerUpdate []func(*Session, *AbstractEventUpdate)
 	HandlersServerDelete []func(*Session, *EventServerDelete)
 
 	// ServerRole-related handlers
-	HandlersServerRoleUpdate []func(*Session, *EventServerRoleUpdate)
+	HandlersServerRoleUpdate []func(*Session, *AbstractEventUpdate)
 	HandlersServerRoleDelete []func(*Session, *EventServerRoleDelete)
 
 	// ServerMember-related handlers
-	HandlersServerMemberUpdate []func(*Session, *EventServerMemberUpdate)
+	HandlersServerMemberUpdate []func(*Session, *AbstractEventUpdate)
 	HandlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
 	HandlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
 
@@ -123,7 +125,7 @@ type Session struct {
 
 	// Webhook-related handlers
 	HandlersWebhookCreate []func(*Session, *EventWebhookCreate)
-	HandlersWebhookUpdate []func(*Session, *EventWebhookUpdate)
+	HandlersWebhookUpdate []func(*Session, *AbstractEventUpdate)
 	HandlersWebhookDelete []func(*Session, *EventWebhookDelete)
 
 	// [Websocket does not seem to emit] Report handler
@@ -131,6 +133,52 @@ type Session struct {
 
 	// Unknown event handler. Useful for debugging purposes
 	HandlersUnknown []func(session *Session, message string)
+}
+
+func (s *Session) Open() (err error) {
+
+	if s.Connected {
+		return fmt.Errorf("already connected")
+	}
+
+	// Determine the websocket URL
+	var query RevoltAPI
+	err = s.request(http.MethodGet, baseURL, nil, &query)
+	if err != nil {
+		return
+	}
+
+	// todo: here on onwards should be in a separate function
+
+	dialer := ws.Dialer{
+		Timeout: s.ReconnectInterval,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), s.ReconnectInterval)
+	defer cancel()
+
+	connection, _, _, err := dialer.Dial(ctx, query.WS)
+	if err != nil {
+		return
+	}
+
+	s.Socket = connection
+
+	wsAuth := WebsocketMessageAuthenticate{
+		Type:  WebsocketMessageTypeAuthenticate,
+		Token: s.Token,
+	}
+
+	// Send an initial authentication message
+	err = s.WriteSocket(wsAuth)
+	if err != nil {
+		return err
+	}
+
+	// Assume we have a successful connection, until we don't
+	s.Connected = true
+	go s.listen()
+	return
 }
 
 // WriteSocket writes data to the websocket in JSON
@@ -146,6 +194,7 @@ func (s *Session) WriteSocket(data any) error {
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
 	endpoint := EndpointEmoji(eID)
 	err = s.request(http.MethodGet, endpoint, nil, &emoji)
+	s.State.addEmoji(emoji)
 	return
 }
 
@@ -172,6 +221,7 @@ func (s *Session) Channel(cID string) (channel *Channel, err error) {
 func (s *Session) User(uID string) (user *User, err error) {
 	endpoint := EndpointUsers(uID)
 	err = s.request(http.MethodGet, endpoint, nil, &user)
+	s.State.addUser(user)
 	return
 }
 
@@ -220,6 +270,7 @@ func (s *Session) UserEdit(uID string, data UserEditData) (user *User, err error
 func (s *Session) Server(id string) (server *Server, err error) {
 	endpoint := EndpointServers(id)
 	err = s.request(http.MethodGet, endpoint, nil, &server)
+	s.State.addServer(server)
 	return
 }
 
@@ -251,6 +302,7 @@ func (s *Session) ChannelEndTyping(cID string) (err error) {
 func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
 	endpoint := EndpointChannelsWebhooks(cID)
 	err = s.request(http.MethodGet, endpoint, nil, &webhooks)
+	s.State.addWebhooks(webhooks)
 	return
 }
 
@@ -407,15 +459,17 @@ func (s *Session) ServerMemberEdit(sID, mID string, data ServerMemberEditData) (
 	return
 }
 
-func (s *Session) ServerMember(sID string, mID string) (members []*ServerMember, err error) {
+func (s *Session) ServerMember(sID string, mID string) (member *ServerMember, err error) {
 	endpoint := EndpointServersMember(sID, mID)
-	err = s.request(http.MethodGet, endpoint, nil, &members)
+	err = s.request(http.MethodGet, endpoint, nil, &member)
+	s.State.addServerMember(member)
 	return
 }
 
-func (s *Session) ServerMembers(sID string) (members []*ServerMembers, err error) {
+func (s *Session) ServerMembers(sID string) (members *ServerMembers, err error) {
 	endpoint := EndpointServersMembers(sID)
 	err = s.request(http.MethodGet, endpoint, nil, &members)
+	s.State.addServerMembersAndUsers(members)
 	return
 }
 
