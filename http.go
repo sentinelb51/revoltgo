@@ -2,8 +2,8 @@ package revoltgo
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/goccy/go-json"
 	"io"
 	"net/http"
 	"net/url"
@@ -98,19 +98,28 @@ type RevoltAPI struct {
 	Revolt   string `json:"revolt"`
 	Features struct {
 		Captcha struct {
+			Enabled bool   `json:"enabled"`
+			Key     string `json:"key"`
 		} `json:"captcha"`
 		Email      bool `json:"email"`
 		InviteOnly bool `json:"invite_only"`
 		Autumn     struct {
+			Enabled bool   `json:"enabled"`
+			Url     string `json:"url"`
 		} `json:"autumn"`
 		January struct {
+			Enabled bool   `json:"enabled"`
+			Url     string `json:"url"`
 		} `json:"january"`
 		Voso struct {
+			Enabled bool   `json:"enabled"`
+			Url     string `json:"url"`
+			Ws      string `json:"ws"`
 		} `json:"voso"`
 	} `json:"features"`
-	Ws    string `json:"ws"`
+	WS    string `json:"ws"`
 	App   string `json:"app"`
-	Vapid string `json:"vapid"`
+	VapID string `json:"vapid"`
 	Build struct {
 		CommitSha       string `json:"commit_sha"`
 		CommitTimestamp string `json:"commit_timestamp"`
