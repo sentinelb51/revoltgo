@@ -3,9 +3,10 @@
 
 We have a Revolt server dedicated to this project, where you can discuss the project, 
 suggest features, or highlight issues.
-[**Join our community.**](https://rvlt.gg/RJ44Wq4x)
+[**Join our community.**](https://rvlt.gg/R55WJBjx)
 
 ## Why use revoltgo
+![RevoltGo logo](https://github.com/sentinelb51/revoltgo/blob/main/logo.png)
 
 At the time of writing, other (few) Revolt Go packages were simply unfeasible. They had:
 
