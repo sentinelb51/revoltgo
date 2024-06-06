@@ -325,7 +325,6 @@ func handle(s *Session, raw []byte) {
 			}
 		}
 	case *EventAuthenticated:
-		// go s.ping()
 		for _, h := range s.HandlersAuthenticated {
 			h(s, e)
 		}
@@ -335,6 +334,7 @@ func handle(s *Session, raw []byte) {
 		}
 	case *EventReady:
 		s.State.populate(e)
+		s.Selfbot = s.State.Self != nil && s.State.Self.Bot == nil
 		for _, h := range s.HandlersReady {
 			h(s, e)
 		}

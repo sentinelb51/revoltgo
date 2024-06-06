@@ -29,15 +29,23 @@ func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
 	mfa, err := session.Login(data)
 	if err == nil {
 		session.Token = mfa.Token
+		session.Selfbot = true
 	}
 
 	return session, mfa, err
 }
 
-// Session struct.
+// Session represents a connection to the Revolt API.
 type Session struct {
-	Token  string
+
+	// Authorisation token
+	Token string
+
+	// The websocket connection
 	Socket *gws.Conn
+
+	// Whether the session is a user or bot
+	Selfbot bool
 
 	// HTTP client used for the REST API
 	HTTP *http.Client
@@ -142,11 +150,14 @@ func (s *Session) Latency() time.Duration {
 	return s.LastHeartbeatAck.Sub(s.LastHeartbeatSent)
 }
 
-// Uptime returns the duration the websocket has been connected for
+// Uptime returns the approximate duration the websocket has been connected for
 func (s *Session) Uptime() time.Duration {
+	// todo: add time difference between last heartbeat and next heartbeat
 	return time.Duration(s.HeartbeatCount) * s.HeartbeatInterval
 }
 
+// Open determines the websocket URL and establishes a connection.
+// It also detects if you are logged in as a user or a bot.
 func (s *Session) Open() (err error) {
 
 	if s.Connected {
