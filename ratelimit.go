@@ -41,8 +41,6 @@ func newRatelimiter() *Ratelimiter {
 }
 
 func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
-	r.Lock()
-	defer r.Unlock()
 
 	// Split to remove query parameters
 	endpoint = strings.SplitN(endpoint, "?", 2)[0]
@@ -50,6 +48,9 @@ func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
 	// To reduce key size, we truncate the base URL from the endpoint
 	// The HTTP method is prepended to the endpoint as ratelimits may differ between methods
 	key := method + endpoint[len(apiURL):]
+
+	r.Lock()
+	defer r.Unlock()
 
 	bucket, exists := r.endpoints[key]
 	if !exists {
@@ -62,8 +63,6 @@ func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
 
 // update updates the ratelimit handler by populating the remaining and resetAfter fields
 func (b *ratelimitBucket) update(headers http.Header) error {
-	b.Lock()
-	defer b.Unlock()
 
 	var (
 		value int
@@ -80,6 +79,9 @@ func (b *ratelimitBucket) update(headers http.Header) error {
 	if headerResetAfter == "" {
 		return fmt.Errorf("missing %s header (remaining was present?)", ratelimitHeaderResetAfter)
 	}
+
+	b.Lock()
+	defer b.Unlock()
 
 	value, err = strconv.Atoi(headerRemaining)
 	if err != nil {
