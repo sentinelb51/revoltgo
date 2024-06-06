@@ -41,22 +41,27 @@ type AbstractEventUpdate struct {
 	Clear []string `json:"clear"`
 }
 
+func aeuConstructor() any {
+	return new(AbstractEventUpdate)
+}
+
 var eventToStruct = map[string]func() any{
+	"Error": func() any { return new(EventError) },
+	"Bulk":  func() any { return new(EventBulk) },
+
 	"Authenticated": func() any { return new(EventAuthenticated) },
 	"Ready":         func() any { return new(EventReady) },
 	"Pong":          func() any { return new(EventPong) },
 	"Auth":          func() any { return new(EventAuth) },
 
 	/* All update events are abstracted away. */
-	"MessageUpdate":    func() any { return new(AbstractEventUpdate) },
-	"ServerUpdate":     func() any { return new(AbstractEventUpdate) },
-	"ChannelUpdate":    func() any { return new(AbstractEventUpdate) },
-	"ServerRoleUpdate": func() any { return new(AbstractEventUpdate) },
-	"WebhookUpdate":    func() any { return new(AbstractEventUpdate) },
-	"UserUpdate":       func() any { return new(AbstractEventUpdate) },
-	"ServerMemberUpdate": func() any {
-		return new(AbstractEventUpdate)
-	},
+	"MessageUpdate":      aeuConstructor,
+	"ServerUpdate":       aeuConstructor,
+	"ChannelUpdate":      aeuConstructor,
+	"ServerRoleUpdate":   aeuConstructor,
+	"WebhookUpdate":      aeuConstructor,
+	"UserUpdate":         aeuConstructor,
+	"ServerMemberUpdate": aeuConstructor,
 
 	"Message":        func() any { return new(EventMessage) },
 	"MessageAppend":  func() any { return new(EventMessageAppend) },
@@ -92,9 +97,19 @@ var eventToStruct = map[string]func() any{
 	"ReportCreate": func() any { return new(EventReportCreate) },
 }
 
+type EventError struct {
+	Event
+	Error string `json:"error"`
+}
+
+type EventBulk struct {
+	Event
+	V []json.RawMessage `json:"v"`
+}
+
 type EventPong struct {
 	Event
-	Data int `json:"data"`
+	Data int64 `json:"data"`
 }
 
 // EventReady stores the data from the websocket ready event.
@@ -286,7 +301,7 @@ type EventWebhookDelete struct {
 	ID string `json:"id"`
 }
 
-// EventReportCreate might not be broadcasted in the websocket for everyone
+// EventReportCreate might not be broadcast in the websocket for everyone
 type EventReportCreate struct {
 	Event
 	*Report
