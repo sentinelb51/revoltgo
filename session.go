@@ -1,12 +1,9 @@
 package revoltgo
 
 import (
-	"context"
 	"fmt"
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
 	"github.com/goccy/go-json"
-	"net"
+	"github.com/lxzan/gws"
 	"net/http"
 	"net/url"
 	"time"
@@ -14,10 +11,11 @@ import (
 
 func New(token string) *Session {
 	return &Session{
+		ShouldReconnect:   true,
 		Token:             token,
 		State:             newState(),
 		Ratelimiter:       newRatelimiter(),
-		HeartbeatInterval: 15 * time.Second,
+		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
 		UserAgent:         "RevoltGo/1.0.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
@@ -39,7 +37,7 @@ func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
 // Session struct.
 type Session struct {
 	Token  string
-	Socket net.Conn
+	Socket *gws.Conn
 
 	// HTTP client used for the REST API
 	HTTP *http.Client
@@ -53,14 +51,18 @@ type Session struct {
 	// The user agent used for REST APIs
 	UserAgent string
 
-	// Indicates whether the session is connected
+	// Indicates whether the websocket is connected
 	Connected bool
 
-	// Interval between sending heartbeats
+	// Whether the websocket should reconnect when the connection drops
+	ShouldReconnect bool
+
+	// Interval between sending heartbeats. Lower values update the latency faster
+	// Values too high (~100 seconds) may cause Cloudflare to drop the connection
 	HeartbeatInterval time.Duration
 
 	// Heartbeat counter
-	heartbeatCount int
+	HeartbeatCount int64
 
 	// Interval between reconnecting, if connection fails
 	ReconnectInterval time.Duration
@@ -135,6 +137,16 @@ type Session struct {
 	HandlersUnknown []func(session *Session, message string)
 }
 
+// Latency returns the websocket latency
+func (s *Session) Latency() time.Duration {
+	return s.LastHeartbeatAck.Sub(s.LastHeartbeatSent)
+}
+
+// Uptime returns the duration the websocket has been connected for
+func (s *Session) Uptime() time.Duration {
+	return time.Duration(s.HeartbeatCount) * s.HeartbeatInterval
+}
+
 func (s *Session) Open() (err error) {
 
 	if s.Connected {
@@ -143,41 +155,27 @@ func (s *Session) Open() (err error) {
 
 	// Determine the websocket URL
 	var query RevoltAPI
-	err = s.request(http.MethodGet, baseURL, nil, &query)
+	err = s.request(http.MethodGet, apiURL, nil, &query)
 	if err != nil {
 		return
 	}
 
-	// todo: here on onwards should be in a separate function
+	parameters := url.Values{}
+	parameters.Set("token", s.Token)
+	parameters.Set("format", "json")
+	parameters.Set("version", "1")
 
-	dialer := ws.Dialer{
-		Timeout: s.ReconnectInterval,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), s.ReconnectInterval)
-	defer cancel()
-
-	connection, _, _, err := dialer.Dial(ctx, query.WS)
+	wsURL, err := url.Parse(query.WS)
 	if err != nil {
 		return
 	}
 
-	s.Socket = connection
+	wsURL.RawQuery = parameters.Encode()
 
-	wsAuth := WebsocketMessageAuthenticate{
-		Type:  WebsocketMessageTypeAuthenticate,
-		Token: s.Token,
-	}
-
-	// Send an initial authentication message
-	err = s.WriteSocket(wsAuth)
-	if err != nil {
-		return err
-	}
+	s.Socket = connect(s, wsURL.String())
 
 	// Assume we have a successful connection, until we don't
 	s.Connected = true
-	go s.listen()
 	return
 }
 
@@ -188,7 +186,7 @@ func (s *Session) WriteSocket(data any) error {
 		return err
 	}
 
-	return wsutil.WriteClientText(s.Socket, payload)
+	return s.Socket.WriteMessage(gws.OpcodeText, payload)
 }
 
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {

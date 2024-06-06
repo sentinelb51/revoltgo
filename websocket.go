@@ -1,26 +1,195 @@
 package revoltgo
 
 import (
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
+	"bytes"
+	"encoding/binary"
 	"github.com/goccy/go-json"
+	"github.com/lxzan/gws"
 	"log"
 	"time"
 )
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetPrefix("[R-GO] ")
-}
-
 type WebsocketMessageType string
 
 const (
+	WebsocketKeepAlivePeriod = 60 * time.Second
+
 	WebsocketMessageTypeAuthenticate WebsocketMessageType = "Authenticate"
 	WebsocketMessageTypeHeartbeat    WebsocketMessageType = "Ping"
 	WebsocketMessageTypeBeginTyping  WebsocketMessageType = "BeginTyping"
 	WebsocketMessageTypeEndTyping    WebsocketMessageType = "EndTyping"
 )
+
+type websocket struct {
+	URL     string
+	Session *Session
+	Close   chan struct{}
+}
+
+func (ws *websocket) heartbeat(session *Session, socket *gws.Conn) {
+
+	var (
+		ticker = time.NewTicker(session.HeartbeatInterval)
+		err    error
+	)
+
+	defer ticker.Stop()
+	for session.Connected {
+		select {
+		case <-ticker.C:
+			//<-ticker.C
+			//payload := WebsocketMessagePing{
+			//	Type: WebsocketMessageTypeHeartbeat,
+			//	Data: session.HeartbeatCount,
+			//}
+			//
+			//err = session.WriteSocket(payload)
+			//if err != nil {
+			//	log.Printf("Heartbeat stopped: %s\n", err)
+			//	break
+			//}
+			//
+			//log.Println("Ping...", session.HeartbeatCount)
+			payload := bytes.NewBuffer(make([]byte, 0, 64))
+			err = binary.Write(payload, binary.LittleEndian, session.HeartbeatCount)
+
+			if err != nil {
+				log.Printf("Heartbeat stopped: %s\n", err)
+				session.Connected = false
+				break
+			}
+
+			if err = socket.WritePing(payload.Bytes()); err != nil {
+				log.Printf("Heartbeat stopped: %s\n", err)
+				session.Connected = false
+				break
+			}
+
+			session.LastHeartbeatSent = time.Now()
+		case <-ws.Close:
+			session.Connected = false
+		}
+	}
+
+	if !session.ShouldReconnect {
+		return
+	}
+
+	for {
+		connect(session, ws.URL)
+
+		if session.Connected {
+			break
+		}
+
+		log.Printf("Re-connect failed, retrying in %s", session.ReconnectInterval.String())
+		time.Sleep(session.ReconnectInterval)
+	}
+}
+
+// connect creates a new websocket connection to the given URL.
+func connect(session *Session, url string) *gws.Conn {
+
+	log.Println("Connecting...")
+
+	handler := &websocket{
+		URL:     url,
+		Session: session,
+	}
+
+	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
+		Addr:             url,
+		ParallelEnabled:  true,
+		CheckUtf8Enabled: false,
+		PermessageDeflate: gws.PermessageDeflate{
+			Enabled:               true,
+			ServerContextTakeover: true,
+			ClientContextTakeover: true,
+		},
+	})
+
+	if err != nil {
+		log.Panicf("Connection refused: %s\n", err)
+	}
+
+	session.Connected = true
+	go socket.ReadLoop()
+	return socket
+}
+
+func (ws *websocket) OnClose(socket *gws.Conn, err error) {
+
+	ws.Close <- struct{}{}
+	ws.Session.Connected = false
+
+	if reason := err.Error(); reason == "" {
+		log.Printf("Connection closed unexpectedly: %v (%d)\n", reason, len(reason))
+		return
+	}
+
+	log.Println("Connection closed.")
+}
+
+func (ws *websocket) OnPong(socket *gws.Conn, payload []byte) {
+
+	now := time.Now()
+	ws.Session.LastHeartbeatAck = now
+
+	var (
+		count int64
+		err   error
+	)
+
+	if err = binary.Read(bytes.NewReader(payload), binary.LittleEndian, &count); err != nil {
+		log.Printf("Pong: read count: %s\n", err)
+		return
+	}
+
+	deadline := now.Add(ws.Session.HeartbeatInterval * 2)
+	if err = socket.SetDeadline(deadline); err != nil {
+		log.Printf("Pong: set deadline: %s\n", err)
+		return
+	}
+
+	if count != ws.Session.HeartbeatCount {
+		log.Printf("Pong: fibrillation %d != %d\n", count, ws.Session.HeartbeatCount)
+		return
+	}
+
+	ws.Session.HeartbeatCount++
+}
+
+func (ws *websocket) OnOpen(socket *gws.Conn) {
+
+	ws.Session.HeartbeatCount = 0
+
+	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
+		log.Printf("Open: set deadline: %s\n", err)
+	}
+
+	if ws.Session.HeartbeatInterval.Seconds() >= 99 {
+		log.Printf("Heartbeat interval (%s) too high, and may cause disconnects\n",
+			ws.Session.HeartbeatInterval.String())
+	}
+
+	log.Printf("Connected (%s)\n", socket.RemoteAddr())
+	go ws.heartbeat(ws.Session, socket)
+}
+
+func (ws *websocket) OnPing(socket *gws.Conn, payload []byte) {
+	// The websocket should not be pinging us; we're the client.
+	log.Printf("Received unexpected ping: %s\n", string(payload))
+}
+
+func (ws *websocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+	handle(ws.Session, message.Data.Bytes())
+	message.Close()
+}
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetPrefix("[R-GO] > ")
+}
 
 type WebsocketMessageAuthenticate struct {
 	Type  WebsocketMessageType `json:"type"`
@@ -29,7 +198,7 @@ type WebsocketMessageAuthenticate struct {
 
 type WebsocketMessagePing struct {
 	Type WebsocketMessageType `json:"type"`
-	Data int                  `json:"data"`
+	Data int64                `json:"data"`
 }
 
 type WebsocketChannelTyping struct {
@@ -37,65 +206,49 @@ type WebsocketChannelTyping struct {
 	Channel string               `json:"channel"`
 }
 
-// listen reads messages from the websocket
-func (s *Session) listen() {
-	for s.Connected {
-		message, op, err := wsutil.ReadServerData(s.Socket)
-		if err != nil {
-			log.Printf("listen error: %s\n", err)
-			s.Connected = false
-			break
-		}
-
-		if op != ws.OpText {
-			continue
-		}
-
-		go s.handle(message)
-	}
-}
-
 // Close the websocket.
 func (s *Session) Close() error {
 	s.Connected = false
-	return s.Socket.Close()
+	s.Socket.WriteClose(1000, nil)
+	return nil
+	// return s.Socket.Close()
 }
 
 // ping pings the websocket every HeartbeatInterval interval
 // It keeps the websocket connection alive, and triggers a re-connect if a problem occurs
-func (s *Session) ping() {
+//func (s *Session) ping() {
+//
+//	for s.Connected {
+//		time.Sleep(s.HeartbeatInterval)
+//
+//		ping := WebsocketMessagePing{
+//			Type: WebsocketMessageTypeHeartbeat,
+//			Data: s.heartbeatCount,
+//		}
+//
+//		err := s.WriteSocket(ping)
+//		if err != nil {
+//			log.Printf("heartbeat failed: %s\n", err)
+//			break
+//		}
+//
+//		s.LastHeartbeatSent = time.Now()
+//	}
+//
+//	s.Connected = false
+//	log.Println("triggering reconnect...")
+//
+//	for !s.Connected {
+//		err := s.Open()
+//		if err != nil {
+//			log.Printf("reconnect failed: %v\n", err)
+//			log.Printf("retrying in %.f seconds...\n", s.ReconnectInterval.Seconds())
+//			time.Sleep(s.ReconnectInterval)
+//		}
+//	}
+//}
 
-	for s.Connected {
-		time.Sleep(s.HeartbeatInterval)
-
-		ping := WebsocketMessagePing{
-			Type: WebsocketMessageTypeHeartbeat,
-			Data: s.heartbeatCount,
-		}
-
-		err := s.WriteSocket(ping)
-		if err != nil {
-			log.Printf("heartbeat failed: %s\n", err)
-			break
-		}
-
-		s.LastHeartbeatSent = time.Now()
-	}
-
-	s.Connected = false
-	log.Println("triggering reconnect...")
-
-	for !s.Connected {
-		err := s.Open()
-		if err != nil {
-			log.Printf("reconnect failed: %v\n", err)
-			log.Printf("retrying in %.f seconds...\n", s.ReconnectInterval.Seconds())
-			time.Sleep(s.ReconnectInterval)
-		}
-	}
-}
-
-func (s *Session) handle(raw []byte) {
+func handle(s *Session, raw []byte) {
 	var data Event
 	err := json.Unmarshal(raw, &data)
 	if err != nil {
@@ -119,13 +272,19 @@ func (s *Session) handle(raw []byte) {
 	}
 
 	switch e := event.(type) {
+	case *EventError:
+		log.Panicf("authentication error: %s\n", e.Error)
+	case *EventBulk:
+		for _, event := range e.V {
+			handle(s, event)
+		}
 	case *EventPong:
-		if e.Data != s.heartbeatCount {
-			log.Printf("heartbeat fibrillation %d != %d\n", e.Data, s.heartbeatCount)
+		if e.Data != s.HeartbeatCount {
+			log.Printf("heartbeat fibrillation %d != %d\n", e.Data, s.HeartbeatCount)
 			break
 		}
 
-		s.heartbeatCount++
+		s.HeartbeatCount++
 		s.LastHeartbeatAck = time.Now()
 
 		for _, h := range s.HandlersPong {
@@ -166,7 +325,7 @@ func (s *Session) handle(raw []byte) {
 			}
 		}
 	case *EventAuthenticated:
-		go s.ping()
+		// go s.ping()
 		for _, h := range s.HandlersAuthenticated {
 			h(s, e)
 		}

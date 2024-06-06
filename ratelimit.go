@@ -49,7 +49,7 @@ func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
 
 	// To reduce key size, we truncate the base URL from the endpoint
 	// The HTTP method is prepended to the endpoint as ratelimits may differ between methods
-	key := method + endpoint[len(baseURL):]
+	key := method + endpoint[len(apiURL):]
 
 	bucket, exists := r.endpoints[key]
 	if !exists {

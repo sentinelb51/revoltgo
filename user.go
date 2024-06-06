@@ -1,5 +1,7 @@
 package revoltgo
 
+import "github.com/goccy/go-json"
+
 type UserRelationshipType string
 
 const (
@@ -13,15 +15,15 @@ const (
 )
 
 type User struct {
-	ID            string         `json:"_id"`
-	Username      string         `json:"username"`
-	Discriminator string         `json:"discriminator"`
-	DisplayName   string         `json:"display_name"`
-	Avatar        *Attachment    `json:"avatar"`
-	Relations     *UserRelations `json:"relations"`
+	ID            string           `json:"_id"`
+	Username      string           `json:"username"`
+	Discriminator string           `json:"discriminator"`
+	DisplayName   string           `json:"display_name"`
+	Avatar        *Attachment      `json:"avatar"`
+	Relations     []*UserRelations `json:"relations"`
 
 	// Bitfield of user badges
-	Badges *int `json:"badges"`
+	Badges int `json:"badges"`
 
 	// User's active status
 	Status *UserStatus `json:"status"`
@@ -33,7 +35,7 @@ type User struct {
 	Flags *int `json:"flags"`
 
 	// Racism?!1
-	Privileged *bool `json:"privileged"`
+	Privileged bool `json:"privileged"`
 
 	// Bot information, if the user is a bot
 	Bot *Bot `json:"bot"`
@@ -42,12 +44,16 @@ type User struct {
 	Relationship UserRelationshipType `json:"relationship"`
 
 	// Whether this user is currently online
-	Online *bool `json:"online"`
+	Online bool `json:"online"`
 }
 
 type UserProfile struct {
 	Content    string      `json:"content"`
 	Background *Attachment `json:"background"`
+}
+
+func (up *UserProfile) URL(size string) string {
+	return EndpointBackground(up.Background.ID, size)
 }
 
 type UserRelations struct {
@@ -72,5 +78,5 @@ type UserMutual struct {
 // UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason
 type UserSettings struct {
 	Updated int
-	Data    string
+	Data    json.RawMessage
 }
