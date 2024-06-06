@@ -201,20 +201,20 @@ func (s *Session) WriteSocket(data any) error {
 }
 
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
-	endpoint := EndpointEmoji(eID)
+	endpoint := EndpointCustomEmoji(eID)
 	err = s.request(http.MethodGet, endpoint, nil, &emoji)
 	s.State.addEmoji(emoji)
 	return
 }
 
 func (s *Session) EmojiCreate(eID string, data EmojiCreateData) (emoji *Emoji, err error) {
-	endpoint := EndpointEmoji(eID)
+	endpoint := EndpointCustomEmoji(eID)
 	err = s.request(http.MethodPut, endpoint, data, &emoji)
 	return
 }
 
 func (s *Session) EmojiDelete(eID string) error {
-	endpoint := EndpointEmoji(eID)
+	endpoint := EndpointCustomEmoji(eID)
 	return s.request(http.MethodDelete, endpoint, nil, nil)
 }
 

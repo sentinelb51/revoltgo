@@ -40,10 +40,8 @@ type Attachment struct {
 	ObjectID  string `json:"object_id"`
 }
 
-// URL is a helper function that returns the URL of the attachment.
-// [!] Make sure attachment is not nil before calling this function.
 func (a *Attachment) URL(size string) string {
-	return EndpointIcon(a.ID, size)
+	return EndpointAutumn(a.Tag, a.ID, size)
 }
 
 type AttachmentMetadata struct {

@@ -5,57 +5,9 @@ import (
 )
 
 const (
-	cdnURL         = "https://autumn.revolt.chat/"
-	URLEmojis      = cdnURL + "emojis/%s"
-	URLAvatars     = cdnURL + "avatars/%s"
-	URLBackgrounds = cdnURL + "backgrounds/%s"
-	URLBanners     = cdnURL + "banners/%s"
-	URLAttachments = cdnURL + "attachments/%s"
-	URLIcons       = cdnURL + "icons/%s"
-)
+	apiURL = "https://api.revolt.chat"
+	cdnURL = "https://autumn.revolt.chat/%s/%s"
 
-func EndpointBanner(id string, size string) (url string) {
-	url = fmt.Sprintf(URLBanners, id)
-	if size != "" {
-		url += "?width=" + size
-	}
-	return
-}
-
-func EndpointAttachment(id string) (url string) {
-	return fmt.Sprintf(URLAttachments, id)
-}
-
-func EndpointAvatar(id string, size string) (url string) {
-	url = fmt.Sprintf(URLAvatars, id)
-	if size != "" {
-		url += "?max_side=" + size
-	}
-	return
-}
-
-func EndpointBackground(id string, size string) (url string) {
-	url = fmt.Sprintf(URLBackgrounds, id)
-	if size != "" {
-		url += "?max_side=" + size
-	}
-	return
-}
-
-func EndpointEmoji(id string) (url string) {
-	return fmt.Sprintf(URLEmojis, id)
-}
-
-func EndpointIcon(id string, size string) (url string) {
-	url = fmt.Sprintf(URLIcons, id)
-	if size != "" {
-		url += "?max_side=" + size
-	}
-	return
-}
-
-const (
-	apiURL           = "https://api.revolt.chat"
 	URLUsersUsername = apiURL + "/users/me/username"
 
 	URLUsers              = apiURL + "/users/%s"
@@ -285,4 +237,20 @@ func EndpointBotsCommands(bID string) string {
 
 func EndpointBotsCommand(bID, cmdID string) string {
 	return fmt.Sprintf(URLBotsCommand, bID, cmdID)
+}
+
+/* Custom endpoints */
+
+func EndpointCustomEmoji(eID string) string {
+	return fmt.Sprintf(URLCustomEmoji, eID)
+}
+
+/* CDN endpoints */
+
+func EndpointAutumn(tag, id, size string) (url string) {
+	url = fmt.Sprintf(cdnURL, tag, id)
+	if size != "" {
+		url += "?max_side=" + size
+	}
+	return
 }

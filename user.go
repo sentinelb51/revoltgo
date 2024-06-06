@@ -52,10 +52,6 @@ type UserProfile struct {
 	Background *Attachment `json:"background"`
 }
 
-func (up *UserProfile) URL(size string) string {
-	return EndpointBackground(up.Background.ID, size)
-}
-
 type UserRelations struct {
 	ID     string               `json:"_id"`
 	Status UserRelationshipType `json:"status"`
