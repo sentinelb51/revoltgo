@@ -35,7 +35,12 @@ func (s *Session) request(method, url string, data, result any) error {
 	// This may be problematic for Cloudflare if blank user agents are blocked
 	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Session-Token", s.Token)
+
+	if s.State.Self != nil && s.State.Self.Bot != nil {
+		request.Header.Set("X-Bot-Token", s.Token)
+	} else {
+		request.Header.Set("X-Session-Token", s.Token)
+	}
 
 	if data != nil {
 		buffer := bufferPool.Get().(*bytes.Buffer)
