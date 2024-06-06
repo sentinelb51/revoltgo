@@ -5,9 +5,46 @@ import (
 )
 
 const (
-	baseURLAutumn = "https://autumn.revolt.chat/"
-	URLIcons      = baseURLAutumn + "icons/%s"
+	cdnURL         = "https://autumn.revolt.chat/"
+	URLEmojis      = cdnURL + "emojis/%s"
+	URLAvatars     = cdnURL + "avatars/%s"
+	URLBackgrounds = cdnURL + "backgrounds/%s"
+	URLBanners     = cdnURL + "banners/%s"
+	URLAttachments = cdnURL + "attachments/%s"
+	URLIcons       = cdnURL + "icons/%s"
 )
+
+func EndpointBanner(id string, size string) (url string) {
+	url = fmt.Sprintf(URLBanners, id)
+	if size != "" {
+		url += "?width=" + size
+	}
+	return
+}
+
+func EndpointAttachment(id string) (url string) {
+	return fmt.Sprintf(URLAttachments, id)
+}
+
+func EndpointAvatar(id string, size string) (url string) {
+	url = fmt.Sprintf(URLAvatars, id)
+	if size != "" {
+		url += "?max_side=" + size
+	}
+	return
+}
+
+func EndpointBackground(id string, size string) (url string) {
+	url = fmt.Sprintf(URLBackgrounds, id)
+	if size != "" {
+		url += "?max_side=" + size
+	}
+	return
+}
+
+func EndpointEmoji(id string) (url string) {
+	return fmt.Sprintf(URLEmojis, id)
+}
 
 func EndpointIcon(id string, size string) (url string) {
 	url = fmt.Sprintf(URLIcons, id)
@@ -18,10 +55,10 @@ func EndpointIcon(id string, size string) (url string) {
 }
 
 const (
-	baseURL          = "https://api.revolt.chat"
-	URLUsersUsername = baseURL + "/users/me/username"
+	apiURL           = "https://api.revolt.chat"
+	URLUsersUsername = apiURL + "/users/me/username"
 
-	URLUsers              = baseURL + "/users/%s"
+	URLUsers              = apiURL + "/users/%s"
 	URLUsersMutual        = URLUsers + "/mutual"
 	URLUsersDM            = URLUsers + "/dm"
 	URLUsersFlags         = URLUsers + "/flags"
@@ -34,7 +71,7 @@ const (
 	URLUsersBanner        = URLUsers + "/banner"
 	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
 
-	URLServers            = baseURL + "/servers/%s"
+	URLServers            = apiURL + "/servers/%s"
 	URLServersAck         = URLServers + "/ack"
 	URLServersChannels    = URLServers + "/channels"
 	URLServersMembers     = URLServers + "/members"
@@ -47,7 +84,7 @@ const (
 	URLServersBanner      = URLServers + "/banner"
 	URLServersPermissions = URLServers + "/permissions/%s"
 
-	URLChannels                 = baseURL + "/channels/%s"
+	URLChannels                 = apiURL + "/channels/%s"
 	URLChannelsMessages         = URLChannels + "/messages"
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
 	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
@@ -59,21 +96,21 @@ const (
 	URLChannelsRecipients       = URLChannels + "/recipients/%s"
 	URLChannelsWebhooks         = URLChannels + "/webhooks"
 
-	URLInvites = baseURL + "/invites/%s"
+	URLInvites = apiURL + "/invites/%s"
 
-	URLBots         = baseURL + "/bots/%s"
+	URLBots         = apiURL + "/bots/%s"
 	URLBotsInvite   = URLBots + "/invite"
 	URLBotsCommands = URLBots + "/commands"
 	URLBotsCommand  = URLBotsCommands + "/%s"
 
-	URLAuth         = baseURL + "/auth"
+	URLAuth         = apiURL + "/auth"
 	URLAuthAccount  = URLAuth + "/account/%s"
 	URLAuthSessions = URLAuth + "/session/%s"
 
-	URLCustom      = baseURL + "/custom"
+	URLCustom      = apiURL + "/custom"
 	URLCustomEmoji = URLCustom + "/emoji/%s"
 
-	URLOnboard = baseURL + "/onboard/%s"
+	URLOnboard = apiURL + "/onboard/%s"
 )
 
 func EndpointOnboard(action string) string {
@@ -94,10 +131,6 @@ func EndpointAuthAccount(action string) string {
 
 func EndpointAuthAccountChange(detail string) string {
 	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("change/%s", detail))
-}
-
-func EndpointEmoji(eID string) string {
-	return fmt.Sprintf(URLCustomEmoji, eID)
 }
 
 func EndpointUsers(uID string) string {
@@ -134,14 +167,6 @@ func EndpointUsersProfile(uID string) string {
 
 func EndpointUserMutualServers(uID string) string {
 	return fmt.Sprintf(URLUsersMutualServers, uID)
-}
-
-func EndpointUserAvatar(uID string) string {
-	return fmt.Sprintf(URLUsersAvatar, uID)
-}
-
-func EndpointUserBanner(uID string) string {
-	return fmt.Sprintf(URLUsersBanner, uID)
 }
 
 func EndpointServers(sID string) string {
