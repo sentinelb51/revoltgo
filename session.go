@@ -138,9 +138,6 @@ type Session struct {
 	HandlersWebhookUpdate []func(*Session, *AbstractEventUpdate)
 	HandlersWebhookDelete []func(*Session, *EventWebhookDelete)
 
-	// [Websocket does not seem to emit] Report handler
-	HandlersReportCreate []func(*Session, *EventReportCreate)
-
 	// Unknown event handler. Useful for debugging purposes
 	HandlersUnknown []func(session *Session, message string)
 }

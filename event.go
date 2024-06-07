@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type EventType string
+
 type Event struct {
 	Type string `json:"type"`
 }
@@ -93,8 +95,6 @@ var eventToStruct = map[string]func() any{
 
 	"WebhookCreate": func() any { return new(EventWebhookCreate) },
 	"WebhookDelete": func() any { return new(EventWebhookDelete) },
-
-	"ReportCreate": func() any { return new(EventReportCreate) },
 }
 
 type EventError struct {
@@ -299,10 +299,4 @@ type EventWebhookCreate struct {
 type EventWebhookDelete struct {
 	Event
 	ID string `json:"id"`
-}
-
-// EventReportCreate might not be broadcast in the websocket for everyone
-type EventReportCreate struct {
-	Event
-	*Report
 }

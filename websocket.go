@@ -450,9 +450,5 @@ func handle(s *Session, raw []byte) {
 		for _, h := range s.HandlersWebhookDelete {
 			h(s, e)
 		}
-	case *EventReportCreate:
-		for _, h := range s.HandlersReportCreate {
-			h(s, e)
-		}
 	}
 }
