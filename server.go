@@ -50,20 +50,20 @@ type ServerSystemMessages struct {
 }
 
 type ServerMember struct {
-	ID       MemberCompoundID `json:"_id"`
-	JoinedAt time.Time        `json:"joined_at"`
-	Nickname *string          `json:"nickname"`
-	Avatar   *Attachment      `json:"avatar"`
-	Roles    []string         `json:"roles"`
-	Timeout  *time.Time       `json:"timeout"`
+	ID       MemberCompositeID `json:"_id"`
+	JoinedAt time.Time         `json:"joined_at"`
+	Nickname *string           `json:"nickname"`
+	Avatar   *Attachment       `json:"avatar"`
+	Roles    []string          `json:"roles"`
+	Timeout  *time.Time        `json:"timeout"`
 }
 
-type MemberCompoundID struct {
+type MemberCompositeID struct {
 	User   string `json:"user"`
 	Server string `json:"server"`
 }
 
-func (m MemberCompoundID) String() string {
+func (m MemberCompositeID) String() string {
 	return m.Server + m.User
 }
 
@@ -78,6 +78,6 @@ type ServerBans struct {
 }
 
 type ServerBan struct {
-	ID     MemberCompoundID `json:"_id"`
-	Reason string           `json:"reason"`
+	ID     MemberCompositeID `json:"_id"`
+	Reason string            `json:"reason"`
 }

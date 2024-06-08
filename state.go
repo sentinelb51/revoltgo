@@ -172,7 +172,7 @@ func (s *State) Member(uID, sID string) *ServerMember {
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.members[MemberCompoundID{User: uID, Server: sID}.String()]
+	return s.members[MemberCompositeID{User: uID, Server: sID}.String()]
 }
 
 func (s *State) Emoji(id string) *Emoji {
@@ -313,7 +313,7 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 	s.Lock()
 	defer s.Unlock()
 
-	id := MemberCompoundID{User: data.User, Server: data.ID}
+	id := MemberCompositeID{User: data.User, Server: data.ID}
 	s.members[id.String()] = &ServerMember{ID: id}
 }
 
@@ -326,7 +326,7 @@ func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 	s.Lock()
 	defer s.Unlock()
 
-	id := MemberCompoundID{User: data.User, Server: data.ID}
+	id := MemberCompositeID{User: data.User, Server: data.ID}
 	delete(s.members, id.String())
 }
 

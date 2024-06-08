@@ -18,22 +18,19 @@ const (
 	URLUsersBlock         = URLUsers + "/block"
 	URLUsersProfile       = URLUsers + "/profile"
 	URLUsersRelationships = URLUsers + "/relationships"
-	URLUsersMutualServers = URLUsers + "/mutual"
-	URLUsersAvatar        = URLUsers + "/avatar"
-	URLUsersBanner        = URLUsers + "/banner"
+
 	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
 
-	URLServers            = apiURL + "/servers/%s"
-	URLServersAck         = URLServers + "/ack"
-	URLServersChannels    = URLServers + "/channels"
-	URLServersMembers     = URLServers + "/members"
-	URLServersMember      = URLServersMembers + "/%s"
-	URLServersBans        = URLServers + "/bans"
-	URLServersBan         = URLServersBans + "/%s"
-	URLServersRoles       = URLServers + "/roles"
-	URLServersRole        = URLServers + "/roles/%s"
-	URLServersAvatar      = URLServers + "/avatar"
-	URLServersBanner      = URLServers + "/banner"
+	URLServers         = apiURL + "/servers/%s"
+	URLServersAck      = URLServers + "/ack"
+	URLServersChannels = URLServers + "/channels"
+	URLServersMembers  = URLServers + "/members"
+	URLServersMember   = URLServersMembers + "/%s"
+	URLServersBans     = URLServers + "/bans"
+	URLServersBan      = URLServersBans + "/%s"
+	URLServersRoles    = URLServers + "/roles"
+	URLServersRole     = URLServers + "/roles/%s"
+
 	URLServersPermissions = URLServers + "/permissions/%s"
 
 	URLChannels                 = apiURL + "/channels/%s"
@@ -63,6 +60,10 @@ const (
 	URLCustomEmoji = URLCustom + "/emoji/%s"
 
 	URLOnboard = apiURL + "/onboard/%s"
+
+	URLSync = apiURL + "/sync/%s"
+
+	URLPush = apiURL + "/push/%s"
 )
 
 func EndpointOnboard(action string) string {
@@ -117,10 +118,6 @@ func EndpointUsersProfile(uID string) string {
 	return fmt.Sprintf(URLUsersProfile, uID)
 }
 
-func EndpointUserMutualServers(uID string) string {
-	return fmt.Sprintf(URLUsersMutualServers, uID)
-}
-
 func EndpointServers(sID string) string {
 	return fmt.Sprintf(URLServers, sID)
 }
@@ -163,14 +160,6 @@ func EndpointServersRoles(sID string) string {
 
 func EndpointServersRole(sID, rID string) string {
 	return fmt.Sprintf(URLServersRole, sID, rID)
-}
-
-func EndpointServersAvatar(sID string) string {
-	return fmt.Sprintf(URLServersAvatar, sID)
-}
-
-func EndpointServersBanner(sID string) string {
-	return fmt.Sprintf(URLServersBanner, sID)
 }
 
 func EndpointChannels(cID string) string {
@@ -243,6 +232,20 @@ func EndpointBotsCommand(bID, cmdID string) string {
 
 func EndpointCustomEmoji(eID string) string {
 	return fmt.Sprintf(URLCustomEmoji, eID)
+}
+
+/* Miscellaneous endpoints */
+
+func EndpointSync(setting string) string {
+	return fmt.Sprintf(URLSync, setting)
+}
+
+func EndpointSyncSettings(sID string) string {
+	return fmt.Sprintf(URLSync, fmt.Sprintf("settings/%s", sID))
+}
+
+func EndpointPush(action string) string {
+	return fmt.Sprintf(URLPush, action)
 }
 
 /* CDN endpoints */

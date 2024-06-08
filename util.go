@@ -4,12 +4,20 @@ import (
 	"github.com/goccy/go-json"
 	"log"
 	"strings"
+	"time"
 	"unicode"
 )
 
 // mergeJSON deserializes the object into JSON, then merges the data into the object.
 // It will also remove any fields specified in the clear map.
-func mergeJSON[T any](object *T, data map[string]any, clear []string) {
+func mergeJSON[T any](object *T, data json.RawMessage, clear []string) {
+
+	decoded := make(map[string]any)
+	err := json.Unmarshal(data, &decoded)
+	if err != nil {
+		log.Printf("Error unmarshalling data: %s\n", err)
+		return
+	}
 
 	// Marshal the object to JSON
 	objectBytes, err := json.Marshal(object)
@@ -27,7 +35,7 @@ func mergeJSON[T any](object *T, data map[string]any, clear []string) {
 	}
 
 	// Merge the data into the object map
-	for key, value := range data {
+	for key, value := range decoded {
 		objectMap[key] = value
 	}
 
@@ -181,4 +189,9 @@ func sliceRemoveIndex[T any](slice []T, index int) []T {
 
 	// Exclude last element, effectively removing it
 	return slice[:size]
+}
+
+type UpdateTuple struct {
+	Timestamp time.Time       `json:"0"`
+	Value     json.RawMessage `json:"1"` // Enjoy using this.
 }

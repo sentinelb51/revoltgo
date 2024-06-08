@@ -45,21 +45,15 @@ func main() {
 		session = revoltgo.New(token)
 	}
 
-	// Append a function that handles authenticated events.
-	// This is just to see when the authentication is complete.
-	session.HandlersAuthenticated = append(session.HandlersAuthenticated, func(session *revoltgo.Session, r *revoltgo.EventAuthenticated) {
-		fmt.Println("Authentication complete")
-	})
-
 	// Append a function that handles ready events.
 	// We will print some details from the event to the console when we receive EventReady.
-	session.HandlersReady = append(session.HandlersReady, func(session *revoltgo.Session, r *revoltgo.EventReady) {
+	session.AddHandler(func(session *revoltgo.Session, r *revoltgo.EventReady) {
 		fmt.Printf("Ready to process commands from %d user(s) across %d server(s)\n", len(r.Users), len(r.Servers))
 	})
 
 	// Append a function that handles message events. We will process any message that is "!ping"
 	// and respond with the latency of the websocket connection, if possible.
-	session.HandlersMessage = append(session.HandlersMessage, func(session *revoltgo.Session, m *revoltgo.EventMessage) {
+	session.AddHandler(func(session *revoltgo.Session, m *revoltgo.EventMessage) {
 
 		// If the message content is not "!ping", ignore the message.
 		if m.Content != "!ping" {

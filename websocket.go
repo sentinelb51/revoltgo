@@ -37,19 +37,6 @@ func (ws *websocket) heartbeat(session *Session, socket *gws.Conn) {
 	for session.Connected {
 		select {
 		case <-ticker.C:
-			//<-ticker.C
-			//payload := WebsocketMessagePing{
-			//	Type: WebsocketMessageTypeHeartbeat,
-			//	Data: session.HeartbeatCount,
-			//}
-			//
-			//err = session.WriteSocket(payload)
-			//if err != nil {
-			//	log.Printf("Heartbeat stopped: %s\n", err)
-			//	break
-			//}
-			//
-			//log.Println("Ping...", session.HeartbeatCount)
 			payload := bytes.NewBuffer(make([]byte, 0, 64))
 			err = binary.Write(payload, binary.LittleEndian, session.HeartbeatCount)
 
@@ -71,19 +58,10 @@ func (ws *websocket) heartbeat(session *Session, socket *gws.Conn) {
 		}
 	}
 
-	if !session.ShouldReconnect {
-		return
-	}
-
-	for {
-		connect(session, ws.URL)
-
-		if session.Connected {
-			break
-		}
-
-		log.Printf("Re-connect failed, retrying in %s", session.ReconnectInterval.String())
+	for !session.Connected && session.ShouldReconnect {
+		log.Printf("Re-connecting in %s...", session.ReconnectInterval.String())
 		time.Sleep(session.ReconnectInterval)
+		connect(session, ws.URL)
 	}
 }
 
@@ -97,17 +75,23 @@ func connect(session *Session, url string) *gws.Conn {
 		Session: session,
 	}
 
-	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
+	options := &gws.ClientOption{
 		Addr:             url,
 		ParallelEnabled:  true,
 		CheckUtf8Enabled: false,
-		PermessageDeflate: gws.PermessageDeflate{
+	}
+
+	if session.CustomCompression != nil {
+		options.PermessageDeflate = *session.CustomCompression
+	} else {
+		options.PermessageDeflate = gws.PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
-		},
-	})
+		}
+	}
 
+	socket, _, err := gws.NewClient(handler, options)
 	if err != nil {
 		log.Panicf("Connection refused: %s\n", err)
 	}
@@ -117,7 +101,7 @@ func connect(session *Session, url string) *gws.Conn {
 	return socket
 }
 
-func (ws *websocket) OnClose(socket *gws.Conn, err error) {
+func (ws *websocket) OnClose(_ *gws.Conn, err error) {
 
 	ws.Close <- struct{}{}
 	ws.Session.Connected = false
@@ -130,10 +114,8 @@ func (ws *websocket) OnClose(socket *gws.Conn, err error) {
 	log.Println("Connection closed.")
 }
 
+// OnPong ensures the pong is valid, updates heartbeat times, and extends the connection deadline.
 func (ws *websocket) OnPong(socket *gws.Conn, payload []byte) {
-
-	now := time.Now()
-	ws.Session.LastHeartbeatAck = now
 
 	var (
 		count int64
@@ -145,18 +127,20 @@ func (ws *websocket) OnPong(socket *gws.Conn, payload []byte) {
 		return
 	}
 
+	if count != ws.Session.HeartbeatCount {
+		log.Printf("Heartbeat fibrillation: %d != %d\n", count, ws.Session.HeartbeatCount)
+		return
+	}
+
+	now := time.Now()
+	ws.Session.LastHeartbeatAck = now
+	ws.Session.HeartbeatCount++
+
 	deadline := now.Add(ws.Session.HeartbeatInterval * 2)
 	if err = socket.SetDeadline(deadline); err != nil {
 		log.Printf("Pong: set deadline: %s\n", err)
 		return
 	}
-
-	if count != ws.Session.HeartbeatCount {
-		log.Printf("Pong: fibrillation %d != %d\n", count, ws.Session.HeartbeatCount)
-		return
-	}
-
-	ws.Session.HeartbeatCount++
 }
 
 func (ws *websocket) OnOpen(socket *gws.Conn) {
@@ -176,12 +160,12 @@ func (ws *websocket) OnOpen(socket *gws.Conn) {
 	go ws.heartbeat(ws.Session, socket)
 }
 
-func (ws *websocket) OnPing(socket *gws.Conn, payload []byte) {
+func (ws *websocket) OnPing(_ *gws.Conn, payload []byte) {
 	// The websocket should not be pinging us; we're the client.
 	log.Printf("Received unexpected ping: %s\n", string(payload))
 }
 
-func (ws *websocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (ws *websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 	handle(ws.Session, message.Data.Bytes())
 	message.Close()
 }
@@ -259,9 +243,6 @@ func handle(s *Session, raw []byte) {
 	eventConstructor, ok := eventToStruct[data.Type]
 	if !ok {
 		log.Printf("unknown event type: %s", data.Type)
-		for _, h := range s.HandlersUnknown {
-			h(s, string(raw))
-		}
 		return
 	}
 
@@ -287,7 +268,7 @@ func handle(s *Session, raw []byte) {
 		s.HeartbeatCount++
 		s.LastHeartbeatAck = time.Now()
 
-		for _, h := range s.HandlersPong {
+		for _, h := range s.handlersPong {
 			h(s, e)
 		}
 	case *AbstractEventUpdate:
@@ -295,159 +276,159 @@ func handle(s *Session, raw []byte) {
 		switch e.Type {
 		case "ServerUpdate":
 			s.State.updateServer(e)
-			for _, h := range s.HandlersServerUpdate {
-				h(s, e)
+			for _, h := range s.handlersServerUpdate {
+				h(s, e.EventServerUpdate())
 			}
 		case "ServerMemberUpdate":
 			s.State.updateServerMember(e)
-			for _, h := range s.HandlersServerMemberUpdate {
-				h(s, e)
+			for _, h := range s.handlersServerMemberUpdate {
+				h(s, e.EventServerMemberUpdate())
 			}
 		case "ChannelUpdate":
 			s.State.updateChannel(e)
-			for _, h := range s.HandlersChannelUpdate {
-				h(s, e)
+			for _, h := range s.handlersChannelUpdate {
+				h(s, e.EventChannelUpdate())
 			}
 		case "UserUpdate":
 			s.State.updateUser(e)
-			for _, h := range s.HandlersUserUpdate {
-				h(s, e)
+			for _, h := range s.handlersUserUpdate {
+				h(s, e.EventUserUpdate())
 			}
 		case "ServerRoleUpdate":
 			s.State.updateServerRole(e)
-			for _, h := range s.HandlersServerRoleUpdate {
-				h(s, e)
+			for _, h := range s.handlersServerRoleUpdate {
+				h(s, e.EventServerRoleUpdate())
 			}
 		case "WebhookUpdate":
 			s.State.updateWebhook(e)
-			for _, h := range s.HandlersWebhookUpdate {
-				h(s, e)
+			for _, h := range s.handlersWebhookUpdate {
+				h(s, e.EventWebhookUpdate())
 			}
 		}
 	case *EventAuthenticated:
-		for _, h := range s.HandlersAuthenticated {
+		for _, h := range s.handlersAuthenticated {
 			h(s, e)
 		}
 	case *EventAuth:
-		for _, h := range s.HandlersAuth {
+		for _, h := range s.handlersAuth {
 			h(s, e)
 		}
 	case *EventReady:
 		s.State.populate(e)
 		s.Selfbot = s.State.Self != nil && s.State.Self.Bot == nil
-		for _, h := range s.HandlersReady {
+		for _, h := range s.handlersReady {
 			h(s, e)
 		}
 	case *EventMessage:
-		for _, h := range s.HandlersMessage {
+		for _, h := range s.handlersMessage {
 			h(s, e)
 		}
 	case *EventMessageAppend:
-		for _, h := range s.HandlersMessageAppend {
+		for _, h := range s.handlersMessageAppend {
 			h(s, e)
 		}
 	case *EventMessageUpdate:
-		for _, h := range s.HandlersMessageUpdate {
+		for _, h := range s.handlersMessageUpdate {
 			h(s, e)
 		}
 	case *EventMessageDelete:
-		for _, h := range s.HandlersMessageDelete {
+		for _, h := range s.handlersMessageDelete {
 			h(s, e)
 		}
 	case *EventMessageReact:
-		for _, h := range s.HandlersMessageReact {
+		for _, h := range s.handlersMessageReact {
 			h(s, e)
 		}
 	case *EventMessageUnreact:
-		for _, h := range s.HandlersMessageUnreact {
+		for _, h := range s.handlersMessageUnreact {
 			h(s, e)
 		}
 	case *EventChannelCreate:
 		s.State.createChannel(e)
-		for _, h := range s.HandlersChannelCreate {
+		for _, h := range s.handlersChannelCreate {
 			h(s, e)
 		}
 	case *EventChannelDelete:
 		s.State.deleteChannel(e)
-		for _, h := range s.HandlersChannelDelete {
+		for _, h := range s.handlersChannelDelete {
 			h(s, e)
 		}
 	case *EventGroupJoin:
-		for _, h := range s.HandlersGroupJoin {
+		for _, h := range s.handlersGroupJoin {
 			h(s, e)
 		}
 	case *EventGroupLeave:
-		for _, h := range s.HandlersGroupLeave {
+		for _, h := range s.handlersGroupLeave {
 			h(s, e)
 		}
 	case *EventChannelStartTyping:
-		for _, h := range s.HandlersChannelStartTyping {
+		for _, h := range s.handlersChannelStartTyping {
 			h(s, e)
 		}
 	case *EventChannelStopTyping:
-		for _, h := range s.HandlersChannelStopTyping {
+		for _, h := range s.handlersChannelStopTyping {
 			h(s, e)
 		}
 	case *EventServerCreate:
 		s.State.createServer(e)
-		for _, h := range s.HandlersServerCreate {
+		for _, h := range s.handlersServerCreate {
 			h(s, e)
 		}
 	case *EventServerDelete:
 		s.State.deleteServer(e)
-		for _, h := range s.HandlersServerDelete {
+		for _, h := range s.handlersServerDelete {
 			h(s, e)
 		}
 	case *EventServerMemberJoin:
 		s.State.createServerMember(e)
-		for _, h := range s.HandlersServerMemberJoin {
+		for _, h := range s.handlersServerMemberJoin {
 			h(s, e)
 		}
 	case *EventServerMemberLeave:
 		s.State.deleteServerMember(e)
-		for _, h := range s.HandlersServerMemberLeave {
+		for _, h := range s.handlersServerMemberLeave {
 			h(s, e)
 		}
 	case *EventChannelAck:
-		for _, h := range s.HandlersChannelAck {
+		for _, h := range s.handlersChannelAck {
 			h(s, e)
 		}
 	case *EventServerRoleDelete:
 		s.State.deleteServerRole(e)
-		for _, h := range s.HandlersServerRoleDelete {
+		for _, h := range s.handlersServerRoleDelete {
 			h(s, e)
 		}
 	case *EventEmojiCreate:
 		s.State.createEmoji(e)
-		for _, h := range s.HandlersEmojiCreate {
+		for _, h := range s.handlersEmojiCreate {
 			h(s, e)
 		}
 	case *EventEmojiDelete:
 		s.State.deleteEmoji(e)
-		for _, h := range s.HandlersEmojiDelete {
+		for _, h := range s.handlersEmojiDelete {
 			h(s, e)
 		}
 	case *EventUserSettingsUpdate:
-		for _, h := range s.HandlersUserSettingsUpdate {
+		for _, h := range s.handlersUserSettingsUpdate {
 			h(s, e)
 		}
 	case *EventUserRelationship:
-		for _, h := range s.HandlersUserRelationship {
+		for _, h := range s.handlersUserRelationship {
 			h(s, e)
 		}
 	case *EventUserPlatformWipe:
 		s.State.platformWipe(e)
-		for _, h := range s.HandlersUserPlatformWipe {
+		for _, h := range s.handlersUserPlatformWipe {
 			h(s, e)
 		}
 	case *EventWebhookCreate:
 		s.State.createWebhook(e)
-		for _, h := range s.HandlersWebhookCreate {
+		for _, h := range s.handlersWebhookCreate {
 			h(s, e)
 		}
 	case *EventWebhookDelete:
 		s.State.deleteWebhook(e)
-		for _, h := range s.HandlersWebhookDelete {
+		for _, h := range s.handlersWebhookDelete {
 			h(s, e)
 		}
 	}

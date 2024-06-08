@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
 )
 
 func New(token string) *Session {
-	return &Session{
+	session := &Session{
 		ShouldReconnect:   true,
 		Token:             token,
 		State:             newState(),
@@ -20,6 +21,10 @@ func New(token string) *Session {
 		UserAgent:         "RevoltGo/1.0.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
+
+	// There may be some validation/boundary checks in the future.
+
+	return session
 }
 
 // NewWithLogin exchanges an email and password for a session token, and then creates a new session.
@@ -65,6 +70,21 @@ type Session struct {
 	// Whether the websocket should reconnect when the connection drops
 	ShouldReconnect bool
 
+	// Defines a custom compression algorithm for the websocket
+	// By default, compression is enabled at the fastest level (1) for >=512 byte payloads
+	// To enable, set gws.PermessageDeflate.Enabled true
+	CustomCompression *gws.PermessageDeflate
+
+	// Defines the threshold for compressing data sent over the websocket
+	// This will reduce the amount of data sent over the network in exchange for CPU time
+	// Disables compression if set to <= 0 (default)
+	CompressionThreshold int
+
+	// Defines how much compression is applied to the data sent over the websocket
+	// Ranges from 0 (no compression), 1 (fastest; least compression) to 9 (slowest; best compression)
+	// Will only take effect if CompressionThreshold is set to a positive value
+	CompressionLevel int
+
 	// Interval between sending heartbeats. Lower values update the latency faster
 	// Values too high (~100 seconds) may cause Cloudflare to drop the connection
 	HeartbeatInterval time.Duration
@@ -84,62 +104,136 @@ type Session struct {
 	/* Event handlers */
 
 	// Authentication-related handlers
-	HandlersReady         []func(*Session, *EventReady)
-	HandlersAuth          []func(*Session, *EventAuth)
-	HandlersPong          []func(*Session, *EventPong)
-	HandlersAuthenticated []func(*Session, *EventAuthenticated)
+	handlersReady         []func(*Session, *EventReady)
+	handlersAuth          []func(*Session, *EventAuth)
+	handlersPong          []func(*Session, *EventPong)
+	handlersAuthenticated []func(*Session, *EventAuthenticated)
 
 	// User-related handlers
-	HandlersUserUpdate         []func(*Session, *AbstractEventUpdate)
-	HandlersUserSettingsUpdate []func(*Session, *EventUserSettingsUpdate)
-	HandlersUserRelationship   []func(*Session, *EventUserRelationship)
-	HandlersUserPlatformWipe   []func(*Session, *EventUserPlatformWipe)
+	handlersUserUpdate         []func(*Session, *EventUserUpdate)
+	handlersUserSettingsUpdate []func(*Session, *EventUserSettingsUpdate)
+	handlersUserRelationship   []func(*Session, *EventUserRelationship)
+	handlersUserPlatformWipe   []func(*Session, *EventUserPlatformWipe)
 
 	// Message-related handlers
-	HandlersMessage        []func(*Session, *EventMessage)
-	HandlersMessageAppend  []func(*Session, *EventMessageAppend)
-	HandlersMessageUpdate  []func(*Session, *EventMessageUpdate)
-	HandlersMessageDelete  []func(*Session, *EventMessageDelete)
-	HandlersMessageReact   []func(*Session, *EventMessageReact)
-	HandlersMessageUnreact []func(*Session, *EventMessageUnreact)
+	handlersMessage        []func(*Session, *EventMessage)
+	handlersMessageAppend  []func(*Session, *EventMessageAppend)
+	handlersMessageUpdate  []func(*Session, *EventMessageUpdate)
+	handlersMessageDelete  []func(*Session, *EventMessageDelete)
+	handlersMessageReact   []func(*Session, *EventMessageReact)
+	handlersMessageUnreact []func(*Session, *EventMessageUnreact)
 
 	// Channel-related handlers
-	HandlersChannelCreate      []func(*Session, *EventChannelCreate)
-	HandlersChannelUpdate      []func(*Session, *AbstractEventUpdate)
-	HandlersChannelDelete      []func(*Session, *EventChannelDelete)
-	HandlersChannelStartTyping []func(*Session, *EventChannelStartTyping)
-	HandlersChannelStopTyping  []func(*Session, *EventChannelStopTyping)
-	HandlersChannelAck         []func(*Session, *EventChannelAck)
+	handlersChannelCreate      []func(*Session, *EventChannelCreate)
+	handlersChannelUpdate      []func(*Session, *EventChannelUpdate)
+	handlersChannelDelete      []func(*Session, *EventChannelDelete)
+	handlersChannelStartTyping []func(*Session, *EventChannelStartTyping)
+	handlersChannelStopTyping  []func(*Session, *EventChannelStopTyping)
+	handlersChannelAck         []func(*Session, *EventChannelAck)
 
 	// Group-related handlers
-	HandlersGroupJoin  []func(*Session, *EventGroupJoin)
-	HandlersGroupLeave []func(*Session, *EventGroupLeave)
+	handlersGroupJoin  []func(*Session, *EventGroupJoin)
+	handlersGroupLeave []func(*Session, *EventGroupLeave)
 
 	// Server-related handlers
-	HandlersServerCreate []func(*Session, *EventServerCreate)
-	HandlersServerUpdate []func(*Session, *AbstractEventUpdate)
-	HandlersServerDelete []func(*Session, *EventServerDelete)
+	handlersServerCreate []func(*Session, *EventServerCreate)
+	handlersServerUpdate []func(*Session, *EventServerUpdate)
+	handlersServerDelete []func(*Session, *EventServerDelete)
 
 	// ServerRole-related handlers
-	HandlersServerRoleUpdate []func(*Session, *AbstractEventUpdate)
-	HandlersServerRoleDelete []func(*Session, *EventServerRoleDelete)
+	handlersServerRoleUpdate []func(*Session, *EventServerRoleUpdate)
+	handlersServerRoleDelete []func(*Session, *EventServerRoleDelete)
 
 	// ServerMember-related handlers
-	HandlersServerMemberUpdate []func(*Session, *AbstractEventUpdate)
-	HandlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
-	HandlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
+	handlersServerMemberUpdate []func(*Session, *EventServerMemberUpdate)
+	handlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
+	handlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
 
 	// Emoji-related handlers
-	HandlersEmojiCreate []func(*Session, *EventEmojiCreate)
-	HandlersEmojiDelete []func(*Session, *EventEmojiDelete)
+	handlersEmojiCreate []func(*Session, *EventEmojiCreate)
+	handlersEmojiDelete []func(*Session, *EventEmojiDelete)
 
 	// Webhook-related handlers
-	HandlersWebhookCreate []func(*Session, *EventWebhookCreate)
-	HandlersWebhookUpdate []func(*Session, *AbstractEventUpdate)
-	HandlersWebhookDelete []func(*Session, *EventWebhookDelete)
+	handlersWebhookCreate []func(*Session, *EventWebhookCreate)
+	handlersWebhookUpdate []func(*Session, *EventWebhookUpdate)
+	handlersWebhookDelete []func(*Session, *EventWebhookDelete)
+}
 
-	// Unknown event handler. Useful for debugging purposes
-	HandlersUnknown []func(session *Session, message string)
+func (s *Session) AddHandler(handler any) {
+	switch h := handler.(type) {
+	case func(*Session, *EventReady):
+		s.handlersReady = append(s.handlersReady, h)
+	case func(*Session, *EventAuth):
+		s.handlersAuth = append(s.handlersAuth, h)
+	case func(*Session, *EventPong):
+		s.handlersPong = append(s.handlersPong, h)
+	case func(*Session, *EventAuthenticated):
+		s.handlersAuthenticated = append(s.handlersAuthenticated, h)
+	case func(*Session, *EventUserUpdate):
+		s.handlersUserUpdate = append(s.handlersUserUpdate, h)
+	case func(*Session, *EventServerUpdate):
+		s.handlersServerUpdate = append(s.handlersServerUpdate, h)
+	case func(*Session, *EventChannelUpdate):
+		s.handlersChannelUpdate = append(s.handlersChannelUpdate, h)
+	case func(*Session, *EventServerRoleUpdate):
+		s.handlersServerRoleUpdate = append(s.handlersServerRoleUpdate, h)
+	case func(*Session, *EventWebhookUpdate):
+		s.handlersWebhookUpdate = append(s.handlersWebhookUpdate, h)
+	case func(*Session, *EventServerMemberUpdate):
+		s.handlersServerMemberUpdate = append(s.handlersServerMemberUpdate, h)
+	case func(*Session, *EventMessage):
+		s.handlersMessage = append(s.handlersMessage, h)
+	case func(*Session, *EventMessageAppend):
+		s.handlersMessageAppend = append(s.handlersMessageAppend, h)
+	case func(*Session, *EventMessageUpdate):
+		s.handlersMessageUpdate = append(s.handlersMessageUpdate, h)
+	case func(*Session, *EventMessageDelete):
+		s.handlersMessageDelete = append(s.handlersMessageDelete, h)
+	case func(*Session, *EventMessageReact):
+		s.handlersMessageReact = append(s.handlersMessageReact, h)
+	case func(*Session, *EventMessageUnreact):
+		s.handlersMessageUnreact = append(s.handlersMessageUnreact, h)
+	case func(*Session, *EventChannelCreate):
+		s.handlersChannelCreate = append(s.handlersChannelCreate, h)
+	case func(*Session, *EventChannelDelete):
+		s.handlersChannelDelete = append(s.handlersChannelDelete, h)
+	case func(*Session, *EventChannelStartTyping):
+		s.handlersChannelStartTyping = append(s.handlersChannelStartTyping, h)
+	case func(*Session, *EventChannelStopTyping):
+		s.handlersChannelStopTyping = append(s.handlersChannelStopTyping, h)
+	case func(*Session, *EventChannelAck):
+		s.handlersChannelAck = append(s.handlersChannelAck, h)
+	case func(*Session, *EventGroupJoin):
+		s.handlersGroupJoin = append(s.handlersGroupJoin, h)
+	case func(*Session, *EventGroupLeave):
+		s.handlersGroupLeave = append(s.handlersGroupLeave, h)
+	case func(*Session, *EventServerCreate):
+		s.handlersServerCreate = append(s.handlersServerCreate, h)
+	case func(*Session, *EventServerDelete):
+		s.handlersServerDelete = append(s.handlersServerDelete, h)
+	case func(*Session, *EventServerMemberJoin):
+		s.handlersServerMemberJoin = append(s.handlersServerMemberJoin, h)
+	case func(*Session, *EventServerMemberLeave):
+		s.handlersServerMemberLeave = append(s.handlersServerMemberLeave, h)
+	case func(*Session, *EventServerRoleDelete):
+		s.handlersServerRoleDelete = append(s.handlersServerRoleDelete, h)
+	case func(*Session, *EventEmojiCreate):
+		s.handlersEmojiCreate = append(s.handlersEmojiCreate, h)
+	case func(*Session, *EventEmojiDelete):
+		s.handlersEmojiDelete = append(s.handlersEmojiDelete, h)
+	case func(*Session, *EventUserSettingsUpdate):
+		s.handlersUserSettingsUpdate = append(s.handlersUserSettingsUpdate, h)
+	case func(*Session, *EventUserRelationship):
+		s.handlersUserRelationship = append(s.handlersUserRelationship, h)
+	case func(*Session, *EventUserPlatformWipe):
+		s.handlersUserPlatformWipe = append(s.handlersUserPlatformWipe, h)
+	case func(*Session, *EventWebhookCreate):
+		s.handlersWebhookCreate = append(s.handlersWebhookCreate, h)
+	case func(*Session, *EventWebhookDelete):
+		s.handlersWebhookDelete = append(s.handlersWebhookDelete, h)
+	default:
+		log.Printf("unknown handler type %T, it has not been registered\n", h)
+	}
 }
 
 // Latency returns the websocket latency
@@ -659,7 +753,7 @@ func (s *Session) Logout() error {
 	return s.request(http.MethodPost, endpoint, nil, nil)
 }
 
-func (s *Session) UserMutual(uID string) (mutual []*UserMutual, err error) {
+func (s *Session) UserMutual(uID string) (mutual []*MutualFriendsAndServersResponse, err error) {
 	endpoint := EndpointUsersMutual(uID)
 	err = s.request(http.MethodGet, endpoint, nil, &mutual)
 	return
@@ -743,4 +837,31 @@ func (s *Session) BotInvite(bID string, data BotInviteData) (err error) {
 	endpoint := EndpointBotsInvite(bID)
 	err = s.request(http.MethodPost, endpoint, data, nil)
 	return
+}
+
+func (s *Session) SyncUnreads() (data []SyncUnread, err error) {
+	endpoint := EndpointSync("unreads")
+	err = s.request(http.MethodGet, endpoint, nil, &data)
+	return
+}
+
+func (s *Session) SyncSettingsFetch(payload SyncSettingsFetchData) (data *SyncSettingsData, err error) {
+	endpoint := EndpointSync("settings")
+	err = s.request(http.MethodPost, endpoint, payload, &data)
+	return
+}
+
+func (s *Session) SyncSettingsSet(payload SyncSettingsData) error {
+	endpoint := EndpointSync("settings")
+	return s.request(http.MethodPut, endpoint, payload, nil)
+}
+
+func (s *Session) PushSubscribe(data WebpushSubscription) error {
+	endpoint := EndpointPush("subscribe")
+	return s.request(http.MethodPost, endpoint, data, nil)
+}
+
+func (s *Session) PushUnsubscribe(data WebpushSubscription) error {
+	endpoint := EndpointPush("unsubscribe")
+	return s.request(http.MethodPost, endpoint, data, nil)
 }

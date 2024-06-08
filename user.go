@@ -66,7 +66,7 @@ type BotInformation struct {
 	Owner string `json:"owner"`
 }
 
-type UserMutual struct {
+type MutualFriendsAndServersResponse struct {
 	Users   []string `json:"users"`
 	Servers []string `json:"servers"`
 }

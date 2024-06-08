@@ -1,18 +1,12 @@
 package revoltgo
 
 type LoginResponse struct {
-	Result       string                    `json:"result"`
-	ID           string                    `json:"_id"`
-	UserID       string                    `json:"user_id"`
-	Token        string                    `json:"token"`
-	Name         string                    `json:"name"`
-	Subscription LoginResponseSubscription `json:"subscription"`
-}
-
-type LoginResponseSubscription struct {
-	Endpoint string `json:"endpoint"`
-	P256DH   string `json:"p256dh"`
-	Auth     string `json:"auth"`
+	Result       string              `json:"result"`
+	ID           string              `json:"_id"`
+	UserID       string              `json:"user_id"`
+	Token        string              `json:"token"`
+	Name         string              `json:"name"`
+	Subscription WebpushSubscription `json:"subscription"`
 }
 
 type Sessions struct {
