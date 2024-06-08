@@ -18,7 +18,7 @@ func New(token string) *Session {
 		Ratelimiter:       newRatelimiter(),
 		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
-		UserAgent:         "RevoltGo/1.0.0",
+		UserAgent:         "RevoltGo/2.0.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
 
