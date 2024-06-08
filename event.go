@@ -2,10 +2,8 @@ package revoltgo
 
 import (
 	"github.com/goccy/go-json"
-	"time"
+	"log"
 )
-
-type EventType string
 
 type Event struct {
 	Type string `json:"type"`
@@ -13,7 +11,7 @@ type Event struct {
 
 type AbstractEventUpdateID struct {
 	StringID string
-	MemberID MemberCompoundID
+	MemberID MemberCompositeID
 }
 
 func (id *AbstractEventUpdateID) UnmarshalJSON(data []byte) (err error) {
@@ -30,71 +28,155 @@ func (id *AbstractEventUpdateID) UnmarshalJSON(data []byte) (err error) {
 type AbstractEventUpdate struct {
 	Event
 
-	// ID can either be a simple string or a MemberCompoundID.
+	// ID can either be a simple string or a MemberCompositeID.
 	ID AbstractEventUpdateID `json:"id"`
 
 	// RoleID is only present in ServerRoleUpdate events.
 	RoleID string `json:"role_id"`
 
 	// The updated data for a specific event
-	Data map[string]any `json:"data"`
+	Data json.RawMessage `json:"data"`
 
 	// Clear is a list of keys to clear from the cache.
 	Clear []string `json:"clear"`
+
+	// Remove is a list of keys to remove from the cache.
+	// Ideally the API should just stick to "clear"...
+	Remove []string `json:"remove"`
 }
 
-func aeuConstructor() any {
-	return new(AbstractEventUpdate)
+// standardise is used to migrate "remove" fields to "clear" if they exist.
+func (aeu *AbstractEventUpdate) standardise() {
+
+	if len(aeu.Remove) <= 0 {
+		return
+	}
+
+	if len(aeu.Clear) > 0 {
+		log.Printf("AbstractEventUpdate has both 'clear' and 'remove' fields?")
+		return
+	}
+
+	aeu.Clear = aeu.Remove
 }
 
-var eventToStruct = map[string]func() any{
-	"Error": func() any { return new(EventError) },
-	"Bulk":  func() any { return new(EventBulk) },
+func (aeu *AbstractEventUpdate) EventServerUpdate() *EventServerUpdate {
+	// Re-populate normal data
+	event := EventServerUpdate{
+		Event: aeu.Event,
+		ID:    aeu.ID.StringID,
+		Clear: aeu.Clear,
+	}
 
-	"Authenticated": func() any { return new(EventAuthenticated) },
-	"Ready":         func() any { return new(EventReady) },
-	"Pong":          func() any { return new(EventPong) },
-	"Auth":          func() any { return new(EventAuth) },
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
 
-	/* All update events are abstracted away. */
-	"MessageUpdate":      aeuConstructor,
-	"ServerUpdate":       aeuConstructor,
-	"ChannelUpdate":      aeuConstructor,
-	"ServerRoleUpdate":   aeuConstructor,
-	"WebhookUpdate":      aeuConstructor,
-	"UserUpdate":         aeuConstructor,
-	"ServerMemberUpdate": aeuConstructor,
+	return &event
+}
 
-	"Message":        func() any { return new(EventMessage) },
-	"MessageAppend":  func() any { return new(EventMessageAppend) },
-	"MessageDelete":  func() any { return new(EventMessageDelete) },
-	"MessageReact":   func() any { return new(EventMessageReact) },
-	"MessageUnreact": func() any { return new(EventMessageUnreact) },
+func (aeu *AbstractEventUpdate) EventChannelUpdate() *EventChannelUpdate {
+	// Re-populate normal data
+	event := EventChannelUpdate{
+		Event: aeu.Event,
+		ID:    aeu.ID.StringID,
+		Clear: aeu.Clear,
+	}
 
-	"ChannelCreate":      func() any { return new(EventChannelCreate) },
-	"ChannelDelete":      func() any { return new(EventChannelDelete) },
-	"ChannelAck":         func() any { return new(EventChannelAck) },
-	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
-	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
 
-	"GroupJoin":  func() any { return new(EventGroupJoin) },
-	"GroupLeave": func() any { return new(EventGroupLeave) },
+	return &event
+}
 
-	"ServerCreate":      func() any { return new(EventServerCreate) },
-	"ServerDelete":      func() any { return new(EventServerDelete) },
-	"ServerRoleDelete":  func() any { return new(EventServerRoleDelete) },
-	"ServerMemberJoin":  func() any { return new(EventServerMemberJoin) },
-	"ServerMemberLeave": func() any { return new(EventServerMemberLeave) },
+func (aeu *AbstractEventUpdate) EventServerRoleUpdate() *EventServerRoleUpdate {
+	// Re-populate normal data
+	event := EventServerRoleUpdate{
+		Event:  aeu.Event,
+		ID:     aeu.ID.StringID,
+		RoleID: aeu.RoleID,
+		Clear:  aeu.Clear,
+	}
 
-	"EmojiCreate": func() any { return new(EventEmojiCreate) },
-	"EmojiDelete": func() any { return new(EventEmojiDelete) },
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
 
-	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
-	"UserRelationship":   func() any { return new(EventUserRelationship) },
-	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
+	return &event
+}
 
-	"WebhookCreate": func() any { return new(EventWebhookCreate) },
-	"WebhookDelete": func() any { return new(EventWebhookDelete) },
+func (aeu *AbstractEventUpdate) EventServerMemberUpdate() *EventServerMemberUpdate {
+	// Re-populate normal data
+	event := EventServerMemberUpdate{
+		Event: aeu.Event,
+		ID:    aeu.ID.MemberID,
+		Clear: aeu.Clear,
+	}
+
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
+
+	return &event
+}
+
+func (aeu *AbstractEventUpdate) EventUserUpdate() *EventUserUpdate {
+	// Re-populate normal data
+	event := EventUserUpdate{
+		Event: aeu.Event,
+		ID:    aeu.ID.StringID,
+		Clear: aeu.Clear,
+	}
+
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
+
+	return &event
+}
+
+func (aeu *AbstractEventUpdate) EventWebhookUpdate() *EventWebhookUpdate {
+	// Re-populate normal data
+	event := EventWebhookUpdate{
+		Event:  aeu.Event,
+		ID:     aeu.ID.StringID,
+		Remove: aeu.Clear,
+	}
+
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
+
+	return &event
+}
+
+func (aeu *AbstractEventUpdate) EventMessageUpdate() *EventMessageUpdate {
+	// Re-populate normal data
+	event := EventMessageUpdate{
+		Event: aeu.Event,
+		ID:    aeu.ID.StringID,
+	}
+
+	// Decode variable data into a struct
+	err := json.Unmarshal(aeu.Data, &event.Data)
+	if err != nil {
+		log.Printf("Error unmarshalling %T from abstract data: %s\n", event, err)
+	}
+
+	return &event
 }
 
 type EventError struct {
@@ -150,17 +232,58 @@ type EventMessage struct {
 	Message
 }
 
-type EventMessageUpdate struct {
+// EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
+type EventServerUpdate struct {
 	Event
-	ID      string                 `json:"id"`
-	Channel string                 `json:"channel"`
-	Data    EventMessageUpdateData `json:"data"`
+	ID    string   `json:"id"`
+	Data  *Server  `json:"data"`
+	Clear []string `json:"clear"`
 }
 
-type EventMessageUpdateData struct {
-	Content string         `json:"content"`
-	Edited  time.Time      `json:"edited"`
-	Embeds  []MessageEmbed `json:"embeds"`
+// EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
+type EventChannelUpdate struct {
+	Event
+	ID    string   `json:"id"`
+	Data  *Channel `json:"data"`
+	Clear []string `json:"clear"`
+}
+
+// EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
+type EventServerRoleUpdate struct {
+	Event
+	ID     string      `json:"id"`
+	RoleID string      `json:"role_id"`
+	Data   *ServerRole `json:"data"`
+	Clear  []string    `json:"clear"`
+}
+
+// EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
+type EventServerMemberUpdate struct {
+	Event
+	ID    MemberCompositeID `json:"id"`
+	Data  *ServerMember     `json:"data"`
+	Clear []string          `json:"clear"`
+}
+
+type EventUserUpdate struct {
+	Event
+	ID    string   `json:"id"`
+	Data  *User    `json:"data"`
+	Clear []string `json:"clear"`
+}
+
+type EventWebhookUpdate struct {
+	Event
+	ID     string   `json:"id"`
+	Data   *Webhook `json:"data"`
+	Remove []string `json:"remove"`
+}
+
+type EventMessageUpdate struct {
+	Event
+	ID      string  `json:"id"`
+	Channel string  `json:"channel"`
+	Data    Message `json:"data"`
 }
 
 type EventMessageAppend struct {
@@ -288,7 +411,7 @@ type EventUserPlatformWipe struct {
 type EventUserSettingsUpdate struct {
 	Event
 	// Update is a tuple of (int, string); update time, and the data in JSON
-	Update map[string][2]json.RawMessage `json:"update"`
+	Update map[string]UpdateTuple `json:"update"`
 }
 
 type EventWebhookCreate struct {
