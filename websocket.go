@@ -3,6 +3,7 @@ package revoltgo
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
 	"log"
@@ -166,6 +167,7 @@ func (ws *websocket) OnPing(_ *gws.Conn, payload []byte) {
 }
 
 func (ws *websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
+	fmt.Println(string(message.Bytes()))
 	handle(ws.Session, message.Data.Bytes())
 	message.Close()
 }
@@ -248,7 +250,7 @@ func handle(s *Session, raw []byte) {
 
 	event := eventConstructor()
 	if err = json.Unmarshal(raw, &event); err != nil {
-		log.Printf("unmarshal event: %s", err)
+		log.Printf("unmarshal event: %s: %s", string(raw), err)
 		return
 	}
 

@@ -47,10 +47,8 @@ const (
 
 	URLInvites = apiURL + "/invites/%s"
 
-	URLBots         = apiURL + "/bots/%s"
-	URLBotsInvite   = URLBots + "/invite"
-	URLBotsCommands = URLBots + "/commands"
-	URLBotsCommand  = URLBotsCommands + "/%s"
+	URLBots       = apiURL + "/bots/%s"
+	URLBotsInvite = URLBots + "/invite"
 
 	URLAuth         = apiURL + "/auth"
 	URLAuthAccount  = URLAuth + "/account/%s"
@@ -218,14 +216,6 @@ func EndpointBots(bID string) string {
 
 func EndpointBotsInvite(bID string) string {
 	return fmt.Sprintf(URLBotsInvite, bID)
-}
-
-func EndpointBotsCommands(bID string) string {
-	return fmt.Sprintf(URLBotsCommands, bID)
-}
-
-func EndpointBotsCommand(bID, cmdID string) string {
-	return fmt.Sprintf(URLBotsCommand, bID, cmdID)
 }
 
 /* Custom endpoints */

@@ -319,6 +319,11 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 
 func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 
+	// We left the server, remove it from the state
+	if data.User == s.Self.ID {
+		delete(s.servers, data.ID)
+	}
+
 	if !s.TrackMembers {
 		return
 	}

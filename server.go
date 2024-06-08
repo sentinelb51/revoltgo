@@ -31,7 +31,7 @@ type ServerRole struct {
 	Permissions *PermissionAD `json:"permissions"`
 	Colour      string        `json:"colour"`
 	Hoist       bool          `json:"hoist"`
-	Rank        uint          `json:"rank"`
+	Rank        int           `json:"rank"`
 }
 
 // ServerCategory Server categories struct.
