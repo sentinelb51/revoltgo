@@ -195,54 +195,19 @@ func (s *Session) Close() error {
 	s.Connected = false
 	s.Socket.WriteClose(1000, nil)
 	return nil
-	// return s.Socket.Close()
 }
 
-// ping pings the websocket every HeartbeatInterval interval
-// It keeps the websocket connection alive, and triggers a re-connect if a problem occurs
-//func (s *Session) ping() {
-//
-//	for s.Connected {
-//		time.Sleep(s.HeartbeatInterval)
-//
-//		ping := WebsocketMessagePing{
-//			Type: WebsocketMessageTypeHeartbeat,
-//			Data: s.heartbeatCount,
-//		}
-//
-//		err := s.WriteSocket(ping)
-//		if err != nil {
-//			log.Printf("heartbeat failed: %s\n", err)
-//			break
-//		}
-//
-//		s.LastHeartbeatSent = time.Now()
-//	}
-//
-//	s.Connected = false
-//	log.Println("triggering reconnect...")
-//
-//	for !s.Connected {
-//		err := s.Open()
-//		if err != nil {
-//			log.Printf("reconnect failed: %v\n", err)
-//			log.Printf("retrying in %.f seconds...\n", s.ReconnectInterval.Seconds())
-//			time.Sleep(s.ReconnectInterval)
-//		}
-//	}
-//}
-
 func handle(s *Session, raw []byte) {
-	var data Event
-	err := json.Unmarshal(raw, &data)
+
+	eventType, err := eventTypeFromJSON(raw)
 	if err != nil {
-		log.Printf("handle: %v", err)
+		log.Printf("event type detection failed: %s\n", err)
 		return
 	}
 
-	eventConstructor, ok := eventToStruct[data.Type]
+	eventConstructor, ok := eventToStruct[eventType]
 	if !ok {
-		log.Printf("unknown event type: %s", data.Type)
+		log.Printf("unknown event type: %s", eventType)
 		return
 	}
 

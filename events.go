@@ -1,7 +1,25 @@
 package revoltgo
 
+import (
+	"bytes"
+	"fmt"
+)
+
 func aeuConstructor() any {
 	return new(AbstractEventUpdate)
+}
+
+const jsonSkipAheadKeyType = len(`{"type":"`)
+
+// eventTypeFromJSON extracts the event type from the JSON data.
+func eventTypeFromJSON(data []byte) (string, error) {
+	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
+	if closingTagIndex < 0 {
+		return "", fmt.Errorf("closing quote of type field not found")
+	}
+
+	result := data[jsonSkipAheadKeyType : jsonSkipAheadKeyType+closingTagIndex]
+	return string(result), nil
 }
 
 var eventToStruct = map[string]func() any{
