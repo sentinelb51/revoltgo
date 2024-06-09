@@ -27,7 +27,7 @@ func (s *Session) request(method, url string, data, result any) error {
 		}
 	}
 
-	request, err := http.NewRequest(method, url, nil)
+	request, err := http.NewRequest(method, url, http.NoBody)
 	if err != nil {
 		return err
 	}
