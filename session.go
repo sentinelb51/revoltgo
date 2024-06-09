@@ -473,6 +473,12 @@ func (s *Session) ServerAck(serverID string) (err error) {
 	return
 }
 
+func (s *Session) MessageAck(channelID, messageID string) (err error) {
+	endpoint := EndpointChannelsMessage(channelID, messageID)
+	err = s.request(http.MethodPut, endpoint, nil, nil)
+	return
+}
+
 func (s *Session) ServerBans(sID string) (bans []*ServerBans, err error) {
 	endpoint := EndpointServersBans(sID)
 	err = s.request(http.MethodGet, endpoint, nil, &bans)
@@ -591,7 +597,7 @@ func (s *Session) ServerMembers(sID string) (members *ServerMembers, err error) 
 }
 
 func (s *Session) ChannelMessage(cID, mID string) (message *Message, err error) {
-	endpoint := EndpointChannelsMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessage(cID, mID)
 	err = s.request(http.MethodGet, endpoint, nil, &message)
 	return
 }
@@ -640,7 +646,7 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 }
 
 func (s *Session) ChannelMessageEdit(cID, mID string, data MessageEditData) (message *Message, err error) {
-	endpoint := EndpointChannelsMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessage(cID, mID)
 	err = s.request(http.MethodPatch, endpoint, data, &message)
 	return
 }
@@ -652,7 +658,7 @@ func (s *Session) ChannelMessageSend(cID string, data MessageSend) (message *Mes
 }
 
 func (s *Session) ChannelMessageDelete(cID, mID string) error {
-	endpoint := EndpointChannelsMessagesMessage(cID, mID)
+	endpoint := EndpointChannelsMessage(cID, mID)
 	return s.request(http.MethodDelete, endpoint, nil, nil)
 }
 
