@@ -224,7 +224,32 @@ func (s *Session) AddHandler(handler any) {
 	case func(*Session, *EventWebhookDelete):
 		s.handlersWebhookDelete = append(s.handlersWebhookDelete, h)
 	default:
-		log.Printf("unknown handler type %T, it has not been registered\n", h)
+
+		handlerType := reflect.TypeOf(handler)
+
+		if handlerType.Kind() != reflect.Func {
+			log.Printf("Handler %s not registered: expected a function, got: %v", handlerType, handlerType)
+			return
+		}
+
+		// Get the amount of arguments
+		inputSize := handlerType.NumIn()
+		inputSizeExpected := 2
+		if inputSize != inputSizeExpected {
+			log.Printf("Handler %s not registered: expected %d arguments, got: %d", handlerType, inputSizeExpected, inputSize)
+			return
+		}
+
+		secondArgument := handlerType.In(1)
+		secondArgumentName := secondArgument.String()
+		secondArgumentExpected := strings.Replace(secondArgumentName, "revoltgo.", "revoltgo.Event", -1)
+
+		if secondArgumentName != secondArgumentExpected {
+			log.Printf(
+				"Handler %s not registered: %s is not an event. Did you mean: %s\n",
+				handlerType, secondArgumentName, secondArgumentExpected,
+			)
+		}
 	}
 }
 
