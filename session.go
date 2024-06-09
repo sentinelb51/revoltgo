@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -75,16 +77,6 @@ type Session struct {
 	// To enable, set gws.PermessageDeflate.Enabled true
 	CustomCompression *gws.PermessageDeflate
 
-	// Defines the threshold for compressing data sent over the websocket
-	// This will reduce the amount of data sent over the network in exchange for CPU time
-	// Disables compression if set to <= 0 (default)
-	CompressionThreshold int
-
-	// Defines how much compression is applied to the data sent over the websocket
-	// Ranges from 0 (no compression), 1 (fastest; least compression) to 9 (slowest; best compression)
-	// Will only take effect if CompressionThreshold is set to a positive value
-	CompressionLevel int
-
 	// Interval between sending heartbeats. Lower values update the latency faster
 	// Values too high (~100 seconds) may cause Cloudflare to drop the connection
 	HeartbeatInterval time.Duration
@@ -132,8 +124,8 @@ type Session struct {
 	handlersChannelAck         []func(*Session, *EventChannelAck)
 
 	// Group-related handlers
-	handlersGroupJoin  []func(*Session, *EventGroupJoin)
-	handlersGroupLeave []func(*Session, *EventGroupLeave)
+	handlersGroupJoin  []func(*Session, *EventChannelGroupJoin)
+	handlersGroupLeave []func(*Session, *EventChannelGroupLeave)
 
 	// Server-related handlers
 	handlersServerCreate []func(*Session, *EventServerCreate)
@@ -203,9 +195,9 @@ func (s *Session) AddHandler(handler any) {
 		s.handlersChannelStopTyping = append(s.handlersChannelStopTyping, h)
 	case func(*Session, *EventChannelAck):
 		s.handlersChannelAck = append(s.handlersChannelAck, h)
-	case func(*Session, *EventGroupJoin):
+	case func(*Session, *EventChannelGroupJoin):
 		s.handlersGroupJoin = append(s.handlersGroupJoin, h)
-	case func(*Session, *EventGroupLeave):
+	case func(*Session, *EventChannelGroupLeave):
 		s.handlersGroupLeave = append(s.handlersGroupLeave, h)
 	case func(*Session, *EventServerCreate):
 		s.handlersServerCreate = append(s.handlersServerCreate, h)

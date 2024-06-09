@@ -355,11 +355,11 @@ func handle(s *Session, raw []byte) {
 		for _, h := range s.handlersChannelDelete {
 			h(s, e)
 		}
-	case *EventGroupJoin:
+	case *EventChannelGroupJoin:
 		for _, h := range s.handlersGroupJoin {
 			h(s, e)
 		}
-	case *EventGroupLeave:
+	case *EventChannelGroupLeave:
 		for _, h := range s.handlersGroupLeave {
 			h(s, e)
 		}

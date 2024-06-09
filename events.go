@@ -34,8 +34,8 @@ var eventToStruct = map[string]func() any{
 	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
 	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
 
-	"GroupJoin":  func() any { return new(EventGroupJoin) },
-	"GroupLeave": func() any { return new(EventGroupLeave) },
+	"ChannelGroupJoin":  func() any { return new(EventChannelGroupJoin) },
+	"ChannelGroupLeave": func() any { return new(EventChannelGroupLeave) },
 
 	"ServerCreate":      func() any { return new(EventServerCreate) },
 	"ServerDelete":      func() any { return new(EventServerDelete) },

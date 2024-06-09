@@ -376,14 +376,14 @@ type EventMessageUnreact struct {
 	EventMessageReact
 }
 
-type EventGroupJoin struct {
+type EventChannelGroupJoin struct {
 	Event
 	ID   string `json:"id"`
 	User string `json:"user"`
 }
 
-type EventGroupLeave struct {
-	EventGroupJoin
+type EventChannelGroupLeave struct {
+	EventChannelGroupJoin
 }
 
 type EventEmojiCreate struct {
