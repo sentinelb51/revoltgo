@@ -184,7 +184,7 @@ func EndpointChannelsMessageReactions(cID, mID string) string {
 	return fmt.Sprintf(URLChannelsMessageReactions, cID, mID)
 }
 
-func EndpointChannelsMessagesMessage(cID, mID string) string {
+func EndpointChannelsMessage(cID, mID string) string {
 	return fmt.Sprintf(URLChannelsMessage, cID, mID)
 }
 
