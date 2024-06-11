@@ -179,9 +179,20 @@ func (aeu *AbstractEventUpdate) EventMessageUpdate() *EventMessageUpdate {
 	return &event
 }
 
+type EventErrorType string
+
+const (
+	EventErrorTypeLabelMe               EventErrorType = "LabelMe"
+	EventErrorTypeInternalError         EventErrorType = "InternalError"
+	EventErrorTypeInvalidSession        EventErrorType = "InvalidSession"
+	EventErrorTypeOnboardingNotFinished EventErrorType = "OnboardingNotFinished"
+	EventErrorTypeAlreadyAuthenticated  EventErrorType = "AlreadyAuthenticated"
+)
+
 type EventError struct {
 	Event
-	Error string `json:"error"`
+	// https://developers.revolt.chat/developers/events/protocol.html#error
+	Error EventErrorType `json:"error"`
 }
 
 type EventBulk struct {
@@ -194,7 +205,7 @@ type EventPong struct {
 	Data int64 `json:"data"`
 }
 
-// EventReady stores the data from the websocket ready event.
+// EventReady provides information about objects relative to the user.
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
@@ -298,6 +309,12 @@ type EventMessageDelete struct {
 	Channel string `json:"channel"`
 }
 
+type EventBulkMessageDelete struct {
+	Event
+	Channel string   `json:"channel"`
+	IDs     []string `json:"ids"`
+}
+
 // EventChannelStartTyping is sent when a user starts typing in a channel.
 type EventChannelStartTyping struct {
 	Event
@@ -321,10 +338,7 @@ type EventChannelAck struct {
 // This is dispatched in conjunction with EventServerUpdate
 type EventChannelCreate struct {
 	Event
-	Type   ChannelType `json:"channel_type"`
-	ID     string      `json:"_id"`
-	Server string      `json:"server"`
-	Name   string      `json:"name"`
+	*Channel
 }
 
 // EventChannelDelete is sent when a channel is deleted.
@@ -343,8 +357,10 @@ type EventServerMemberLeave struct {
 // EventServerCreate is sent when a server is created (joined).
 type EventServerCreate struct {
 	Event
-	ID     string  `json:"id"`
-	Server *Server `json:"server"`
+	ID       string     `json:"id"`
+	Server   *Server    `json:"server"`
+	Channels []*Channel `json:"channels"`
+	Emojis   []*Emoji   `json:"emojis"`
 }
 
 type EventServerRoleDelete struct {
@@ -372,8 +388,16 @@ type EventMessageReact struct {
 	EmojiID   string `json:"emoji_id"`
 }
 
+// EventMessageUnreact is sent when a user removes a singular reaction from a message.
 type EventMessageUnreact struct {
 	EventMessageReact
+}
+
+// EventMessageRemoveReaction is sent when all the reactions are removed from a message.
+type EventMessageRemoveReaction struct {
+	ID        string `json:"id"`
+	ChannelID string `json:"channel_id"`
+	EmojiID   string `json:"emoji_id"`
 }
 
 type EventChannelGroupJoin struct {

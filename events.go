@@ -40,11 +40,13 @@ var eventToStruct = map[string]func() any{
 	"UserUpdate":         aeuConstructor,
 	"ServerMemberUpdate": aeuConstructor,
 
-	"Message":        func() any { return new(EventMessage) },
-	"MessageAppend":  func() any { return new(EventMessageAppend) },
-	"MessageDelete":  func() any { return new(EventMessageDelete) },
-	"MessageReact":   func() any { return new(EventMessageReact) },
-	"MessageUnreact": func() any { return new(EventMessageUnreact) },
+	"Message":               func() any { return new(EventMessage) },
+	"MessageAppend":         func() any { return new(EventMessageAppend) },
+	"MessageDelete":         func() any { return new(EventMessageDelete) },
+	"BulkMessageDelete":     func() any { return new(EventBulkMessageDelete) },
+	"MessageReact":          func() any { return new(EventMessageReact) },
+	"MessageUnreact":        func() any { return new(EventMessageUnreact) },
+	"MessageRemoveReaction": func() any { return new(EventMessageRemoveReaction) },
 
 	"ChannelCreate":      func() any { return new(EventChannelCreate) },
 	"ChannelDelete":      func() any { return new(EventChannelDelete) },
