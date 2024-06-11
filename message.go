@@ -109,7 +109,7 @@ type MessageEmbedImage struct {
 }
 
 type MessageEmbedVideo struct {
-	Url    string `json:"url"`
+	URL    string `json:"url"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
 }
