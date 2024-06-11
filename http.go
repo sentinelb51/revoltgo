@@ -36,7 +36,8 @@ func (s *Session) request(method, url string, data, result any) error {
 	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", "application/json")
 
-	if s.Selfbot {
+	// todo: maybe "pre-compile" headers?
+	if s.Selfbot() {
 		request.Header.Set("X-Session-Token", s.Token)
 	} else {
 		request.Header.Set("X-Bot-Token", s.Token)
