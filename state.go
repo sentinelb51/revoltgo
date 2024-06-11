@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"github.com/oklog/ulid/v2"
 	"log"
 	"sync"
 )
@@ -202,10 +203,6 @@ func newState() *State {
 	}
 }
 
-/*
-	Websocket state updates
-*/
-
 // populate populates the state with the data from the ready event.
 // It will overwrite any existing data in the state.
 func (s *State) populate(ready *EventReady) {
@@ -255,10 +252,6 @@ func (s *State) populate(ready *EventReady) {
 }
 
 func (s *State) platformWipe(event *EventUserPlatformWipe) {
-	if !s.TrackUsers {
-		return
-	}
-
 	s.Lock()
 	defer s.Unlock()
 
@@ -344,8 +337,7 @@ func (s *State) updateServerMember(event *AbstractEventUpdate) {
 	mID := event.ID.MemberID
 	member := s.members[mID.String()]
 	if member == nil {
-		log.Printf("unknown member update %s in server %s\n", mID.User, mID.Server)
-		return
+		s.members[mID.String()] = &ServerMember{ID: mID}
 	}
 
 	s.Lock()
@@ -369,14 +361,56 @@ func (s *State) createChannel(event *EventChannelCreate) {
 	s.Lock()
 	defer s.Unlock()
 
-	s.channels[event.ID] = &Channel{
-		ID:     event.ID,
-		Server: event.Server,
-		Type:   event.Type,
-		Name:   event.Name,
+	s.channels[event.ID] = event.Channel
+
+	if !s.TrackServers {
+		return
 	}
 
-	server.Channels = append(server.Channels, event.ID)
+	if event.Server != "" {
+		server.Channels = append(server.Channels, event.ID)
+	}
+}
+
+func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
+
+	if !s.TrackChannels {
+		return
+	}
+
+	channel := s.channels[event.ID]
+	if channel == nil {
+		fmt.Printf("%s joined unknown group: %s\n", event.User, event.ID)
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	channel.Recipients = append(channel.Recipients, event.User)
+}
+
+func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
+
+	if !s.TrackChannels {
+		return
+	}
+
+	channel := s.channels[event.ID]
+	if channel == nil {
+		fmt.Printf("%s left unknown group %s\n", event.User, event.ID)
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	for i, uID := range channel.Recipients {
+		if uID == event.User {
+			channel.Recipients = sliceRemoveIndex(channel.Recipients, i)
+			return
+		}
+	}
 }
 
 func (s *State) updateChannel(event *AbstractEventUpdate) {
@@ -434,6 +468,31 @@ func (s *State) createServer(event *EventServerCreate) {
 	defer s.Unlock()
 
 	s.servers[event.ID] = event.Server
+
+	// If there's something you'll be first at in life, it's being a member in your own server.
+	if s.TrackMembers {
+		member := &ServerMember{
+			ID: MemberCompositeID{User: s.Self.ID, Server: event.ID},
+		}
+
+		if id, err := ulid.Parse(event.Server.ID); err == nil {
+			member.JoinedAt = ulid.Time(id.Time())
+		}
+
+		s.members[member.ID.String()] = member
+	}
+
+	if s.TrackChannels {
+		for _, channel := range event.Channels {
+			s.addChannel(channel)
+		}
+	}
+
+	if s.TrackEmojis {
+		for _, emoji := range event.Emojis {
+			s.addEmoji(emoji)
+		}
+	}
 }
 
 func (s *State) updateServer(event *AbstractEventUpdate) {
