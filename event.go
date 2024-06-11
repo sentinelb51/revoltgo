@@ -48,7 +48,7 @@ type AbstractEventUpdate struct {
 // standardise is used to migrate "remove" fields to "clear" if they exist.
 func (aeu *AbstractEventUpdate) standardise() {
 
-	if len(aeu.Remove) <= 0 {
+	if len(aeu.Remove) == 0 {
 		return
 	}
 
