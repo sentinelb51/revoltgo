@@ -109,69 +109,6 @@ func toSnakeCase(str string) string {
 	return result.String()
 }
 
-// OBSOLETE. Have fun reading this though.
-// update will update the object with the data provided.
-//func update[T any](object T, data map[string]any, clear map[string]struct{}) {
-//
-//	objectValue := reflect.ValueOf(object).Elem()
-//	objectType := objectValue.Type()
-//
-//	for i := 0; i < objectValue.NumField(); i++ {
-//
-//		// If we cannot set values, skip.
-//		fieldValue := objectValue.Field(i)
-//		if !fieldValue.CanSet() {
-//			continue
-//		}
-//
-//		field := objectType.Field(i)
-//		tag := field.Tag.Get("json")
-//
-//		// If there's no JSON tag for some reason, skip.
-//		if tag == "" {
-//			continue
-//		}
-//
-//		// If the field should be cleared, clear it.
-//		if _, shouldClear := clear[tag]; shouldClear {
-//			fieldValue.SetZero()
-//			continue
-//		}
-//
-//		// Is the JSON tag present in the updated event data?
-//		overwrite, shouldOverwrite := data[tag]
-//		if !shouldOverwrite {
-//			continue
-//		}
-//
-//		// Get it's underlying value
-//		value := reflect.ValueOf(overwrite)
-//
-//		// Check if the field value and the value are of the same kind
-//		if fieldValue.Kind() != value.Kind() {
-//			// Special case for nested structs
-//			if fieldValue.Kind() == reflect.Struct && value.Kind() == reflect.Map {
-//				// Create a new instance of the struct
-//
-//				newStruct := reflect.New(fieldValue.Type()).Interface()
-//				// Call update recursively
-//
-//				update(newStruct, overwrite.(map[string]any), clear)
-//
-//				// Set the field to the new struct
-//				fieldValue.Set(reflect.ValueOf(newStruct).Elem())
-//				continue
-//			}
-//
-//			log.Printf("%s.%s (%s) and value '%s' (%s) are not of the same kind\n",
-//				objectType.Name(), field.Name, field.Type, value.String(), value.Kind())
-//			return
-//		}
-//		// Update the field with the new value
-//		fieldValue.Set(reflect.ValueOf(overwrite))
-//	}
-//}
-
 // sliceRemoveIndex removes the element at the specified index from slice.
 // If the index is out of bounds, slice is returned unchanged.
 func sliceRemoveIndex[T any](slice []T, index int) []T {
