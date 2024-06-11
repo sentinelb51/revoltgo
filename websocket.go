@@ -219,56 +219,20 @@ func handle(s *Session, raw []byte) {
 
 	switch e := event.(type) {
 	case *EventError:
-		log.Panicf("authentication error: %s\n", e.Error)
+		for _, h := range s.handlersError {
+			h(s, e)
+		}
 	case *EventBulk:
-		for _, event := range e.V {
-			handle(s, event)
+		for _, h := range s.handlersBulk {
+			h(s, e)
 		}
 	case *EventPong:
-		if e.Data != s.HeartbeatCount {
-			log.Printf("heartbeat fibrillation %d != %d\n", e.Data, s.HeartbeatCount)
-			break
-		}
-
-		s.HeartbeatCount++
-		s.LastHeartbeatAck = time.Now()
-
 		for _, h := range s.handlersPong {
 			h(s, e)
 		}
 	case *AbstractEventUpdate:
-
-		switch e.Type {
-		case "ServerUpdate":
-			s.State.updateServer(e)
-			for _, h := range s.handlersServerUpdate {
-				h(s, e.EventServerUpdate())
-			}
-		case "ServerMemberUpdate":
-			s.State.updateServerMember(e)
-			for _, h := range s.handlersServerMemberUpdate {
-				h(s, e.EventServerMemberUpdate())
-			}
-		case "ChannelUpdate":
-			s.State.updateChannel(e)
-			for _, h := range s.handlersChannelUpdate {
-				h(s, e.EventChannelUpdate())
-			}
-		case "UserUpdate":
-			s.State.updateUser(e)
-			for _, h := range s.handlersUserUpdate {
-				h(s, e.EventUserUpdate())
-			}
-		case "ServerRoleUpdate":
-			s.State.updateServerRole(e)
-			for _, h := range s.handlersServerRoleUpdate {
-				h(s, e.EventServerRoleUpdate())
-			}
-		case "WebhookUpdate":
-			s.State.updateWebhook(e)
-			for _, h := range s.handlersWebhookUpdate {
-				h(s, e.EventWebhookUpdate())
-			}
+		for _, h := range s.handlersAbstractEventUpdate {
+			h(s, e)
 		}
 	case *EventAuthenticated:
 		for _, h := range s.handlersAuthenticated {
@@ -279,8 +243,6 @@ func handle(s *Session, raw []byte) {
 			h(s, e)
 		}
 	case *EventReady:
-		s.State.populate(e)
-		s.Selfbot = s.State.Self != nil && s.State.Self.Bot == nil
 		for _, h := range s.handlersReady {
 			h(s, e)
 		}
@@ -309,12 +271,10 @@ func handle(s *Session, raw []byte) {
 			h(s, e)
 		}
 	case *EventChannelCreate:
-		s.State.createChannel(e)
 		for _, h := range s.handlersChannelCreate {
 			h(s, e)
 		}
 	case *EventChannelDelete:
-		s.State.deleteChannel(e)
 		for _, h := range s.handlersChannelDelete {
 			h(s, e)
 		}
@@ -335,22 +295,18 @@ func handle(s *Session, raw []byte) {
 			h(s, e)
 		}
 	case *EventServerCreate:
-		s.State.createServer(e)
 		for _, h := range s.handlersServerCreate {
 			h(s, e)
 		}
 	case *EventServerDelete:
-		s.State.deleteServer(e)
 		for _, h := range s.handlersServerDelete {
 			h(s, e)
 		}
 	case *EventServerMemberJoin:
-		s.State.createServerMember(e)
 		for _, h := range s.handlersServerMemberJoin {
 			h(s, e)
 		}
 	case *EventServerMemberLeave:
-		s.State.deleteServerMember(e)
 		for _, h := range s.handlersServerMemberLeave {
 			h(s, e)
 		}
@@ -359,17 +315,14 @@ func handle(s *Session, raw []byte) {
 			h(s, e)
 		}
 	case *EventServerRoleDelete:
-		s.State.deleteServerRole(e)
 		for _, h := range s.handlersServerRoleDelete {
 			h(s, e)
 		}
 	case *EventEmojiCreate:
-		s.State.createEmoji(e)
 		for _, h := range s.handlersEmojiCreate {
 			h(s, e)
 		}
 	case *EventEmojiDelete:
-		s.State.deleteEmoji(e)
 		for _, h := range s.handlersEmojiDelete {
 			h(s, e)
 		}
@@ -382,17 +335,14 @@ func handle(s *Session, raw []byte) {
 			h(s, e)
 		}
 	case *EventUserPlatformWipe:
-		s.State.platformWipe(e)
 		for _, h := range s.handlersUserPlatformWipe {
 			h(s, e)
 		}
 	case *EventWebhookCreate:
-		s.State.createWebhook(e)
 		for _, h := range s.handlersWebhookCreate {
 			h(s, e)
 		}
 	case *EventWebhookDelete:
-		s.State.deleteWebhook(e)
 		for _, h := range s.handlersWebhookDelete {
 			h(s, e)
 		}

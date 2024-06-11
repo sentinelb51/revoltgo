@@ -20,9 +20,11 @@ func New(token string) *Session {
 		Ratelimiter:       newRatelimiter(),
 		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
-		UserAgent:         "RevoltGo/2.0.1",
+		UserAgent:         "RevoltGo/2.1.0",
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
+
+	session.addDefaultHandlers()
 
 	// There may be some validation/boundary checks in the future.
 
@@ -36,7 +38,7 @@ func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
 	mfa, err := session.Login(data)
 	if err == nil {
 		session.Token = mfa.Token
-		session.Selfbot = true
+		session.selfbot = true
 	}
 
 	return session, mfa, err
@@ -50,9 +52,6 @@ type Session struct {
 
 	// The websocket connection
 	Socket *gws.Conn
-
-	// Whether the session is a user or bot
-	Selfbot bool
 
 	// HTTP client used for the REST API
 	HTTP *http.Client
@@ -92,6 +91,11 @@ type Session struct {
 
 	// Last time a ping was received
 	LastHeartbeatAck time.Time
+
+	/* Private fields */
+
+	// Whether the session is a user or bot
+	selfbot bool
 
 	/* Event handlers */
 
@@ -149,10 +153,171 @@ type Session struct {
 	handlersWebhookCreate []func(*Session, *EventWebhookCreate)
 	handlersWebhookUpdate []func(*Session, *EventWebhookUpdate)
 	handlersWebhookDelete []func(*Session, *EventWebhookDelete)
+
+	// System event handlers
+	handlersAbstractEventUpdate []func(*Session, *AbstractEventUpdate)
+	handlersError               []func(*Session, *EventError)
+	handlersBulk                []func(*Session, *EventBulk)
 }
 
+// Selfbot returns whether the session is a selfbot
+func (s *Session) Selfbot() bool {
+	return s.selfbot
+}
+
+// addDefaultHandlers adds mission-critical handlers to keep the library working
+func (s *Session) addDefaultHandlers() {
+
+	// The websocket's first response if authentication was unsuccessful
+	s.AddHandler(func(s *Session, e *EventError) {
+		log.Printf("Authentication error: %s\n", e.Error)
+	})
+
+	s.AddHandler(func(s *Session, e *EventBulk) {
+		for _, event := range e.V {
+			go handle(s, event)
+		}
+	})
+
+	s.AddHandler(func(s *Session, e *EventReady) {
+		s.State.populate(e)
+		s.selfbot = s.State.Self != nil && s.State.Self.Bot == nil
+	})
+
+	// If state is disabled, none of these handlers are required
+	if s.State == nil {
+		return
+	}
+
+	if s.State.TrackUsers {
+		s.AddHandler(func(s *Session, e *EventUserPlatformWipe) {
+			s.State.platformWipe(e)
+		})
+	}
+
+	if s.State.TrackChannels {
+
+		s.AddHandler(func(s *Session, e *EventChannelCreate) {
+			s.State.createChannel(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventChannelDelete) {
+			s.State.deleteChannel(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventChannelGroupJoin) {
+			s.State.addGroupParticipant(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventChannelGroupLeave) {
+			s.State.removeGroupParticipant(e)
+		})
+	}
+
+	if s.State.TrackServers {
+		s.AddHandler(func(s *Session, e *EventServerCreate) {
+			s.State.createServer(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventServerDelete) {
+			s.State.deleteServer(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventServerRoleDelete) {
+			s.State.deleteServerRole(e)
+		})
+	}
+
+	if s.State.TrackMembers {
+		s.AddHandler(func(s *Session, e *EventServerMemberJoin) {
+			s.State.createServerMember(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventServerMemberLeave) {
+			s.State.deleteServerMember(e)
+		})
+	}
+
+	if s.State.TrackEmojis {
+		s.AddHandler(func(s *Session, e *EventEmojiCreate) {
+			s.State.createEmoji(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventEmojiDelete) {
+			s.State.deleteEmoji(e)
+		})
+	}
+
+	if s.State.TrackWebhooks {
+		s.AddHandler(func(s *Session, e *EventWebhookCreate) {
+			s.State.createWebhook(e)
+		})
+
+		s.AddHandler(func(s *Session, e *EventWebhookDelete) {
+			s.State.deleteWebhook(e)
+		})
+	}
+
+	s.AddHandler(func(s *Session, e *AbstractEventUpdate) {
+		switch e.Type {
+		case "ServerUpdate":
+			s.State.updateServer(e)
+			for _, h := range s.handlersServerUpdate {
+				h(s, e.EventServerUpdate())
+			}
+		case "ServerMemberUpdate":
+			s.State.updateServerMember(e)
+			for _, h := range s.handlersServerMemberUpdate {
+				h(s, e.EventServerMemberUpdate())
+			}
+		case "ChannelUpdate":
+			s.State.updateChannel(e)
+			for _, h := range s.handlersChannelUpdate {
+				h(s, e.EventChannelUpdate())
+			}
+		case "UserUpdate":
+			s.State.updateUser(e)
+			for _, h := range s.handlersUserUpdate {
+				h(s, e.EventUserUpdate())
+			}
+		case "ServerRoleUpdate":
+			s.State.updateServerRole(e)
+			for _, h := range s.handlersServerRoleUpdate {
+				h(s, e.EventServerRoleUpdate())
+			}
+		case "WebhookUpdate":
+			s.State.updateWebhook(e)
+			for _, h := range s.handlersWebhookUpdate {
+				h(s, e.EventWebhookUpdate())
+			}
+		}
+	})
+}
+
+// AddHandler registers an event handler based on function signature
 func (s *Session) AddHandler(handler any) {
 	switch h := handler.(type) {
+	case func(*Session, *AbstractEventUpdate):
+
+		if s.handlersAbstractEventUpdate != nil {
+			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
+		}
+
+		s.handlersAbstractEventUpdate = append(s.handlersAbstractEventUpdate, h)
+	case func(*Session, *EventError):
+
+		if s.handlersError != nil {
+			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
+		}
+
+		s.handlersError = append(s.handlersError, h)
+	case func(*Session, *EventBulk):
+
+		if s.handlersBulk != nil {
+			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
+		}
+
+		s.handlersBulk = append(s.handlersBulk, h)
 	case func(*Session, *EventReady):
 		s.handlersReady = append(s.handlersReady, h)
 	case func(*Session, *EventAuth):
@@ -270,6 +435,10 @@ func (s *Session) Open() (err error) {
 
 	if s.Connected {
 		return fmt.Errorf("already connected")
+	}
+
+	if s.Token == "" {
+		return fmt.Errorf("no token provided")
 	}
 
 	// Determine the websocket URL
