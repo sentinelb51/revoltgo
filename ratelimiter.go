@@ -40,7 +40,7 @@ func newRatelimiter() *Ratelimiter {
 	return r
 }
 
-func (r *Ratelimiter) get(method string, endpoint string) *ratelimitBucket {
+func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
 
 	// Split to remove query parameters
 	endpoint = strings.SplitN(endpoint, "?", 2)[0]
@@ -107,7 +107,7 @@ func (b *ratelimitBucket) delay() time.Duration {
 		return 0
 	}
 
-	return b.resetAfter.Sub(time.Now())
+	return time.Until(b.resetAfter)
 }
 
 func (r *Ratelimiter) cleaner() {
