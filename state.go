@@ -438,16 +438,19 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 		return
 	}
 
+	channel := s.channels[event.ID]
+	if channel == nil {
+		fmt.Printf("unknown channel deleted %s\n", event.ID)
+		return
+	}
+
 	s.Lock()
 	defer s.Unlock()
 
-	channel := s.channels[event.ID]
-	if channel != nil {
-		delete(s.channels, event.ID)
-	}
+	delete(s.channels, event.ID)
 
-	server, exists := s.servers[channel.Server]
-	if !exists {
+	server := s.servers[channel.Server]
+	if server == nil {
 		return
 	}
 
