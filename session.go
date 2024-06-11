@@ -20,7 +20,7 @@ func New(token string) *Session {
 		Ratelimiter:       newRatelimiter(),
 		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
-		UserAgent:         "RevoltGo/2.1.0",
+		UserAgent:         fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
 		HTTP:              &http.Client{Timeout: 10 * time.Second},
 	}
 
@@ -259,6 +259,9 @@ func (s *Session) addDefaultHandlers() {
 	}
 
 	s.AddHandler(func(s *Session, e *AbstractEventUpdate) {
+
+		e.standardise()
+
 		switch e.Type {
 		case "ServerUpdate":
 			s.State.updateServer(e)
@@ -407,7 +410,7 @@ func (s *Session) AddHandler(handler any) {
 
 		secondArgument := handlerType.In(1)
 		secondArgumentName := secondArgument.String()
-		secondArgumentExpected := strings.Replace(secondArgumentName, "revoltgo.", "revoltgo.Event", -1)
+		secondArgumentExpected := strings.ReplaceAll(secondArgumentName, "revoltgo.", "revoltgo.Event")
 
 		if secondArgumentName != secondArgumentExpected {
 			log.Printf(
@@ -751,7 +754,7 @@ func (s *Session) ServerMemberEdit(sID, mID string, data ServerMemberEditData) (
 	return
 }
 
-func (s *Session) ServerMember(sID string, mID string) (member *ServerMember, err error) {
+func (s *Session) ServerMember(sID, mID string) (member *ServerMember, err error) {
 	endpoint := EndpointServersMember(sID, mID)
 	err = s.request(http.MethodGet, endpoint, nil, &member)
 	s.State.addServerMember(member)
