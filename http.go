@@ -18,8 +18,8 @@ var bufferPool = sync.Pool{
 	},
 }
 
-func (s *Session) request(method, url string, data, result any) error {
-	rl := s.Ratelimiter.get(method, url)
+func (s *Session) request(method, destination string, data, result any) error {
+	rl := s.Ratelimiter.get(method, destination)
 
 	if !rl.resetAfter.IsZero() {
 		if wait := rl.delay(); wait > 0 {
@@ -27,7 +27,7 @@ func (s *Session) request(method, url string, data, result any) error {
 		}
 	}
 
-	request, err := http.NewRequest(method, url, http.NoBody)
+	request, err := http.NewRequest(method, destination, http.NoBody)
 	if err != nil {
 		return err
 	}
@@ -111,16 +111,16 @@ type RevoltAPI struct {
 		InviteOnly bool `json:"invite_only"`
 		Autumn     struct {
 			Enabled bool   `json:"enabled"`
-			Url     string `json:"url"`
+			URL     string `json:"url"`
 		} `json:"autumn"`
 		January struct {
 			Enabled bool   `json:"enabled"`
-			Url     string `json:"url"`
+			URL     string `json:"url"`
 		} `json:"january"`
 		Voso struct {
 			Enabled bool   `json:"enabled"`
-			Url     string `json:"url"`
-			Ws      string `json:"ws"`
+			URL     string `json:"url"`
+			WS      string `json:"ws"`
 		} `json:"voso"`
 	} `json:"features"`
 	WS    string `json:"ws"`
@@ -129,8 +129,8 @@ type RevoltAPI struct {
 	Build struct {
 		CommitSha       string `json:"commit_sha"`
 		CommitTimestamp string `json:"commit_timestamp"`
-		Semver          string `json:"semver"`
-		OriginUrl       string `json:"origin_url"`
+		SemVer          string `json:"semver"`
+		OriginURL       string `json:"origin_url"`
 		Timestamp       string `json:"timestamp"`
 	} `json:"build"`
 }
