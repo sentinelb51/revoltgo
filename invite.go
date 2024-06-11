@@ -28,6 +28,8 @@ type InviteJoin struct {
 	Server   *Server `json:"server"`
 }
 
+// InviteCreate seems deprecated/no longer documented
+// todo: remove in the future
 type InviteCreate struct {
 	Type InviteType `json:"type"`
 
