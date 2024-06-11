@@ -93,7 +93,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
 
 // ChannelPermissions is a utility function to calculate permissions for a user in a Channel
 func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
-	switch channel.Type {
+	switch channel.ChannelType {
 	case ChannelTypeSavedMessages:
 		return PermissionGrantAllSafe, nil
 	case ChannelTypeDM:
@@ -135,6 +135,6 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
 
 		return permissions, nil
 	default:
-		return 0, fmt.Errorf("unknown channel type %v", channel.Type)
+		return 0, fmt.Errorf("unknown channel type %v", channel.ChannelType)
 	}
 }
