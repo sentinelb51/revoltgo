@@ -337,7 +337,8 @@ func (s *State) updateServerMember(event *AbstractEventUpdate) {
 	mID := event.ID.MemberID
 	member := s.members[mID.String()]
 	if member == nil {
-		s.members[mID.String()] = &ServerMember{ID: mID}
+		member := &ServerMember{ID: mID}
+		s.members[mID.String()] = member
 	}
 
 	s.Lock()
