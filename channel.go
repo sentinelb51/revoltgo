@@ -13,13 +13,16 @@ const (
 // Channel holds information about a channel.
 type Channel struct {
 	ID                 string        `json:"_id"`
-	Type               ChannelType   `json:"channel_type"`
 	Server             string        `json:"server"`
+	ChannelType        ChannelType   `json:"channel_type"`
 	Name               string        `json:"name"`
 	Description        string        `json:"description"`
 	Icon               *Attachment   `json:"icon"`
 	DefaultPermissions *PermissionAD `json:"default_permissions"`
 	NSFW               bool          `json:"nsfw"`
+
+	// Recipients are populated for direct messages or groups, typically including your user ID
+	Recipients []string `json:"recipients"`
 
 	// ID of the last message sent in this channel
 	LastMessageID string `json:"last_message_id"`
@@ -34,9 +37,6 @@ type Channel struct {
 
 	// User ID of the owner of the group
 	Owner string `json:"owner"`
-
-	// [2-tuple of] user IDs participating in this channel
-	Recipients []string `json:"recipients"`
 
 	// Whether this direct message channel is currently open on both sides
 	Active bool `json:"active"`
