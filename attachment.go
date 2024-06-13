@@ -17,7 +17,7 @@ type Attachment struct {
 	Tag string `json:"tag"`
 
 	// Original filename
-	FileName string `json:"filename"`
+	Filename string `json:"filename"`
 
 	// Metadata associated with file
 	Metadata *AttachmentMetadata `json:"metadata"`
@@ -40,7 +40,7 @@ type Attachment struct {
 	ObjectID  string `json:"object_id"`
 }
 
-func (a *Attachment) URL(size string) string {
+func (a Attachment) URL(size string) string {
 	return EndpointAutumn(a.Tag, a.ID, size)
 }
 
