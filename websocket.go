@@ -211,140 +211,486 @@ func handle(s *Session, raw []byte) {
 		return
 	}
 
-	event := eventConstructor()
-	if err = json.Unmarshal(raw, &event); err != nil {
-		log.Printf("unmarshal event: %s: %s", string(raw), err)
-		return
-	}
+	switch eventType {
+	case "Error":
 
-	switch e := event.(type) {
-	case *EventError:
+		if len(s.handlersError) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersError {
-			h(s, e)
+			h(s, event.(*EventError))
 		}
-	case *EventBulk:
+	case "Bulk":
+
+		if len(s.handlersBulk) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersBulk {
-			h(s, e)
+			h(s, event.(*EventBulk))
 		}
-	case *EventPong:
+	case "Pong":
+
+		if len(s.handlersPong) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersPong {
-			h(s, e)
+			h(s, event.(*EventPong))
 		}
-	case *AbstractEventUpdate:
+	case "AbstractEventUpdate":
+
+		if len(s.handlersAbstractEventUpdate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersAbstractEventUpdate {
-			h(s, e)
+			h(s, event.(*AbstractEventUpdate))
 		}
-	case *EventAuthenticated:
+	case "Authenticated":
+
+		if len(s.handlersAuthenticated) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersAuthenticated {
-			h(s, e)
+			h(s, event.(*EventAuthenticated))
 		}
-	case *EventAuth:
+	case "Auth":
+
+		if len(s.handlersAuth) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersAuth {
-			h(s, e)
+			h(s, event.(*EventAuth))
 		}
-	case *EventReady:
+	case "Ready":
+
+		if len(s.handlersReady) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersReady {
-			h(s, e)
+			h(s, event.(*EventReady))
 		}
-	case *EventMessage:
+	case "Message":
+
+		if len(s.handlersMessage) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessage {
-			h(s, e)
+			h(s, event.(*EventMessage))
 		}
-	case *EventMessageAppend:
+	case "MessageAppend":
+
+		if len(s.handlersMessageAppend) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessageAppend {
-			h(s, e)
+			h(s, event.(*EventMessageAppend))
 		}
-	case *EventMessageUpdate:
+	case "MessageUpdate":
+
+		if len(s.handlersMessageUpdate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessageUpdate {
-			h(s, e)
+			h(s, event.(*EventMessageUpdate))
 		}
-	case *EventMessageDelete:
+	case "MessageDelete":
+
+		if len(s.handlersMessageDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessageDelete {
-			h(s, e)
+			h(s, event.(*EventMessageDelete))
 		}
-	case *EventMessageReact:
+	case "MessageReact":
+
+		if len(s.handlersMessageReact) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessageReact {
-			h(s, e)
+			h(s, event.(*EventMessageReact))
 		}
-	case *EventMessageUnreact:
+	case "MessageUnreact":
+
+		if len(s.handlersMessageUnreact) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersMessageUnreact {
-			h(s, e)
+			h(s, event.(*EventMessageUnreact))
 		}
-	case *EventChannelCreate:
+	case "ChannelCreate":
+
+		if len(s.handlersChannelCreate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersChannelCreate {
-			h(s, e)
+			h(s, event.(*EventChannelCreate))
 		}
-	case *EventChannelDelete:
+	case "ChannelDelete":
+
+		if len(s.handlersChannelDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersChannelDelete {
-			h(s, e)
+			h(s, event.(*EventChannelDelete))
 		}
-	case *EventChannelGroupJoin:
+	case "ChannelGroupJoin":
+
+		if len(s.handlersGroupJoin) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersGroupJoin {
-			h(s, e)
+			h(s, event.(*EventChannelGroupJoin))
 		}
-	case *EventChannelGroupLeave:
+	case "ChannelGroupLeave":
+
+		if len(s.handlersGroupLeave) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersGroupLeave {
-			h(s, e)
+			h(s, event.(*EventChannelGroupLeave))
 		}
-	case *EventChannelStartTyping:
+	case "ChannelStartTyping":
+
+		if len(s.handlersChannelStartTyping) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersChannelStartTyping {
-			h(s, e)
+			h(s, event.(*EventChannelStartTyping))
 		}
-	case *EventChannelStopTyping:
+	case "ChannelStopTyping":
+
+		if len(s.handlersChannelStopTyping) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersChannelStopTyping {
-			h(s, e)
+			h(s, event.(*EventChannelStopTyping))
 		}
-	case *EventServerCreate:
+	case "ServerCreate":
+
+		if len(s.handlersServerCreate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersServerCreate {
-			h(s, e)
+			h(s, event.(*EventServerCreate))
 		}
-	case *EventServerDelete:
+	case "ServerDelete":
+
+		if len(s.handlersServerDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersServerDelete {
-			h(s, e)
+			h(s, event.(*EventServerDelete))
 		}
-	case *EventServerMemberJoin:
+	case "ServerMemberJoin":
+
+		if len(s.handlersServerMemberJoin) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersServerMemberJoin {
-			h(s, e)
+			h(s, event.(*EventServerMemberJoin))
 		}
-	case *EventServerMemberLeave:
+	case "ServerMemberLeave":
+
+		if len(s.handlersServerMemberLeave) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersServerMemberLeave {
-			h(s, e)
+			h(s, event.(*EventServerMemberLeave))
 		}
-	case *EventChannelAck:
+	case "ChannelAck":
+
+		if len(s.handlersChannelAck) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersChannelAck {
-			h(s, e)
+			h(s, event.(*EventChannelAck))
 		}
-	case *EventServerRoleDelete:
+	case "ServerRoleDelete":
+
+		if len(s.handlersServerRoleDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersServerRoleDelete {
-			h(s, e)
+			h(s, event.(*EventServerRoleDelete))
 		}
-	case *EventEmojiCreate:
+	case "EmojiCreate":
+
+		if len(s.handlersEmojiCreate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersEmojiCreate {
-			h(s, e)
+			h(s, event.(*EventEmojiCreate))
 		}
-	case *EventEmojiDelete:
+	case "EmojiDelete":
+
+		if len(s.handlersEmojiDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersEmojiDelete {
-			h(s, e)
+			h(s, event.(*EventEmojiDelete))
 		}
-	case *EventUserSettingsUpdate:
+	case "UserSettingsUpdate":
+
+		if len(s.handlersUserSettingsUpdate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersUserSettingsUpdate {
-			h(s, e)
+			h(s, event.(*EventUserSettingsUpdate))
 		}
-	case *EventUserRelationship:
+	case "UserRelationship":
+
+		if len(s.handlersUserRelationship) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersUserRelationship {
-			h(s, e)
+			h(s, event.(*EventUserRelationship))
 		}
-	case *EventUserPlatformWipe:
+	case "UserPlatformWipe":
+
+		if len(s.handlersUserPlatformWipe) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersUserPlatformWipe {
-			h(s, e)
+			h(s, event.(*EventUserPlatformWipe))
 		}
-	case *EventWebhookCreate:
+	case "WebhookCreate":
+
+		if len(s.handlersWebhookCreate) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersWebhookCreate {
-			h(s, e)
+			h(s, event.(*EventWebhookCreate))
 		}
-	case *EventWebhookDelete:
+	case "WebhookDelete":
+
+		if len(s.handlersWebhookDelete) == 0 {
+			return
+		}
+
+		event := eventConstructor()
+		if err = json.Unmarshal(raw, &event); err != nil {
+			log.Printf("unmarshal event: %s: %s", string(raw), err)
+			return
+		}
+
 		for _, h := range s.handlersWebhookDelete {
-			h(s, e)
+			h(s, event.(*EventWebhookDelete))
 		}
 	}
 }

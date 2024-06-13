@@ -259,39 +259,80 @@ func (s *Session) addDefaultHandlers() {
 	}
 
 	s.AddHandler(func(s *Session, e *AbstractEventUpdate) {
-
 		e.standardise()
 
 		switch e.Type {
 		case "ServerUpdate":
 			s.State.updateServer(e)
+
+			if len(s.handlersServerUpdate) == 0 {
+				return
+			}
+
+			event := e.EventServerUpdate()
+
 			for _, h := range s.handlersServerUpdate {
-				h(s, e.EventServerUpdate())
+				h(s, event)
 			}
 		case "ServerMemberUpdate":
 			s.State.updateServerMember(e)
+
+			if len(s.handlersServerMemberUpdate) == 0 {
+				return
+			}
+
+			event := e.EventServerMemberUpdate()
+
 			for _, h := range s.handlersServerMemberUpdate {
-				h(s, e.EventServerMemberUpdate())
+				h(s, event)
 			}
 		case "ChannelUpdate":
 			s.State.updateChannel(e)
+
+			if len(s.handlersChannelUpdate) == 0 {
+				return
+			}
+
+			event := e.EventChannelUpdate()
+
 			for _, h := range s.handlersChannelUpdate {
-				h(s, e.EventChannelUpdate())
+				h(s, event)
 			}
 		case "UserUpdate":
 			s.State.updateUser(e)
+
+			if len(s.handlersUserUpdate) == 0 {
+				return
+			}
+
+			event := e.EventUserUpdate()
+
 			for _, h := range s.handlersUserUpdate {
-				h(s, e.EventUserUpdate())
+				h(s, event)
 			}
 		case "ServerRoleUpdate":
 			s.State.updateServerRole(e)
+
+			if len(s.handlersServerRoleUpdate) == 0 {
+				return
+			}
+
+			event := e.EventServerRoleUpdate()
+
 			for _, h := range s.handlersServerRoleUpdate {
-				h(s, e.EventServerRoleUpdate())
+				h(s, event)
 			}
 		case "WebhookUpdate":
 			s.State.updateWebhook(e)
+
+			if len(s.handlersWebhookUpdate) == 0 {
+				return
+			}
+
+			event := e.EventWebhookUpdate()
+
 			for _, h := range s.handlersWebhookUpdate {
-				h(s, e.EventWebhookUpdate())
+				h(s, event)
 			}
 		}
 	})
