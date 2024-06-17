@@ -63,10 +63,6 @@ type MemberCompositeID struct {
 	Server string `json:"server"`
 }
 
-func (m MemberCompositeID) String() string {
-	return m.Server + m.User
-}
-
 type ServerMembers struct {
 	Members []*ServerMember `json:"members"`
 	Users   []*User         `json:"users"`

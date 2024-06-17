@@ -1,11 +1,29 @@
 package revoltgo
 
 import (
-	"fmt"
 	"github.com/oklog/ulid/v2"
 	"log"
 	"sync"
+	"time"
 )
+
+const initialMembersSize = 50
+
+type stateMembers map[string]map[string]*ServerMember
+
+func (sm stateMembers) add(member *ServerMember) {
+
+	// Get the members for a particular server
+	members := sm[member.ID.Server]
+
+	// If the server's members are not allocated, allocate them
+	if members == nil {
+		members = make(map[string]*ServerMember, initialMembersSize)
+		sm[member.ID.Server] = members
+	}
+
+	members[member.ID.User] = member
+}
 
 type State struct {
 	sync.RWMutex
@@ -17,9 +35,10 @@ type State struct {
 	users    map[string]*User
 	servers  map[string]*Server
 	channels map[string]*Channel
-	members  map[string]*ServerMember
 	emojis   map[string]*Emoji
 	webhooks map[string]*Webhook
+	// members maps Server.ID to members
+	members stateMembers
 
 	/* Tracking options */
 	TrackUsers    bool
@@ -40,7 +59,7 @@ type State struct {
 
 /*
 	API call updates
-	Used when TrackAPICalls/TrackBulkAPICalls is enabled
+	Used when (State.TrackAPICalls or State.TrackBulkAPICalls) is enabled
 */
 
 func (s *State) addUser(user *User) {
@@ -88,7 +107,7 @@ func (s *State) addServerMember(member *ServerMember) {
 	s.Lock()
 	defer s.Unlock()
 
-	s.members[member.ID.String()] = member
+	s.members.add(member)
 }
 
 func (s *State) addServerMembersAndUsers(data *ServerMembers) {
@@ -100,12 +119,17 @@ func (s *State) addServerMembersAndUsers(data *ServerMembers) {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, member := range data.Members {
-		s.members[member.ID.String()] = member
-	}
-
 	for _, user := range data.Users {
 		s.users[user.ID] = user
+	}
+
+	if len(data.Members) == 0 {
+		return
+	}
+
+	// todo: possible optimisation because members will be from the same server
+	for _, member := range data.Members {
+		s.members.add(member)
 	}
 }
 
@@ -169,11 +193,28 @@ func (s *State) Channel(id string) *Channel {
 	return s.channels[id]
 }
 
+func (s *State) Members(sID string) []*ServerMember {
+	s.RLock()
+	defer s.RUnlock()
+
+	members := make([]*ServerMember, 0, len(s.members))
+	for _, member := range s.members[sID] {
+		members = append(members, member)
+	}
+
+	return members
+}
+
 func (s *State) Member(uID, sID string) *ServerMember {
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.members[MemberCompositeID{User: uID, Server: sID}.String()]
+	members := s.members[sID]
+	if members == nil {
+		return nil
+	}
+
+	return members[uID]
 }
 
 func (s *State) Emoji(id string) *Emoji {
@@ -237,9 +278,9 @@ func (s *State) populate(ready *EventReady) {
 	}
 
 	if s.TrackMembers {
-		s.members = make(map[string]*ServerMember, len(ready.Members))
+		s.members = make(stateMembers, len(ready.Members))
 		for _, member := range ready.Members {
-			s.members[member.ID.String()] = member
+			s.members.add(member)
 		}
 	}
 
@@ -306,8 +347,12 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 	s.Lock()
 	defer s.Unlock()
 
-	id := MemberCompositeID{User: data.User, Server: data.ID}
-	s.members[id.String()] = &ServerMember{ID: id}
+	member := &ServerMember{
+		ID:       MemberCompositeID{User: data.User, Server: data.ID},
+		JoinedAt: time.Now(),
+	}
+
+	s.members.add(member)
 }
 
 func (s *State) deleteServerMember(data *EventServerMemberLeave) {
@@ -324,8 +369,7 @@ func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 	s.Lock()
 	defer s.Unlock()
 
-	id := MemberCompositeID{User: data.User, Server: data.ID}
-	delete(s.members, id.String())
+	delete(s.members, data.User)
 }
 
 func (s *State) updateServerMember(event *AbstractEventUpdate) {
@@ -335,11 +379,8 @@ func (s *State) updateServerMember(event *AbstractEventUpdate) {
 	}
 
 	mID := event.ID.MemberID
-	member := s.members[mID.String()]
-	if member == nil {
-		member = &ServerMember{ID: mID}
-		s.members[mID.String()] = member
-	}
+	members := s.members[mID.Server]
+	member := members[mID.User]
 
 	s.Lock()
 	defer s.Unlock()
@@ -355,7 +396,7 @@ func (s *State) createChannel(event *EventChannelCreate) {
 
 	server := s.servers[event.Server]
 	if server == nil {
-		fmt.Printf("channel %s created in unknown server %s\n", event.ID, event.Server)
+		log.Printf("channel %s created in unknown server %s\n", event.ID, event.Server)
 		return
 	}
 
@@ -381,7 +422,7 @@ func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		fmt.Printf("%s joined unknown group: %s\n", event.User, event.ID)
+		log.Printf("%s joined unknown group: %s\n", event.User, event.ID)
 		return
 	}
 
@@ -399,7 +440,7 @@ func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		fmt.Printf("%s left unknown group %s\n", event.User, event.ID)
+		log.Printf("%s left unknown group %s\n", event.User, event.ID)
 		return
 	}
 
@@ -422,7 +463,7 @@ func (s *State) updateChannel(event *AbstractEventUpdate) {
 
 	channel := s.channels[event.ID.StringID]
 	if channel == nil {
-		fmt.Printf("unknown channel updated %s\n", event.ID)
+		log.Printf("unknown channel updated %s\n", event.ID)
 		return
 	}
 
@@ -440,7 +481,7 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		fmt.Printf("unknown channel deleted %s\n", event.ID)
+		log.Printf("unknown channel deleted %s\n", event.ID)
 		return
 	}
 
@@ -483,7 +524,7 @@ func (s *State) createServer(event *EventServerCreate) {
 			member.JoinedAt = ulid.Time(id.Time())
 		}
 
-		s.members[member.ID.String()] = member
+		s.members.add(member)
 	}
 
 	if s.TrackChannels {
@@ -527,6 +568,12 @@ func (s *State) deleteServer(event *EventServerDelete) {
 	defer s.Unlock()
 
 	delete(s.servers, event.ID)
+
+	if !s.TrackMembers {
+		return
+	}
+
+	delete(s.members, event.ID)
 }
 
 func (s *State) updateUser(event *AbstractEventUpdate) {

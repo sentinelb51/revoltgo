@@ -257,8 +257,18 @@ func handle(s *Session, raw []byte) {
 		for _, h := range s.handlersPong {
 			h(s, event.(*EventPong))
 		}
-	case "AbstractEventUpdate":
 
+	case
+		"MessageUpdate",
+		"ServerUpdate",
+		"ChannelUpdate",
+		"ServerRoleUpdate",
+		"WebhookUpdate",
+		"UserUpdate",
+		"ServerMemberUpdate":
+
+		// note: if this is empty, none of the above listed events will dispatch.
+		// bad design.
 		if len(s.handlersAbstractEventUpdate) == 0 {
 			return
 		}
@@ -269,8 +279,9 @@ func handle(s *Session, raw []byte) {
 			return
 		}
 
+		aeu := event.(*AbstractEventUpdate)
 		for _, h := range s.handlersAbstractEventUpdate {
-			h(s, event.(*AbstractEventUpdate))
+			h(s, aeu)
 		}
 	case "Authenticated":
 
@@ -346,21 +357,6 @@ func handle(s *Session, raw []byte) {
 
 		for _, h := range s.handlersMessageAppend {
 			h(s, event.(*EventMessageAppend))
-		}
-	case "MessageUpdate":
-
-		if len(s.handlersMessageUpdate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessageUpdate {
-			h(s, event.(*EventMessageUpdate))
 		}
 	case "MessageDelete":
 
