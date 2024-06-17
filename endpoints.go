@@ -34,6 +34,7 @@ const (
 	URLServersPermissions = URLServers + "/permissions/%s"
 
 	URLChannels                 = apiURL + "/channels/%s"
+	URLChannelAckMessage        = URLChannels + "/ack/%s"
 	URLChannelsMessages         = URLChannels + "/messages"
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
 	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
@@ -162,6 +163,10 @@ func EndpointServersRole(sID, rID string) string {
 
 func EndpointChannels(cID string) string {
 	return fmt.Sprintf(URLChannels, cID)
+}
+
+func EndpointChannelAckMessage(cID, mID string) string {
+	return fmt.Sprintf(URLChannelAckMessage, cID, mID)
 }
 
 func EndpointChannelsRecipients(cID, mID string) string {
