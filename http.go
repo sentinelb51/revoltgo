@@ -359,6 +359,10 @@ type PermissionsSetDefaultData struct {
 	Permissions uint `json:"permissions"`
 }
 
+type ChannelMessageBulkDeleteData struct {
+	IDs []string `json:"ids"`
+}
+
 type ChannelEditData struct {
 	Name        string   `json:"name,omitempty"`
 	Description string   `json:"description,omitempty"`
@@ -367,4 +371,10 @@ type ChannelEditData struct {
 	Nsfw        bool     `json:"nsfw,omitempty"`
 	Archived    bool     `json:"archived,omitempty"`
 	Remove      []string `json:"remove"`
+}
+
+type SyncSettingsData map[string]UpdateTuple
+
+type SyncSettingsFetchData struct {
+	Keys []string `json:"keys"`
 }
