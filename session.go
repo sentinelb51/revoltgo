@@ -196,7 +196,6 @@ func (s *Session) addDefaultHandlers() {
 	}
 
 	if s.State.TrackChannels {
-
 		s.AddHandler(func(s *Session, e *EventChannelCreate) {
 			s.State.createChannel(e)
 		})
@@ -342,25 +341,10 @@ func (s *Session) addDefaultHandlers() {
 func (s *Session) AddHandler(handler any) {
 	switch h := handler.(type) {
 	case func(*Session, *AbstractEventUpdate):
-
-		if s.handlersAbstractEventUpdate != nil {
-			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
-		}
-
 		s.handlersAbstractEventUpdate = append(s.handlersAbstractEventUpdate, h)
 	case func(*Session, *EventError):
-
-		if s.handlersError != nil {
-			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
-		}
-
 		s.handlersError = append(s.handlersError, h)
 	case func(*Session, *EventBulk):
-
-		if s.handlersBulk != nil {
-			log.Printf("Warning: %T is a system handler; overwriting it may cause unexpected behaviour\n", h)
-		}
-
 		s.handlersBulk = append(s.handlersBulk, h)
 	case func(*Session, *EventReady):
 		s.handlersReady = append(s.handlersReady, h)
@@ -687,7 +671,7 @@ func (s *Session) ServerAck(serverID string) (err error) {
 }
 
 func (s *Session) MessageAck(channelID, messageID string) (err error) {
-	endpoint := EndpointChannelsMessage(channelID, messageID)
+	endpoint := EndpointChannelAckMessage(channelID, messageID)
 	err = s.request(http.MethodPut, endpoint, nil, nil)
 	return
 }
@@ -873,6 +857,11 @@ func (s *Session) ChannelMessageSend(cID string, data MessageSend) (message *Mes
 func (s *Session) ChannelMessageDelete(cID, mID string) error {
 	endpoint := EndpointChannelsMessage(cID, mID)
 	return s.request(http.MethodDelete, endpoint, nil, nil)
+}
+
+func (s *Session) ChannelMessageDeleteBulk(cID string, messages ChannelMessageBulkDeleteData) error {
+	endpoint := EndpointChannelsMessage(cID, "bulk")
+	return s.request(http.MethodDelete, endpoint, messages, nil)
 }
 
 func (s *Session) AccountCreate(data AccountCreateData) error {
