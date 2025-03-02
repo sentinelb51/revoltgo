@@ -689,19 +689,19 @@ func (s *Session) ServersRole(sID, rID string) (role *ServerRole, err error) {
 }
 
 func (s *Session) Invite(iID string) (invite *Invite, err error) {
-	endpoint := EndpointInvites(iID)
+	endpoint := EndpointInvite(iID)
 	err = s.request(http.MethodGet, endpoint, nil, &invite)
 	return
 }
 
 func (s *Session) InviteJoin(iID string) (invite *Invite, err error) {
-	endpoint := EndpointInvites(iID)
+	endpoint := EndpointInvite(iID)
 	err = s.request(http.MethodPost, endpoint, nil, &invite)
 	return
 }
 
 func (s *Session) InviteDelete(iID string) (err error) {
-	endpoint := EndpointInvites(iID)
+	endpoint := EndpointInvite(iID)
 	err = s.request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
@@ -725,7 +725,7 @@ func (s *Session) ServersRoleCreate(sID string, data ServerRoleCreateData) (role
 }
 
 func (s *Session) PermissionsSet(sID, rID string, data PermissionAD) (err error) {
-	endpoint := EndpointPermissions(sID, rID)
+	endpoint := EndpointServerPermissions(sID, rID)
 	err = s.request(http.MethodPut, endpoint, data, nil)
 	return
 }
@@ -744,7 +744,7 @@ func (s *Session) ChannelPermissionsSetDefault(sID string, data PermissionAD) (e
 
 // PermissionsSetDefault sets the permissions of a role in a server
 func (s *Session) PermissionsSetDefault(sID string, data PermissionsSetDefaultData) (err error) {
-	endpoint := EndpointPermissions(sID, "default")
+	endpoint := EndpointServerPermissions(sID, "default")
 	err = s.request(http.MethodPut, endpoint, data, nil)
 	return
 }

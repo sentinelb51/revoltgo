@@ -149,7 +149,7 @@ func EndpointServersBan(sID, uID string) string {
 	return fmt.Sprintf(URLServersBan, sID, uID)
 }
 
-func EndpointInvites(sID string) string {
+func EndpointInvite(sID string) string {
 	return fmt.Sprintf(URLInvites, sID)
 }
 
@@ -173,7 +173,7 @@ func EndpointChannelsRecipients(cID, mID string) string {
 	return fmt.Sprintf(URLChannelsRecipients, cID, mID)
 }
 
-func EndpointPermissions(sID, rID string) string {
+func EndpointServerPermissions(sID, rID string) string {
 	return fmt.Sprintf(URLServersPermissions, sID, rID)
 }
 
@@ -207,10 +207,6 @@ func EndpointChannelsInvite(cID, iID string) string {
 
 func EndpointChannelsWebhooks(cID string) string {
 	return fmt.Sprintf(URLChannelsWebhooks, cID)
-}
-
-func EndpointInvite(iID string) string {
-	return fmt.Sprintf(URLInvites, iID)
 }
 
 /* Bot endpoints */
