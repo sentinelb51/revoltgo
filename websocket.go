@@ -172,7 +172,7 @@ func (ws *websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetPrefix("[R-GO] > ")
+	log.SetPrefix("[R-GO] ")
 }
 
 type WebsocketMessageAuthenticate struct {
