@@ -9,8 +9,10 @@ import (
 
 const initialMembersSize = 50
 
+// stateMembers maps a Server.ID to "members"; "members" maps a User.ID to ServerMember
 type stateMembers map[string]map[string]*ServerMember
 
+// add adds a singular member to a server's members
 func (sm stateMembers) add(member *ServerMember) {
 
 	// Get the members for a particular server
@@ -23,6 +25,33 @@ func (sm stateMembers) add(member *ServerMember) {
 	}
 
 	members[member.ID.User] = member
+}
+
+// addMany adds multiple members to multiple servers
+func (sm stateMembers) addMany(members []*ServerMember) {
+	// Group members based on their server ID
+	groups := make(map[string][]*ServerMember)
+	for _, member := range members {
+		groups[member.ID.Server] = append(groups[member.ID.Server], member)
+	}
+
+	// For each server, fetch or allocate members, and add them in bulk
+	for serverID, serverMembers := range groups {
+
+		// Get the members for a particular server
+		members := sm[serverID]
+
+		// If the server's members are not allocated, allocate them
+		if members == nil {
+			members = make(map[string]*ServerMember, len(serverMembers))
+			sm[serverID] = members
+		}
+
+		// Add the members to the server
+		for _, member := range serverMembers {
+			members[member.ID.User] = member
+		}
+	}
 }
 
 type State struct {
@@ -127,10 +156,7 @@ func (s *State) addServerMembersAndUsers(data *ServerMembers) {
 		return
 	}
 
-	// todo: possible optimisation because members will be from the same server
-	for _, member := range data.Members {
-		s.members.add(member)
-	}
+	s.members.addMany(data.Members)
 }
 
 func (s *State) addEmoji(emoji *Emoji) {
@@ -358,6 +384,7 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 
 	// We left the server, remove it from the state
+	// todo: double check the last line doesn't already do this?
 	if data.User == s.Self.ID {
 		delete(s.servers, data.ID)
 	}
@@ -378,12 +405,23 @@ func (s *State) updateServerMember(event *AbstractEventUpdate) {
 		return
 	}
 
-	mID := event.ID.MemberID
-	members := s.members[mID.Server]
-	member := members[mID.User]
-
 	s.Lock()
 	defer s.Unlock()
+
+	mID := event.ID.MemberID
+	members := s.members[mID.Server]
+
+	if members == nil {
+		members = make(map[string]*ServerMember, initialMembersSize)
+		s.members[mID.Server] = members
+	}
+
+	member := members[mID.User]
+	if member == nil {
+		member = &ServerMember{ID: mID}
+		members[mID.User] = member
+		// todo: maybe add a type for map[string]*ServerMember with add() method?
+	}
 
 	mergeJSON[ServerMember](member, event.Data, event.Clear)
 }
