@@ -181,7 +181,7 @@ func (s *Session) addDefaultHandlers() {
 
 	s.AddHandler(func(s *Session, e *EventReady) {
 		s.State.populate(e)
-		s.selfbot = s.State.Self != nil && s.State.Self.Bot == nil
+		s.selfbot = s.State.self != nil && s.State.self.Bot == nil
 	})
 
 	// If state is disabled, none of these handlers are required
@@ -189,13 +189,13 @@ func (s *Session) addDefaultHandlers() {
 		return
 	}
 
-	if s.State.TrackUsers {
+	if s.State.TrackUsers() {
 		s.AddHandler(func(s *Session, e *EventUserPlatformWipe) {
 			s.State.platformWipe(e)
 		})
 	}
 
-	if s.State.TrackChannels {
+	if s.State.TrackChannels() {
 		s.AddHandler(func(s *Session, e *EventChannelCreate) {
 			s.State.createChannel(e)
 		})
@@ -213,7 +213,7 @@ func (s *Session) addDefaultHandlers() {
 		})
 	}
 
-	if s.State.TrackServers {
+	if s.State.TrackServers() {
 		s.AddHandler(func(s *Session, e *EventServerCreate) {
 			s.State.createServer(e)
 		})
@@ -227,7 +227,7 @@ func (s *Session) addDefaultHandlers() {
 		})
 	}
 
-	if s.State.TrackMembers {
+	if s.State.TrackMembers() {
 		s.AddHandler(func(s *Session, e *EventServerMemberJoin) {
 			s.State.createServerMember(e)
 		})
@@ -237,7 +237,7 @@ func (s *Session) addDefaultHandlers() {
 		})
 	}
 
-	if s.State.TrackEmojis {
+	if s.State.TrackEmojis() {
 		s.AddHandler(func(s *Session, e *EventEmojiCreate) {
 			s.State.createEmoji(e)
 		})
@@ -247,7 +247,7 @@ func (s *Session) addDefaultHandlers() {
 		})
 	}
 
-	if s.State.TrackWebhooks {
+	if s.State.TrackWebhooks() {
 		s.AddHandler(func(s *Session, e *EventWebhookCreate) {
 			s.State.createWebhook(e)
 		})
