@@ -167,7 +167,9 @@ func (ws *websocket) OnPing(_ *gws.Conn, payload []byte) {
 
 func (ws *websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 	handle(ws.Session, message.Data.Bytes())
-	message.Close()
+	if err := message.Close(); err != nil {
+		log.Printf("Message close: %s\n", err)
+	}
 }
 
 func init() {
@@ -193,8 +195,7 @@ type WebsocketChannelTyping struct {
 // Close the websocket.
 func (s *Session) Close() error {
 	s.Connected = false
-	s.Socket.WriteClose(1000, nil)
-	return nil
+	return s.Socket.WriteClose(1000, nil)
 }
 
 func handle(s *Session, raw []byte) {
