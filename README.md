@@ -43,7 +43,7 @@ either of the following commands to install the package:
 go get github.com/sentinelb51/revoltgo
 ```
 
-**Experimental release**
+**Latest release**
 ```bash
 go get github.com/sentinelb51/revoltgo@latest
 ```
@@ -86,6 +86,7 @@ session.Close()
 The following examples are available in the [examples](https://github.com/sentinelb51/revoltgo/tree/main/examples) directory:
 - **ping_bot.go**: A simple **bot** that responds to the `!ping` command.
 - **selfbot.go**: A simple **self-bot** that responds to the `!ping` command.
+- **uploads.go**: A simple **bot** that uploads the RevoltGo logo using the command "!upload"
 
 ## Resource usage
 The resource utilisation of the library depends on how many handlers are registered 
