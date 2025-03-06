@@ -20,6 +20,8 @@ import (
 	 - Follow the same hierarchical structure as the constants
 */
 
+// todo: maybe add AutumnTag enum for the tag parameter in the EndpointAutumn function?
+
 const (
 	apiURL = "https://api.revolt.chat"
 	cdnURL = "https://autumn.revolt.chat/%s"
