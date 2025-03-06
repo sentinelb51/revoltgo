@@ -4,9 +4,25 @@ import (
 	"fmt"
 )
 
+/*
+	This file contains all the endpoints used in this library for the Revolt API.
+	The naming scheme of the constants and methods has rules:
+
+	Constants:
+	 - Prefix with "URL"
+	 - Follow a hierarchical structure that build on top of each other
+	 - Use plural/singular forms to somewhat reflect the relationship between resources;
+		- For example, "EndpointChannelAckMessage" relates to a single Channel and a single Message object
+		- Conversely, "URLChannelsMessages" relates to multiple messages, but inherits "Channels" due to the hierarchy
+
+	Methods:
+	 - Prefix with "Endpoint"
+	 - Follow the same hierarchical structure as the constants
+*/
+
 const (
 	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://autumn.revolt.chat/%s/%s"
+	cdnURL = "https://autumn.revolt.chat/%s"
 
 	URLUsersUsername = apiURL + "/users/me/username"
 
@@ -34,11 +50,11 @@ const (
 	URLServersPermissions = URLServers + "/permissions/%s"
 
 	URLChannels                 = apiURL + "/channels/%s"
-	URLChannelAckMessage        = URLChannels + "/ack/%s"
+	URLChannelsAckMessage       = URLChannels + "/ack/%s"
 	URLChannelsMessages         = URLChannels + "/messages"
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
 	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
-	URLChannelMessageReaction   = URLChannelsMessageReactions + "/%s"
+	URLChannelsMessageReaction  = URLChannelsMessageReactions + "/%s"
 	URLChannelsTyping           = URLChannels + "/typing"
 	URLChannelsInvites          = URLChannels + "/invites"
 	URLChannelsInvite           = URLChannelsInvites + "/%s"
@@ -166,7 +182,7 @@ func EndpointChannels(cID string) string {
 }
 
 func EndpointChannelAckMessage(cID, mID string) string {
-	return fmt.Sprintf(URLChannelAckMessage, cID, mID)
+	return fmt.Sprintf(URLChannelsAckMessage, cID, mID)
 }
 
 func EndpointChannelsRecipients(cID, mID string) string {
@@ -182,7 +198,7 @@ func EndpointChannelsMessages(cID string) string {
 }
 
 func EndpointChannelsMessageReaction(cID, mID, rID string) string {
-	return fmt.Sprintf(URLChannelMessageReaction, cID, mID, rID)
+	return fmt.Sprintf(URLChannelsMessageReaction, cID, mID, rID)
 }
 
 func EndpointChannelsMessageReactions(cID, mID string) string {
@@ -241,8 +257,13 @@ func EndpointPush(action string) string {
 
 /* CDN endpoints */
 
-func EndpointAutumn(tag, id, size string) (url string) {
-	url = fmt.Sprintf(cdnURL, tag, id)
+func EndpointAutumn(tag string) (url string) {
+	url = fmt.Sprintf(cdnURL, tag)
+	return
+}
+
+func EndpointAutumnFile(tag, id, size string) (url string) {
+	url = fmt.Sprintf("%s/%s", cdnURL, tag, id)
 	if size != "" {
 		url += "?max_side=" + size
 	}
