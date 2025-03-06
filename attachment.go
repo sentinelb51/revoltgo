@@ -41,7 +41,7 @@ type Attachment struct {
 }
 
 func (a Attachment) URL(size string) string {
-	return EndpointAutumn(a.Tag, a.ID, size)
+	return EndpointAutumnFile(a.Tag, a.ID, size)
 }
 
 type AttachmentMetadata struct {

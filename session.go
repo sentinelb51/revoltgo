@@ -505,6 +505,17 @@ func (s *Session) WriteSocket(data any) error {
 	return s.Socket.WriteMessage(gws.OpcodeText, payload)
 }
 
+func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {
+
+	if file.Name == "" {
+		log.Printf("Warning: uploading a files without names may cause the media to not load on the client")
+	}
+
+	endpoint := EndpointAutumn("attachments")
+	err = s.request(http.MethodPost, endpoint, file, &attachment)
+	return
+}
+
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
 	endpoint := EndpointCustomEmoji(eID)
 	err = s.request(http.MethodGet, endpoint, nil, &emoji)

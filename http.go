@@ -5,12 +5,20 @@ import (
 	"fmt"
 	"github.com/goccy/go-json"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
 	"sync"
 	"time"
 )
+
+// todo: use http.NewRequestWithContext() for timeouts, maybe make it configurable via Session
+// if err = json.NewDecoder(response.Body).Decode(result); err != nil {
+//			return fmt.Errorf("request: json.Decode: %s", err)
+//		}
+// todo: decode unless 204, use result to show body
+// todo: revisit bufferPool usage
 
 var bufferPool = sync.Pool{
 	New: func() any {
@@ -27,36 +35,24 @@ func (s *Session) request(method, destination string, data, result any) error {
 		}
 	}
 
-	request, err := http.NewRequest(method, destination, http.NoBody)
+	reader, contentType, err := prepareRequestBody(data)
 	if err != nil {
 		return err
 	}
 
-	// This may be problematic for Cloudflare if blank user agents are blocked
-	request.Header.Set("User-Agent", s.UserAgent)
-	request.Header.Set("Content-Type", "application/json")
+	request, err := http.NewRequest(method, destination, reader)
+	if err != nil {
+		return err
+	}
 
-	// todo: maybe "pre-compile" headers?
+	// Set request headers
+	request.Header.Set("User-Agent", s.UserAgent)
+	request.Header.Set("Content-Type", contentType)
+
 	if s.Selfbot() {
 		request.Header.Set("X-Session-Token", s.Token)
 	} else {
 		request.Header.Set("X-Bot-Token", s.Token)
-	}
-
-	if data != nil {
-		buffer := bufferPool.Get().(*bytes.Buffer)
-
-		// Reset the buffer to clear any previous data
-		buffer.Reset()
-
-		// Return the buffer to the pool for reuse
-		defer bufferPool.Put(buffer)
-
-		if err = json.NewEncoder(buffer).Encode(data); err != nil {
-			return fmt.Errorf("request: json.Encode: %s", err)
-		}
-
-		request.Body = io.NopCloser(buffer)
 	}
 
 	response, err := s.HTTP.Do(request)
@@ -65,36 +61,77 @@ func (s *Session) request(method, destination string, data, result any) error {
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
+	if err = rl.update(response.Header); err != nil {
 		return err
 	}
 
-	err = rl.update(response.Header)
-	if err != nil {
-		return err
+	// Process response based on status code
+	return handleResponse(response.StatusCode, response.Body, result)
+}
+
+// prepareRequestBody prepares an appropriate request body and determines the content type
+func prepareRequestBody(body any) (io.Reader, string, error) {
+	if body == nil {
+		return http.NoBody, "application/json", nil
 	}
 
-	switch response.StatusCode {
-	case http.StatusOK:
-	case http.StatusCreated:
+	if data, ok := body.(*File); ok {
+		return prepareFileUpload(data)
+	}
+
+	return prepareJSONBody(body)
+}
+
+// prepareFileUpload prepares a multipart form for uploading a file
+func prepareFileUpload(file *File) (io.Reader, string, error) {
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreateFormFile("file", file.Name)
+	if err != nil {
+		return nil, "", fmt.Errorf("writer.CreateFormFile: %w", err)
+	}
+
+	if _, err = io.Copy(part, file.Reader); err != nil {
+		return nil, "", fmt.Errorf("io.Copy: %w", err)
+	}
+
+	if err = writer.Close(); err != nil {
+		return nil, "", fmt.Errorf("writer.Close: %w", err)
+	}
+
+	return body, writer.FormDataContentType(), nil
+}
+
+// prepareJSONBody encodes data as JSON
+func prepareJSONBody(data any) (io.Reader, string, error) {
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	buffer.Reset()
+
+	if err := json.NewEncoder(buffer).Encode(data); err != nil {
+		bufferPool.Put(buffer)
+		return nil, "", fmt.Errorf("json.Encode: %w", err)
+	}
+
+	reader := bytes.NewReader(buffer.Bytes())
+	bufferPool.Put(buffer)
+
+	return reader, "application/json", nil
+}
+
+// handleResponse processes the API response
+func handleResponse(statusCode int, body io.Reader, result any) error {
+	switch statusCode {
 	case http.StatusNoContent:
 		return nil
-	case http.StatusBadGateway:
-		// TODO: Implement re-tries with sequences
-		fallthrough
-	case http.StatusUnauthorized:
-		return fmt.Errorf("401: %s", body)
-	case http.StatusTooManyRequests:
-		fallthrough
-	default: // Error condition
-		return fmt.Errorf("bad status code %d: %s", response.StatusCode, body)
-	}
-
-	if result != nil {
-		if err = json.Unmarshal(body, result); err != nil {
-			return fmt.Errorf("request: json.Unmarshal: %s", err)
+	case http.StatusOK, http.StatusCreated:
+		if err := json.NewDecoder(body).Decode(result); err != nil {
+			return fmt.Errorf("handleResponse: %w", err)
 		}
+	default:
+		const limit = 1024
+		message, _ := io.ReadAll(io.LimitReader(body, limit))
+		return fmt.Errorf("bad status code %d: %s", statusCode, message)
 	}
 
 	return nil
