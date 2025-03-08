@@ -350,8 +350,9 @@ type EventChannelDelete struct {
 // EventServerMemberLeave is sent when a user leaves a server.
 type EventServerMemberLeave struct {
 	Event
-	ID   string `json:"id"`
-	User string `json:"user"`
+	ID     string `json:"id"`
+	User   string `json:"user"`
+	Reason string `json:"reason"`
 }
 
 // EventServerCreate is sent when a server is created (joined).
