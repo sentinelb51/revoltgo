@@ -24,7 +24,7 @@ import (
 
 const (
 	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://autumn.revolt.chat/%s"
+	cdnURL = "https://autumn.revolt.chat"
 
 	URLUsersUsername = apiURL + "/users/me/username"
 
@@ -267,7 +267,7 @@ func EndpointAutumn(tag string) (url string) {
 }
 
 func EndpointAutumnFile(tag, id, size string) (url string) {
-	url = fmt.Sprintf("%s/%s", cdnURL, tag, id)
+	url = fmt.Sprintf("%s/%s/%s", cdnURL, tag, id)
 	if size != "" {
 		url += "?max_side=" + size
 	}
