@@ -508,7 +508,7 @@ func (s *Session) WriteSocket(data any) error {
 func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {
 
 	if file.Name == "" {
-		log.Printf("Warning: uploading a files without names may cause the media to not load on the client")
+		log.Printf("Warning: uploading files without names may cause the media to not load on the client")
 	}
 
 	endpoint := EndpointAutumn("attachments")
