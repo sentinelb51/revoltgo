@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -58,9 +59,18 @@ type ServerMember struct {
 	Timeout  *time.Time        `json:"timeout"`
 }
 
+// Mention is a proxy function that calls ServerMember.ID.Mention().
+func (m ServerMember) Mention() string {
+	return m.ID.Mention()
+}
+
 type MemberCompositeID struct {
 	User   string `json:"user"`
 	Server string `json:"server"`
+}
+
+func (m MemberCompositeID) Mention() string {
+	return fmt.Sprintf("<@%s>", m.User)
 }
 
 type ServerMembers struct {

@@ -1,6 +1,9 @@
 package revoltgo
 
-import "github.com/goccy/go-json"
+import (
+	"fmt"
+	"github.com/goccy/go-json"
+)
 
 type UserRelationshipType string
 
@@ -45,6 +48,10 @@ type User struct {
 
 	// Whether this user is currently online
 	Online bool `json:"online"`
+}
+
+func (s *User) Mention() string {
+	return fmt.Sprintf("<@%s>", s.ID)
 }
 
 type UserProfile struct {
