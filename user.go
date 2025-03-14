@@ -31,7 +31,7 @@ type User struct {
 	// User's active status
 	Status *UserStatus `json:"status"`
 
-	// User's profile
+	// todo: potentially deprecated
 	Profile *UserProfile `json:"profile"`
 
 	// Enum of user flags
