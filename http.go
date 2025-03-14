@@ -238,13 +238,13 @@ type AccountDeleteConfirmData struct {
 }
 
 type UserEditData struct {
-	DisplayName string       `json:"display_name"`
-	Avatar      string       `json:"avatar"`
-	Status      *UserStatus  `json:"status"`
-	Profile     *UserProfile `json:"profile"`
-	Badges      int          `json:"badges"`
-	Flags       int          `json:"flags"`
-	Remove      []string     `json:"remove"`
+	DisplayName string       `json:"display_name,omitempty"`
+	Avatar      string       `json:"avatar,omitempty"`
+	Status      *UserStatus  `json:"status,omitempty"`
+	Profile     *UserProfile `json:"profile,omitempty"`
+	Badges      *int         `json:"badges,omitempty"`
+	Flags       *int         `json:"flags,omitempty"`
+	Remove      []string     `json:"remove,omitempty"`
 }
 
 type UsernameData struct {
@@ -303,11 +303,11 @@ type ServerChannelCreateData struct {
 }
 
 type ServerMemberEditData struct {
-	Nickname string    `json:"nickname"`
-	Avatar   string    `json:"avatar"`
-	Roles    []string  `json:"roles"`
-	Timeout  time.Time `json:"timeout"`
-	Remove   []string  `json:"remove"`
+	Nickname string    `json:"nickname,omitempty"`
+	Avatar   string    `json:"avatar,omitempty"`
+	Roles    []string  `json:"roles,omitempty"`
+	Timeout  time.Time `json:"timeout,omitempty"`
+	Remove   []string  `json:"remove,omitempty"`
 }
 
 type MessageEditData struct {
@@ -380,11 +380,11 @@ func (p ChannelMessagesParams) Encode() string {
 }
 
 type ServerRoleEditData struct {
-	Name   string   `json:"name"`
-	Colour string   `json:"colour"`
-	Hoist  bool     `json:"hoist"`
-	Rank   int      `json:"rank"`
-	Remove []string `json:"remove"`
+	Name   string   `json:"name,omitempty"`
+	Colour string   `json:"colour,omitempty"`
+	Hoist  *bool    `json:"hoist"`
+	Rank   *int     `json:"rank"`
+	Remove []string `json:"remove,omitempty"`
 }
 
 type ServerRoleCreateData struct {
@@ -405,7 +405,7 @@ type ChannelEditData struct {
 	Description string   `json:"description,omitempty"`
 	Owner       string   `json:"owner,omitempty"`
 	Icon        string   `json:"icon,omitempty"`
-	Nsfw        bool     `json:"nsfw,omitempty"`
+	NSFW        bool     `json:"nsfw,omitempty"`
 	Archived    bool     `json:"archived,omitempty"`
 	Remove      []string `json:"remove"`
 }
