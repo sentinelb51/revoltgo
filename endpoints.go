@@ -81,6 +81,8 @@ const (
 	URLSync = apiURL + "/sync/%s"
 
 	URLPush = apiURL + "/push/%s"
+
+	URLSafetyReport = apiURL + "/safety/report"
 )
 
 func EndpointOnboard(action string) string {
