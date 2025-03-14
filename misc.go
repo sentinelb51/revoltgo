@@ -1,5 +1,7 @@
 package revoltgo
 
+// todo: maybe move CompositeChannelID to channel.go?
+
 type CompositeChannelID struct {
 	Channel string `json:"channel"`
 	User    string `json:"user"`
