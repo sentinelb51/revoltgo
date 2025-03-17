@@ -15,7 +15,7 @@ import (
 
 // todo: use http.NewRequestWithContext() for timeouts, maybe make it configurable via Session
 // if err = json.NewDecoder(response.Body).Decode(result); err != nil {
-//			return fmt.Errorf("request: json.Decode: %s", err)
+//			return fmt.Errorf("Request: json.Decode: %s", err)
 //		}
 // todo: decode unless 204, use result to show body
 // todo: revisit bufferPool usage
@@ -26,7 +26,15 @@ var bufferPool = sync.Pool{
 	},
 }
 
-func (s *Session) request(method, destination string, data, result any) error {
+/*
+Request sends a JSON Request with "method" to a destination URL
+- "result" will be used to decode the response into, and
+- "data" is the Request body which wil be encoded as JSON
+
+- If the "data" is a *File, it will be uploaded as a multipart form
+This function automatically handles rate-limiting and response status codes
+*/
+func (s *Session) Request(method, destination string, data, result any) error {
 	rl := s.Ratelimiter.get(method, destination)
 
 	if !rl.resetAfter.IsZero() {
@@ -45,7 +53,7 @@ func (s *Session) request(method, destination string, data, result any) error {
 		return err
 	}
 
-	// Set request headers
+	// Set Request headers
 	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", contentType)
 
@@ -69,7 +77,7 @@ func (s *Session) request(method, destination string, data, result any) error {
 	return handleResponse(response.StatusCode, response.Body, result)
 }
 
-// prepareRequestBody prepares an appropriate request body and determines the content type
+// prepareRequestBody prepares an appropriate Request body and determines the content type
 func prepareRequestBody(body any) (io.Reader, string, error) {
 	if body == nil {
 		return http.NoBody, "application/json", nil
