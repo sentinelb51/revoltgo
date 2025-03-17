@@ -1,8 +1,6 @@
 package revoltgo
 
-import (
-	"fmt"
-)
+import "fmt"
 
 /*
 	This file contains all the endpoints used in this library for the Revolt API.
