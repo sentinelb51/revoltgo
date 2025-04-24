@@ -18,11 +18,14 @@ import "fmt"
 	 - Follow the same hierarchical structure as the constants
 */
 
+// todo: fetch urls from apiURL
+// also add methods to update base URLs, or maybe do that in s.request() method with string builder?
+
 // todo: maybe add AutumnTag enum for the tag parameter in the EndpointAutumn function?
 
 const (
 	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://autumn.revolt.chat"
+	cdnURL = "https://cdn.revoltusercontent.com"
 
 	URLUsersUsername = apiURL + "/users/me/username"
 
