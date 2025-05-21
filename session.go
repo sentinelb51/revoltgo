@@ -1003,6 +1003,7 @@ func (s *Session) DirectMessages() (channels []*Channel, err error) {
 }
 
 // DirectMessageCreate opens a direct message channel with a user
+// Will return an error "MissingPermission" "SendMessage" if you are not friends or blocked
 func (s *Session) DirectMessageCreate(uID string) (channel *Channel, err error) {
 	endpoint := EndpointUsersDM(uID)
 	err = s.Request(http.MethodGet, endpoint, nil, &channel)
