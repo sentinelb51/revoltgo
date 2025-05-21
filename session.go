@@ -470,8 +470,8 @@ func (s *Session) Open() (err error) {
 	}
 
 	// Determine the websocket URL
-	var query RevoltAPI
-	err = s.Request(http.MethodGet, apiURL, nil, &query)
+	var query RootData
+	err = s.Request(http.MethodGet, "", nil, &query)
 	if err != nil {
 		return
 	}
@@ -502,6 +502,7 @@ func (s *Session) WriteSocket(data any) error {
 		return err
 	}
 
+	// Should we use WriteAsync?
 	return s.Socket.WriteMessage(gws.OpcodeText, payload)
 }
 

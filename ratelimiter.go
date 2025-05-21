@@ -45,9 +45,8 @@ func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
 	// Split to remove query parameters
 	endpoint = strings.SplitN(endpoint, "?", 2)[0]
 
-	// To reduce key size, we truncate the base URL from the endpoint
 	// The HTTP method is prepended to the endpoint as ratelimits may differ between methods
-	key := method + endpoint[len(apiURL):]
+	key := method + endpoint
 
 	r.Lock()
 	defer r.Unlock()

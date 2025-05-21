@@ -1,6 +1,11 @@
 package revoltgo
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"net/url"
+	"strings"
+)
 
 /*
 	This file contains all the endpoints used in this library for the Revolt API.
@@ -15,21 +20,57 @@ import "fmt"
 
 	Methods:
 	 - Prefix with "Endpoint"
+	 - Used to generate a URL for a specific resource
 	 - Follow the same hierarchical structure as the constants
 */
 
-// todo: fetch urls from apiURL
-// also add methods to update base URLs, or maybe do that in s.request() method with string builder?
-
-// todo: maybe add AutumnTag enum for the tag parameter in the EndpointAutumn function?
-
-const (
+/* These base URLs are used by the Session.Request method */
+var (
 	apiURL = "https://api.revolt.chat"
 	cdnURL = "https://cdn.revoltusercontent.com/%s"
+)
 
-	URLUsersUsername = apiURL + "/users/me/username"
+// SetBaseURL sets the base URL for the API.
+// Make sure to call this before opening any sessions, and not during an active connection.
+func SetBaseURL(newURL string) error {
 
-	URLUsers              = apiURL + "/users/%s"
+	// Must not end with a slash
+	newURL = strings.TrimSuffix(newURL, "/") // Must not end with a slash
+
+	URL, err := url.Parse(newURL)
+	if err != nil {
+		return err
+	}
+
+	if URL.Scheme != "https" {
+		return fmt.Errorf("base URL must use HTTPS")
+	}
+
+	// Must not have a path
+	if URL.Path != "" {
+		return fmt.Errorf("base URL must not have a path (trailing /)")
+	}
+
+	// Must not have a host
+	if URL.Host == "" {
+		return fmt.Errorf("base URL must have a host")
+	}
+
+	// Simple check to see if domain and TLD are present
+	if strings.Count(URL.Host, ".") < 1 {
+		return fmt.Errorf("base URL must have a domain and TLD")
+	}
+
+	apiURL = URL.String()
+	log.Printf("Base URL set to %s", apiURL)
+
+	return nil
+}
+
+const (
+	URLUsersUsername = "/users/me/username"
+
+	URLUsers              = "/users/%s"
 	URLUsersMutual        = URLUsers + "/mutual"
 	URLUsersDM            = URLUsers + "/dm"
 	URLUsersFlags         = URLUsers + "/flags"
@@ -40,7 +81,7 @@ const (
 
 	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
 
-	URLServers         = apiURL + "/servers/%s"
+	URLServers         = "/servers/%s"
 	URLServersAck      = URLServers + "/ack"
 	URLServersChannels = URLServers + "/channels"
 	URLServersMembers  = URLServers + "/members"
@@ -52,7 +93,7 @@ const (
 
 	URLServersPermissions = URLServers + "/permissions/%s"
 
-	URLChannels                 = apiURL + "/channels/%s"
+	URLChannels                 = "/channels/%s"
 	URLChannelsAckMessage       = URLChannels + "/ack/%s"
 	URLChannelsMessages         = URLChannels + "/messages"
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
@@ -65,25 +106,25 @@ const (
 	URLChannelsRecipients       = URLChannels + "/recipients/%s"
 	URLChannelsWebhooks         = URLChannels + "/webhooks"
 
-	URLInvites = apiURL + "/invites/%s"
+	URLInvites = "/invites/%s"
 
-	URLBots       = apiURL + "/bots/%s"
+	URLBots       = "/bots/%s"
 	URLBotsInvite = URLBots + "/invite"
 
-	URLAuth         = apiURL + "/auth"
+	URLAuth         = "/auth"
 	URLAuthAccount  = URLAuth + "/account/%s"
 	URLAuthSessions = URLAuth + "/session/%s"
 
-	URLCustom      = apiURL + "/custom"
+	URLCustom      = "/custom"
 	URLCustomEmoji = URLCustom + "/emoji/%s"
 
-	URLOnboard = apiURL + "/onboard/%s"
+	URLOnboard = "/onboard/%s"
 
-	URLSync = apiURL + "/sync/%s"
+	URLSync = "/sync/%s"
 
-	URLPush = apiURL + "/push/%s"
+	URLPush = "/push/%s"
 
-	URLSafetyReport = apiURL + "/safety/report"
+	URLSafetyReport = "/safety/report"
 )
 
 func EndpointOnboard(action string) string {

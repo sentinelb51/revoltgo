@@ -35,7 +35,13 @@ Request sends a JSON Request with "method" to a destination URL
 This function automatically handles rate-limiting and response status codes
 */
 func (s *Session) Request(method, destination string, data, result any) error {
+
+	// Handle ratelimits before appending the API URL to reduce key size
 	rl := s.Ratelimiter.get(method, destination)
+
+	// This essentially locks the Request method to API endpoints only
+	// This also improves security because you cannot make requests to external resources, leaking HTTP headers
+	destination = apiURL + destination
 
 	if !rl.resetAfter.IsZero() {
 		if wait := rl.delay(); wait > 0 {
@@ -53,7 +59,6 @@ func (s *Session) Request(method, destination string, data, result any) error {
 		return err
 	}
 
-	// Set Request headers
 	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", contentType)
 
@@ -83,8 +88,8 @@ func prepareRequestBody(body any) (io.Reader, string, error) {
 		return http.NoBody, "application/json", nil
 	}
 
-	if data, ok := body.(*File); ok {
-		return prepareFileUpload(data)
+	if file, ok := body.(*File); ok {
+		return prepareFileUpload(file)
 	}
 
 	return prepareJSONBody(body)
@@ -145,7 +150,7 @@ func handleResponse(statusCode int, body io.Reader, result any) error {
 	return nil
 }
 
-type RevoltAPI struct {
+type RootData struct {
 	Revolt   string `json:"revolt"`
 	Features struct {
 		Captcha struct {
