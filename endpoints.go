@@ -25,7 +25,7 @@ import "fmt"
 
 const (
 	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://cdn.revoltusercontent.com"
+	cdnURL = "https://cdn.revoltusercontent.com/%s"
 
 	URLUsersUsername = apiURL + "/users/me/username"
 
