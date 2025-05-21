@@ -1,6 +1,9 @@
 package revoltgo
 
-import "github.com/goccy/go-json"
+import (
+	"fmt"
+	"github.com/goccy/go-json"
+)
 
 type UserRelationshipType string
 
@@ -28,7 +31,7 @@ type User struct {
 	// User's active status
 	Status *UserStatus `json:"status"`
 
-	// User's profile
+	// todo: potentially deprecated
 	Profile *UserProfile `json:"profile"`
 
 	// Enum of user flags
@@ -47,9 +50,13 @@ type User struct {
 	Online bool `json:"online"`
 }
 
+func (s *User) Mention() string {
+	return fmt.Sprintf("<@%s>", s.ID)
+}
+
 type UserProfile struct {
-	Content    string      `json:"content"`
-	Background *Attachment `json:"background"`
+	Content    string      `json:"content,omitempty"`
+	Background *Attachment `json:"background,omitempty"`
 }
 
 type UserRelations struct {
@@ -57,9 +64,19 @@ type UserRelations struct {
 	Status UserRelationshipType `json:"status"`
 }
 
+type UserStatusPresence string
+
+const (
+	UserStatusPresenceOnline    UserStatusPresence = "Online"
+	UserStatusPresenceIdle      UserStatusPresence = "Idle"
+	UserStatusPresenceFocus     UserStatusPresence = "Focus"
+	UserStatusPresenceBusy      UserStatusPresence = "Busy"
+	UserStatusPresenceInvisible UserStatusPresence = "Invisible"
+)
+
 type UserStatus struct {
-	Text     string `json:"text"`
-	Presence string `json:"presence"`
+	Text     string             `json:"text,omitempty"`
+	Presence UserStatusPresence `json:"presence"`
 }
 
 type BotInformation struct {

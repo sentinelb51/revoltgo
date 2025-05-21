@@ -1,8 +1,6 @@
 package revoltgo
 
-import (
-	"fmt"
-)
+import "fmt"
 
 /*
 	This file contains all the endpoints used in this library for the Revolt API.
@@ -20,11 +18,14 @@ import (
 	 - Follow the same hierarchical structure as the constants
 */
 
+// todo: fetch urls from apiURL
+// also add methods to update base URLs, or maybe do that in s.request() method with string builder?
+
 // todo: maybe add AutumnTag enum for the tag parameter in the EndpointAutumn function?
 
 const (
 	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://autumn.revolt.chat/%s"
+	cdnURL = "https://cdn.revoltusercontent.com"
 
 	URLUsersUsername = apiURL + "/users/me/username"
 
@@ -81,6 +82,8 @@ const (
 	URLSync = apiURL + "/sync/%s"
 
 	URLPush = apiURL + "/push/%s"
+
+	URLSafetyReport = apiURL + "/safety/report"
 )
 
 func EndpointOnboard(action string) string {
@@ -265,7 +268,7 @@ func EndpointAutumn(tag string) (url string) {
 }
 
 func EndpointAutumnFile(tag, id, size string) (url string) {
-	url = fmt.Sprintf("%s/%s", cdnURL, tag, id)
+	url = fmt.Sprintf("%s/%s/%s", cdnURL, tag, id)
 	if size != "" {
 		url += "?max_side=" + size
 	}

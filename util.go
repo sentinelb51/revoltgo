@@ -8,6 +8,11 @@ import (
 	"unicode"
 )
 
+// Ptr is a quality-of-life function to quickly return a pointer to any value
+func Ptr[T any](v T) *T {
+	return &v
+}
+
 // mergeJSON deserializes the object into JSON, then merges the data into the object.
 // It will also remove any fields specified in the clear map.
 func mergeJSON[T any](object *T, data json.RawMessage, clear []string) {

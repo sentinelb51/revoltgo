@@ -53,10 +53,8 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 }
 
 type State struct {
-	mu sync.RWMutex // Global mutex for race safety
-
-	// The current user, also present in users
-	self *User
+	mu   sync.RWMutex // Global mutex for race safety
+	self *User        // The current user, also present in users
 
 	/* Caches */
 	users    map[string]*User

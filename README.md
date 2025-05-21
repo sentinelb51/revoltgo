@@ -113,3 +113,15 @@ Standalone, with state enabled, the library uses:
 The memory usage is expected to grow with state enabled as more objects get cached.
 ### Linux platforms
 Not tested, but it's expected to be around the same.
+
+## License: BSD 3-Clause
+RevoltGo is licensed under the BSD 3-Clause License. What this means is that:
+
+#### You are allowed to:
++ Modify the code, and distribute your own versions.
++ Use this library in personal, open-source, or commercial projects.
++ Include it in proprietary software, without making your project open-source.
+
+#### You are not allowed to:
+- Remove or alter the license and copyright notice.
+- Use the name "RevoltGo" or its contributors for endorsements without permission.
