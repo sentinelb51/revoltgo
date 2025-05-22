@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -39,9 +40,12 @@ func (s *Session) Request(method, destination string, data, result any) error {
 	// Handle ratelimits before appending the API URL to reduce key size
 	rl := s.Ratelimiter.get(method, destination)
 
-	// This essentially locks the Request method to API endpoints only
-	// This also improves security because you cannot make requests to external resources, leaking HTTP headers
-	destination = apiURL + destination
+	// todo: kotlin.Unit's type SessionRequest struct approach
+	if !strings.HasPrefix(destination, cdnURL[:len(cdnURL)-3]) {
+		// This essentially locks the Request method to API endpoints only
+		// This also improves security because you cannot make requests to external resources, leaking HTTP headers
+		destination = apiURL + destination
+	}
 
 	if !rl.resetAfter.IsZero() {
 		if wait := rl.delay(); wait > 0 {
