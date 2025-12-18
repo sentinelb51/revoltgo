@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	"github.com/sentinelb51/revoltgo"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/sentinelb51/revoltgo"
 )
 
 func main() {

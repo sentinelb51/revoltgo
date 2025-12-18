@@ -3,10 +3,11 @@ package revoltgo
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/goccy/go-json"
-	"github.com/lxzan/gws"
 	"log"
 	"time"
+
+	"github.com/goccy/go-json"
+	"github.com/lxzan/gws"
 )
 
 type WebsocketMessageType string

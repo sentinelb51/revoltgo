@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+
 	"github.com/goccy/go-json"
 )
 

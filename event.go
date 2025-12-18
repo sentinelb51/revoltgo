@@ -1,8 +1,9 @@
 package revoltgo
 
 import (
-	"github.com/goccy/go-json"
 	"log"
+
+	"github.com/goccy/go-json"
 )
 
 type Event struct {

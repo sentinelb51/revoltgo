@@ -3,7 +3,6 @@ package revoltgo
 import (
 	"bytes"
 	"fmt"
-	"github.com/goccy/go-json"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/goccy/go-json"
 )
 
 // todo: use http.NewRequestWithContext() for timeouts, maybe make it configurable via Session

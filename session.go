@@ -2,14 +2,15 @@ package revoltgo
 
 import (
 	"fmt"
-	"github.com/goccy/go-json"
-	"github.com/lxzan/gws"
 	"log"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/goccy/go-json"
+	"github.com/lxzan/gws"
 )
 
 func New(token string) *Session {

@@ -1,11 +1,12 @@
 package revoltgo
 
 import (
-	"github.com/goccy/go-json"
 	"log"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/goccy/go-json"
 )
 
 // Ptr is a quality-of-life function to quickly return a pointer to any value

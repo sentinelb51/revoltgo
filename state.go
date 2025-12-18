@@ -1,10 +1,11 @@
 package revoltgo
 
 import (
-	"github.com/oklog/ulid/v2"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 const initialMembersSize = 50
