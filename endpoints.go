@@ -3,8 +3,6 @@ package revoltgo
 import (
 	"fmt"
 	"log"
-	"net/url"
-	"strings"
 )
 
 /*
@@ -26,44 +24,40 @@ import (
 
 /* These base URLs are used by the Session.Request method */
 var (
-	apiURL = "https://api.revolt.chat"
-	cdnURL = "https://cdn.revoltusercontent.com/%s"
+	apiURL = "https://api.stoat.chat"
+	cdnURL = "https://cdn.stoatusercontent.com"
+
+	parsedAPIBase = mustParseURL(apiURL)
+	parsedCDNBase = mustParseURL(cdnURL)
 )
 
 // SetBaseURL sets the base URL for the API.
-// Make sure to call this before opening any sessions, and not during an active connection.
+// Call before opening any sessions; this is not mutex-protected.
 func SetBaseURL(newURL string) error {
-
-	// Must not end with a slash
-	newURL = strings.TrimSuffix(newURL, "/") // Must not end with a slash
-
-	URL, err := url.Parse(newURL)
+	u, err := validateBaseURL(newURL)
 	if err != nil {
 		return err
 	}
 
-	if URL.Scheme != "https" {
-		return fmt.Errorf("base URL must use HTTPS")
-	}
+	apiURL = u.String()
+	parsedAPIBase = u
 
-	// Must not have a path
-	if URL.Path != "" {
-		return fmt.Errorf("base URL must not have a path (trailing /)")
-	}
-
-	// Must not have a host
-	if URL.Host == "" {
-		return fmt.Errorf("base URL must have a host")
-	}
-
-	// Simple check to see if domain and TLD are present
-	if strings.Count(URL.Host, ".") < 1 {
-		return fmt.Errorf("base URL must have a domain and TLD")
-	}
-
-	apiURL = URL.String()
 	log.Printf("Base URL set to %s", apiURL)
+	return nil
+}
 
+// SetCDNURL sets the base URL for the CDN (Autumn).
+// Call before opening any sessions; this is not mutex-protected.
+func SetCDNURL(newURL string) error {
+	u, err := validateBaseURL(newURL)
+	if err != nil {
+		return err
+	}
+
+	cdnURL = u.String()
+	parsedCDNBase = u
+
+	log.Printf("CDN URL set to %s", cdnURL)
 	return nil
 }
 
@@ -304,7 +298,7 @@ func EndpointPush(action string) string {
 /* CDN endpoints */
 
 func EndpointAutumn(tag string) (url string) {
-	url = fmt.Sprintf(cdnURL, tag)
+	url = fmt.Sprintf("%s/%s", cdnURL, tag)
 	return
 }
 

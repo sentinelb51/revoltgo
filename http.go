@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -9,23 +10,39 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
 )
 
-// todo: use http.NewRequestWithContext() for timeouts, maybe make it configurable via Session
-// if err = json.NewDecoder(response.Body).Decode(result); err != nil {
-//			return fmt.Errorf("Request: json.Decode: %s", err)
-//		}
-// todo: decode unless 204, use result to show body
-// todo: revisit bufferPool usage
+// resolveDestination converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
+// It also allows absolute URLs targeting the CDN. Otherwise, it rejects the URL.
+func resolveDestination(destination string) (string, error) {
+	destination = strings.TrimSpace(destination)
+	if destination == "" {
+		return "", fmt.Errorf("destination empty")
+	}
 
-var bufferPool = sync.Pool{
-	New: func() any {
-		return new(bytes.Buffer)
-	},
+	u, err := url.Parse(destination)
+	if err != nil {
+		return "", fmt.Errorf("parse(destination): %w", err)
+	}
+
+	// Reject scheme-less URLs (//host/path) and any provided scheme.
+	if u.Scheme != "" || u.Host != "" {
+		if sameHostname(u, parsedAPIBase) || sameHostname(u, parsedCDNBase) {
+			return u.String(), nil
+		}
+		return "", fmt.Errorf("refusing external URL host %q", u.Host)
+	}
+
+	// Path-only (or query/fragment) reference.
+	return parsedAPIBase.ResolveReference(u).String(), nil
+}
+
+func sameHostname(a, b *url.URL) bool {
+	// Host may include port; compare case-insensitively.
+	return strings.EqualFold(a.Host, b.Host)
 }
 
 /*
@@ -41,11 +58,9 @@ func (s *Session) Request(method, destination string, data, result any) error {
 	// Handle ratelimits before appending the API URL to reduce key size
 	rl := s.Ratelimiter.get(method, destination)
 
-	// todo: kotlin.Unit's type SessionRequest struct approach
-	if !strings.HasPrefix(destination, cdnURL[:len(cdnURL)-3]) {
-		// This essentially locks the Request method to API endpoints only
-		// This also improves security because you cannot make requests to external resources, leaking HTTP headers
-		destination = apiURL + destination
+	destination, err := resolveDestination(destination)
+	if err != nil {
+		return err
 	}
 
 	if !rl.resetAfter.IsZero() {
@@ -59,7 +74,7 @@ func (s *Session) Request(method, destination string, data, result any) error {
 		return err
 	}
 
-	request, err := http.NewRequest(method, destination, reader)
+	request, err := http.NewRequestWithContext(context.Background(), method, destination, reader)
 	if err != nil {
 		return err
 	}
@@ -122,19 +137,13 @@ func prepareFileUpload(file *File) (io.Reader, string, error) {
 }
 
 // prepareJSONBody encodes data as JSON
-func prepareJSONBody(data any) (io.Reader, string, error) {
-	buffer := bufferPool.Get().(*bytes.Buffer)
-	buffer.Reset()
-
-	if err := json.NewEncoder(buffer).Encode(data); err != nil {
-		bufferPool.Put(buffer)
-		return nil, "", fmt.Errorf("json.Encode: %w", err)
+func prepareJSONBody(body any) (io.Reader, string, error) {
+	data, err := json.Marshal(body)
+	if err != nil {
+		return nil, "", fmt.Errorf("json.Marshal: %w", err)
 	}
 
-	reader := bytes.NewReader(buffer.Bytes())
-	bufferPool.Put(buffer)
-
-	return reader, "application/json", nil
+	return bytes.NewReader(data), "application/json", nil
 }
 
 // handleResponse processes the API response
@@ -143,8 +152,10 @@ func handleResponse(statusCode int, body io.Reader, result any) error {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusOK, http.StatusCreated:
-		if err := json.NewDecoder(body).Decode(result); err != nil {
-			return fmt.Errorf("handleResponse: %w", err)
+		if result != nil {
+			if err := json.NewDecoder(body).Decode(result); err != nil {
+				return fmt.Errorf("handleResponse: %w", err)
+			}
 		}
 	default:
 		const limit = 1024

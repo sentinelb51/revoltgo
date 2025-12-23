@@ -472,7 +472,7 @@ func (s *Session) Open() (err error) {
 
 	// Determine the websocket URL
 	var query RootData
-	err = s.Request(http.MethodGet, "", nil, &query)
+	err = s.Request(http.MethodGet, apiURL, nil, &query)
 	if err != nil {
 		return
 	}

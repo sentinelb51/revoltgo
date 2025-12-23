@@ -1,7 +1,9 @@
 package revoltgo
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 	"unicode"
@@ -137,4 +139,39 @@ func sliceRemoveIndex[T any](slice []T, index int) []T {
 type UpdateTuple struct {
 	Timestamp time.Time       `json:"0"`
 	Value     json.RawMessage `json:"1"` // Enjoy using this.
+}
+
+func mustParseURL(raw string) *url.URL {
+	u, err := url.Parse(raw)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+func validateBaseURL(newURL string) (u *url.URL, err error) {
+	newURL = strings.TrimSuffix(strings.TrimSpace(newURL), "/")
+
+	u, err = url.Parse(newURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base URL: %w", err)
+	}
+
+	if u.Scheme != "https" {
+		return nil, fmt.Errorf("base URL must use HTTPS")
+	}
+
+	if u.Path != "" {
+		return nil, fmt.Errorf("base URL must not have a path (trailing /)")
+	}
+
+	if u.Host == "" {
+		return nil, fmt.Errorf("base URL must have a host")
+	}
+
+	if strings.Count(u.Hostname(), ".") < 1 {
+		return nil, fmt.Errorf("base URL must have a domain and TLD")
+	}
+
+	return
 }
