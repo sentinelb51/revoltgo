@@ -743,16 +743,15 @@ func (s *Session) PermissionsSet(sID, rID string, data PermissionAD) (err error)
 	return
 }
 
-func (s *Session) ChannelPermissionsSet(sID, cID string, data PermissionAD) (err error) {
-	endpoint := EndpointChannelsPermissions(sID, cID)
-	err = s.Request(http.MethodPut, endpoint, data, nil)
-	return
+// ChannelPermissionsSet sets permissions for the specified role in this channel.
+func (s *Session) ChannelPermissionsSet(cID, rID string, data PermissionAD) (err error) {
+	endpoint := EndpointChannelsPermissions(cID, rID)
+	return s.Request(http.MethodPut, endpoint, data, nil)
 }
 
-func (s *Session) ChannelPermissionsSetDefault(sID string, data PermissionAD) (err error) {
-	endpoint := EndpointChannelsPermissions(sID, "default")
-	err = s.Request(http.MethodPut, endpoint, data, nil)
-	return
+// ChannelPermissionsSetDefault sets permissions for the default role in this channel.
+func (s *Session) ChannelPermissionsSetDefault(cID string, data PermissionAD) (err error) {
+	return s.ChannelPermissionsSet(cID, "default", data)
 }
 
 // PermissionsSetDefault sets the permissions of a role in a server

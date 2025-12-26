@@ -185,8 +185,8 @@ func EndpointServersChannels(sID string) string {
 	return fmt.Sprintf(URLServersChannels, sID)
 }
 
-func EndpointChannelsPermissions(sID, cID string) string {
-	return fmt.Sprintf(URLChannelsPermissions, sID, cID)
+func EndpointChannelsPermissions(cID, rID string) string {
+	return fmt.Sprintf(URLChannelsPermissions, cID, rID)
 }
 
 func EndpointServersMembers(sID string) string {
