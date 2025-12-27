@@ -47,3 +47,11 @@ type ChannelFetchedMessages struct {
 	Users    []*User         `json:"users"`
 	Members  []*ServerMember `json:"members"`
 }
+
+type ChannelJoinCall struct {
+	// Token for authenticating with the voice server
+	Token string `json:"token"`
+
+	// URL of the livekit server to connect to
+	URL string `json:"url"`
+}

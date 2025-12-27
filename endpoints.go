@@ -89,6 +89,8 @@ const (
 
 	URLChannels                 = "/channels/%s"
 	URLChannelsAckMessage       = URLChannels + "/ack/%s"
+	URLChannelsJoinCall         = URLChannels + "/join_call"
+	URLChannelsEndRing          = URLChannels + "/end_ring/%s"
 	URLChannelsMessages         = URLChannels + "/messages"
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
 	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
@@ -219,6 +221,14 @@ func EndpointServersRole(sID, rID string) string {
 
 func EndpointChannels(cID string) string {
 	return fmt.Sprintf(URLChannels, cID)
+}
+
+func EndpointChannelsJoinCall(cID string) string {
+	return fmt.Sprintf(URLChannelsJoinCall, cID)
+}
+
+func EndpointChannelsEndRing(cID, uID string) string {
+	return fmt.Sprintf(URLChannelsEndRing, cID, uID)
 }
 
 func EndpointChannelAckMessage(cID, mID string) string {

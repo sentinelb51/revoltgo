@@ -347,7 +347,20 @@ type MessageEditData struct {
 type EmojiCreateData struct {
 	Name   string       `json:"name"`
 	Parent *EmojiParent `json:"parent"`
-	Nsfw   bool         `json:"nsfw"`
+	NSFW   bool         `json:"nsfw"`
+}
+
+type ChannelJoinCallData struct {
+	// Name of the node to join
+	Node string `json:"node,omitempty"`
+
+	// Whether to force disconnect any other existing voice connections
+	// Useful for disconnecting on another device and joining on a new one
+	ForceDisconnect bool `json:"force_disconnect,omitempty"`
+
+	// Users which should be notified of the call starting
+	// Only used when the user is the first one connected.
+	Recipients []string `json:"recipients,omitempty"`
 }
 
 type ChannelMessagesParamsSortType string

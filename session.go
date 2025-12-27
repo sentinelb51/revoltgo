@@ -828,8 +828,22 @@ func (s *Session) ChannelMessageReactionDelete(cID, mID, eID string) (err error)
 // ChannelMessageReactionClear clears all reactions on a message
 func (s *Session) ChannelMessageReactionClear(cID, mID string) (err error) {
 	endpoint := EndpointChannelsMessageReactions(cID, mID)
-	err = s.Request(http.MethodDelete, endpoint, nil, nil)
+	return s.Request(http.MethodDelete, endpoint, nil, nil)
+}
+
+// ChannelsJoinCall asks the voice server for a token to join the call.
+func (s *Session) ChannelsJoinCall(cID string, data ChannelJoinCallData) (call ChannelJoinCall, err error) {
+	endpoint := EndpointChannelsJoinCall(cID)
+	err = s.Request(http.MethodPost, endpoint, data, &call)
 	return
+}
+
+// ChannelsEndRing stops ringing a user in a DM if a call exists; returns NotConnected otherwise.
+// Only works within DMs and groups; returns NoEffect in servers.
+// Returns NotFound if the user is not in the DM/group channel.
+func (s *Session) ChannelsEndRing(cID, uID string) error {
+	endpoint := EndpointChannelsEndRing(cID, uID)
+	return s.Request(http.MethodPut, endpoint, nil, nil)
 }
 
 func (s *Session) ServerChannelCreate(sID string, data ServerChannelCreateData) (channel *Channel, err error) {
