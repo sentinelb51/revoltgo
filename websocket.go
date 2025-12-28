@@ -201,6 +201,10 @@ func (s *Session) Close() error {
 
 func handle(s *Session, raw []byte) {
 
+	if s.DebugWS {
+		log.Printf("[WS]: %s\n", string(raw))
+	}
+
 	eventType, err := eventTypeFromJSON(raw)
 	if err != nil {
 		log.Printf("event type detection failed: %s\n", err)

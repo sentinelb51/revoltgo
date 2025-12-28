@@ -93,6 +93,12 @@ type Session struct {
 	// Last time a ping was received
 	LastHeartbeatAck time.Time
 
+	// Enables debug logs for websocket messages
+	DebugWS bool
+
+	// Enables debug logs for HTTP requests
+	DebugHTTP bool
+
 	/* Private fields */
 
 	// Whether the session is a user or bot
