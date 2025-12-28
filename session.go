@@ -15,14 +15,11 @@ import (
 
 func New(token string) *Session {
 	session := &Session{
-		ShouldReconnect:   true,
-		Token:             token,
-		State:             newState(),
-		Ratelimiter:       newRatelimiter(),
-		HeartbeatInterval: 30 * time.Second,
-		ReconnectInterval: 5 * time.Second,
-		UserAgent:         fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
-		HTTP:              &http.Client{Timeout: 10 * time.Second},
+		Token:       token,
+		State:       newState(),
+		Ratelimiter: newRatelimiter(),
+		UserAgent:   fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
+		HTTP:        &http.Client{Timeout: 10 * time.Second},
 	}
 
 	session.addDefaultHandlers()
@@ -45,64 +42,21 @@ func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
 	return session, mfa, err
 }
 
+// todo: NewWithLoginExpress which automatically saves the token to a file
+
 // Session represents a connection to the Revolt API.
 type Session struct {
-
-	// Authorisation token
-	Token string
-
-	// The websocket connection
-	Socket *gws.Conn
-
-	// HTTP client used for the REST API
-	HTTP *http.Client
-
-	// Ratelimiter for the REST API
-	Ratelimiter *Ratelimiter
-
-	// State is a central store for all data received from the API
-	State *State
-
-	// The user agent used for REST APIs
-	UserAgent string
-
-	// Indicates whether the websocket is connected
-	Connected bool
-
-	// Whether the websocket should reconnect when the connection drops
-	ShouldReconnect bool
-
-	// Defines a custom compression algorithm for the websocket
-	// By default, compression is enabled at the fastest level (1) for >=512 byte payloads
-	// To enable, set gws.PermessageDeflate.Enabled true
-	CustomCompression *gws.PermessageDeflate
-
-	// Interval between sending heartbeats. Lower values update the latency faster
-	// Values too high (~100 seconds) may cause Cloudflare to drop the connection
-	HeartbeatInterval time.Duration
-
-	// Heartbeat counter
-	HeartbeatCount int64
-
-	// Interval between reconnecting, if connection fails
-	ReconnectInterval time.Duration
-
-	// Last time a ping was sent
-	LastHeartbeatSent time.Time
-
-	// Last time a ping was received
-	LastHeartbeatAck time.Time
-
-	// Enables debug logs for websocket messages
-	DebugWS bool
-
-	// Enables debug logs for HTTP requests
-	DebugHTTP bool
+	Token       string       // Authorisation token
+	WS          *Websocket   // The Websocket connection
+	HTTP        *http.Client // HTTP client used for the REST API
+	Ratelimiter *Ratelimiter // Ratelimiter for the REST API
+	State       *State       // State is a central store for all data received from the API
+	UserAgent   string       // The user agent used for REST APIs
 
 	/* Private fields */
 
-	// Whether the session is a user or bot
-	selfbot bool
+	selfbot bool   // Whether the session is a user or bot
+	wsURL   string // Websocket URL obtained from root node
 
 	/* Event handlers */
 
@@ -173,16 +127,17 @@ func (s *Session) Selfbot() bool {
 }
 
 // addDefaultHandlers adds mission-critical handlers to keep the library working
+// todo: redo this; it's not dynamic
 func (s *Session) addDefaultHandlers() {
 
-	// The websocket's first response if authentication was unsuccessful
+	// The Websocket's first response if authentication was unsuccessful
 	s.AddHandler(func(s *Session, e *EventError) {
 		log.Printf("Authentication error: %s\n", e.Error)
 	})
 
 	s.AddHandler(func(s *Session, e *EventBulk) {
 		for _, event := range e.V {
-			go handle(s, event)
+			go s.WS.handle(event)
 		}
 	})
 
@@ -453,22 +408,15 @@ func (s *Session) AddHandler(handler any) {
 	}
 }
 
-// Latency returns the websocket latency
-func (s *Session) Latency() time.Duration {
-	return s.LastHeartbeatAck.Sub(s.LastHeartbeatSent)
+func (s *Session) IsConnected() bool {
+	return s.WS != nil && s.WS.IsConnected()
 }
 
-// Uptime returns the approximate duration the websocket has been connected for
-func (s *Session) Uptime() time.Duration {
-	// todo: add time difference between last heartbeat and next heartbeat
-	return time.Duration(s.HeartbeatCount) * s.HeartbeatInterval
-}
-
-// Open determines the websocket URL and establishes a connection.
+// Open determines the Websocket URL and establishes a connection.
 // It also detects if you are logged in as a user or a bot.
 func (s *Session) Open() (err error) {
 
-	if s.Connected {
+	if s.IsConnected() {
 		return fmt.Errorf("already connected")
 	}
 
@@ -476,7 +424,7 @@ func (s *Session) Open() (err error) {
 		return fmt.Errorf("no token provided")
 	}
 
-	// Determine the websocket URL
+	// Determine the Websocket URL
 	var query RootData
 	err = s.Request(http.MethodGet, apiURL, nil, &query)
 	if err != nil {
@@ -495,14 +443,13 @@ func (s *Session) Open() (err error) {
 
 	wsURL.RawQuery = parameters.Encode()
 
-	s.Socket = connect(s, wsURL.String())
+	s.WS = newWebsocket(s, wsURL.String())
+	s.WS.connect()
 
-	// Assume we have a successful connection, until we don't
-	s.Connected = true
 	return
 }
 
-// WriteSocket writes data to the websocket in JSON
+// WriteSocket writes data to the Websocket in JSON
 func (s *Session) WriteSocket(data any) error {
 	payload, err := json.Marshal(data)
 	if err != nil {
@@ -510,7 +457,7 @@ func (s *Session) WriteSocket(data any) error {
 	}
 
 	// Should we use WriteAsync?
-	return s.Socket.WriteMessage(gws.OpcodeText, payload)
+	return s.WS.WriteMessage(gws.OpcodeText, payload)
 }
 
 func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {
@@ -620,13 +567,13 @@ func (s *Session) ServerCreate(data ServerCreateData) (server *Server, err error
 	return
 }
 
-// ChannelBeginTyping is a websocket method to start typing in a channel
+// ChannelBeginTyping is a Websocket method to start typing in a channel
 func (s *Session) ChannelBeginTyping(cID string) (err error) {
 	data := WebsocketChannelTyping{Channel: cID, Type: WebsocketMessageTypeBeginTyping}
 	return s.WriteSocket(data)
 }
 
-// ChannelEndTyping is a websocket method to stop typing in a channel
+// ChannelEndTyping is a Websocket method to stop typing in a channel
 func (s *Session) ChannelEndTyping(cID string) (err error) {
 	data := WebsocketChannelTyping{Channel: cID, Type: WebsocketMessageTypeEndTyping}
 	return s.WriteSocket(data)

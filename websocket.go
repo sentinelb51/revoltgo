@@ -1,14 +1,22 @@
 package revoltgo
 
 import (
-	"bytes"
+	"context"
 	"encoding/binary"
 	"log"
+	"runtime"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetPrefix("[R-GO] ")
+}
 
 type WebsocketMessageType string
 
@@ -20,163 +28,6 @@ const (
 	WebsocketMessageTypeBeginTyping  WebsocketMessageType = "BeginTyping"
 	WebsocketMessageTypeEndTyping    WebsocketMessageType = "EndTyping"
 )
-
-type websocket struct {
-	URL     string
-	Session *Session
-	Close   chan struct{}
-}
-
-func (ws *websocket) heartbeat(session *Session, socket *gws.Conn) {
-
-	var (
-		ticker = time.NewTicker(session.HeartbeatInterval)
-		err    error
-	)
-
-	defer ticker.Stop()
-	for session.Connected {
-		select {
-		case <-ticker.C:
-			payload := bytes.NewBuffer(make([]byte, 0, 64))
-			err = binary.Write(payload, binary.LittleEndian, session.HeartbeatCount)
-
-			if err != nil {
-				log.Printf("Heartbeat stopped: %s\n", err)
-				session.Connected = false
-				break
-			}
-
-			if err = socket.WritePing(payload.Bytes()); err != nil {
-				log.Printf("Heartbeat stopped: %s\n", err)
-				session.Connected = false
-				break
-			}
-
-			session.LastHeartbeatSent = time.Now()
-		case <-ws.Close:
-			session.Connected = false
-		}
-	}
-
-	for !session.Connected && session.ShouldReconnect {
-		log.Printf("Re-connecting in %s...", session.ReconnectInterval.String())
-		time.Sleep(session.ReconnectInterval)
-		connect(session, ws.URL)
-	}
-}
-
-// connect creates a new websocket connection to the given URL.
-func connect(session *Session, url string) *gws.Conn {
-
-	log.Println("Connecting...")
-
-	handler := &websocket{
-		URL:     url,
-		Session: session,
-	}
-
-	options := &gws.ClientOption{
-		Addr:             url,
-		ParallelEnabled:  true,
-		CheckUtf8Enabled: false,
-	}
-
-	if session.CustomCompression != nil {
-		options.PermessageDeflate = *session.CustomCompression
-	} else {
-		options.PermessageDeflate = gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		}
-	}
-
-	socket, _, err := gws.NewClient(handler, options)
-	if err != nil {
-		log.Panicf("Connection refused: %s\n", err)
-	}
-
-	session.Connected = true
-	go socket.ReadLoop()
-	return socket
-}
-
-func (ws *websocket) OnClose(_ *gws.Conn, err error) {
-
-	ws.Close <- struct{}{}
-	ws.Session.Connected = false
-
-	if reason := err.Error(); reason == "" {
-		log.Printf("Connection closed unexpectedly: %v (%d)\n", reason, len(reason))
-		return
-	}
-
-	log.Println("Connection closed.")
-}
-
-// OnPong ensures the pong is valid, updates heartbeat times, and extends the connection deadline.
-func (ws *websocket) OnPong(socket *gws.Conn, payload []byte) {
-
-	var (
-		count int64
-		err   error
-	)
-
-	if err = binary.Read(bytes.NewReader(payload), binary.LittleEndian, &count); err != nil {
-		log.Printf("Pong: read count: %s\n", err)
-		return
-	}
-
-	if count != ws.Session.HeartbeatCount {
-		log.Printf("Heartbeat fibrillation: %d != %d\n", count, ws.Session.HeartbeatCount)
-		return
-	}
-
-	now := time.Now()
-	ws.Session.LastHeartbeatAck = now
-	ws.Session.HeartbeatCount++
-
-	deadline := now.Add(ws.Session.HeartbeatInterval * 2)
-	if err = socket.SetDeadline(deadline); err != nil {
-		log.Printf("Pong: set deadline: %s\n", err)
-		return
-	}
-}
-
-func (ws *websocket) OnOpen(socket *gws.Conn) {
-
-	ws.Session.HeartbeatCount = 0
-
-	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
-		log.Printf("Open: set deadline: %s\n", err)
-	}
-
-	if ws.Session.HeartbeatInterval.Seconds() >= 99 {
-		log.Printf("Heartbeat interval (%s) too high, and may cause disconnects\n",
-			ws.Session.HeartbeatInterval.String())
-	}
-
-	log.Printf("Connected (%s)\n", socket.RemoteAddr())
-	go ws.heartbeat(ws.Session, socket)
-}
-
-func (ws *websocket) OnPing(_ *gws.Conn, payload []byte) {
-	// The websocket should not be pinging us; we're the client.
-	log.Printf("Received unexpected ping: %s\n", string(payload))
-}
-
-func (ws *websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
-	handle(ws.Session, message.Data.Bytes())
-	if err := message.Close(); err != nil {
-		log.Printf("Message close: %s\n", err)
-	}
-}
-
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetPrefix("[R-GO] ")
-}
 
 type WebsocketMessageAuthenticate struct {
 	Type  WebsocketMessageType `json:"type"`
@@ -193,17 +44,263 @@ type WebsocketChannelTyping struct {
 	Channel string               `json:"channel"`
 }
 
-// Close the websocket.
-func (s *Session) Close() error {
-	s.Connected = false
-	return s.Socket.WriteClose(1000, nil)
+// todo: migrate fields like heartbeat from Session to websocket?
+
+type Websocket struct {
+	url     string
+	session *Session
+
+	mu   sync.RWMutex
+	conn *gws.Conn
+
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	heartbeatCount    int64
+	heartbeatLastSent time.Time
+	heartbeatLastAck  time.Time
+
+	/* Configurable options */
+
+	// Interval between sending heartbeats. Lower values update the latency faster.
+	// Values too high (>=100 seconds) may cause Cloudflare to drop the connection
+	HeartbeatInterval time.Duration
+
+	Debug             bool                   // Prints sending (not a typo) and received websocket messages
+	ShouldReconnect   bool                   // Whether the websocket should attempt to reconnect on disconnection
+	ReconnectInterval time.Duration          // Interval between reconnecting, if connection fails
+	CustomCompression *gws.PermessageDeflate // Defines a custom compression algorithm for the Websocket.
 }
 
-func handle(s *Session, raw []byte) {
+// newWebsocket constructs a websocket wrapper.
+func newWebsocket(session *Session, url string) *Websocket {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Websocket{
+		url:     url,
+		session: session,
+		ctx:     ctx,
+		cancel:  cancel,
 
-	if s.DebugWS {
-		log.Printf("[WS]: %s\n", string(raw))
+		ShouldReconnect:   true,
+		HeartbeatInterval: 30 * time.Second,
+		ReconnectInterval: 5 * time.Second,
 	}
+}
+
+func (ws *Websocket) IsConnected() bool {
+	ws.mu.RLock()
+	defer ws.mu.RUnlock()
+	return ws.conn != nil
+}
+
+// Latency returns the Websocket latency
+func (ws *Websocket) Latency() time.Duration {
+	ws.mu.RLock()
+	defer ws.mu.RUnlock()
+	return ws.heartbeatLastAck.Sub(ws.heartbeatLastSent)
+}
+
+// Uptime approximates the duration the Websocket has been connected for
+func (ws *Websocket) Uptime() time.Duration {
+	// Use atomic load because heartbeatCount is updated atomically elsewhere
+	count := atomic.LoadInt64(&ws.heartbeatCount)
+
+	ws.mu.RLock()
+	lastSent := ws.heartbeatLastSent
+	ws.mu.RUnlock()
+
+	uptime := time.Duration(count) * ws.HeartbeatInterval
+	if count != 0 {
+		uptime += time.Since(lastSent)
+	}
+
+	return uptime
+}
+
+// connect dials a new gws connection.
+func (ws *Websocket) connect() {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+
+	// If we are already shutting down, do not reconnect
+	if ws.ctx.Err() != nil {
+		return
+	}
+
+	log.Printf("Connecting to %s...\n", StrTrimAfter(ws.url, "?"))
+
+	options := &gws.ClientOption{
+		Addr:             ws.url,
+		ParallelEnabled:  true,
+		ParallelGolimit:  runtime.NumCPU(),
+		CheckUtf8Enabled: false,
+	}
+
+	if ws.CustomCompression != nil {
+		options.PermessageDeflate = *ws.CustomCompression
+	}
+
+	socket, response, err := gws.NewClient(ws, options)
+	if err != nil {
+		log.Printf("Connection failed: %s\n", err)
+		go ws.reconnectLoop()
+		return
+	}
+
+	if response != nil && response.Body != nil {
+		_ = response.Body.Close()
+	}
+
+	ws.conn = socket
+
+	go socket.ReadLoop()
+}
+
+func (ws *Websocket) reconnectLoop() {
+	select {
+	case <-ws.ctx.Done():
+		return
+	case <-time.After(ws.ReconnectInterval):
+		log.Printf("Re-connecting...")
+		ws.connect()
+	}
+}
+
+func (ws *Websocket) heartbeatLoop() {
+	ticker := time.NewTicker(ws.HeartbeatInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ws.ctx.Done():
+			return
+		case <-ticker.C:
+			ws.mu.RLock()
+			conn := ws.conn
+			ws.mu.RUnlock()
+
+			if conn == nil {
+				continue
+			}
+
+			count := atomic.LoadInt64(&ws.heartbeatCount)
+			payload := make([]byte, 8)
+			binary.LittleEndian.PutUint64(payload, uint64(count))
+
+			if err := conn.WritePing(payload); err != nil {
+				log.Printf("Heartbeat failed: %s\n", err)
+				_ = conn.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
+				return
+			}
+
+			ws.mu.Lock()
+			ws.heartbeatLastSent = time.Now()
+			ws.mu.Unlock()
+		}
+	}
+}
+
+func (ws *Websocket) OnOpen(socket *gws.Conn) {
+	log.Printf("Resolved: %s\n", socket.RemoteAddr())
+	atomic.StoreInt64(&ws.heartbeatCount, 0)
+
+	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
+		log.Fatalf("Set deadline failed: %s\n", err)
+	}
+
+	go ws.heartbeatLoop()
+}
+
+func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
+	ws.mu.Lock()
+	ws.conn = nil
+	ws.mu.Unlock()
+
+	if err != nil && err.Error() != "" {
+		log.Printf("Connection closed unexpectedly: %v\n", err)
+	} else {
+		log.Println("Connection closed.")
+	}
+
+	// Trigger reconnect if the session is still active
+	if ws.ShouldReconnect && ws.ctx.Err() == nil {
+		go ws.reconnectLoop()
+	}
+}
+
+func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
+	if len(payload) < 8 {
+		return
+	}
+
+	count := int64(binary.LittleEndian.Uint64(payload))
+	current := atomic.LoadInt64(&ws.heartbeatCount)
+
+	if count != current {
+		log.Printf("Heartbeat mismatch: %d != %d\n", count, current)
+		return
+	}
+
+	ws.mu.Lock()
+	ws.heartbeatLastAck = time.Now()
+	ws.mu.Unlock()
+
+	atomic.AddInt64(&ws.heartbeatCount, 1)
+	_ = socket.SetDeadline(time.Now().Add(ws.HeartbeatInterval * 2))
+}
+
+func (ws *Websocket) OnPing(_ *gws.Conn, payload []byte) {
+	log.Printf("Received unexpected ping: %s\n", string(payload))
+}
+
+func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
+	// Extract to buffer
+	data := message.Data.Bytes()
+	buffer := make([]byte, len(data))
+	copy(buffer, data)
+
+	// Release resources
+	_ = message.Close()
+
+	if ws.Debug {
+		log.Printf("[WS/RX]: %s\n", string(buffer))
+	}
+
+	// Dispatch in separate goroutine; don't block ReadLoop
+	go ws.handle(buffer)
+}
+
+func (ws *Websocket) WriteMessage(opcode gws.Opcode, payload []byte) error {
+	ws.mu.RLock()
+	defer ws.mu.RUnlock()
+
+	if ws.conn == nil {
+		return gws.ErrConnClosed
+	}
+
+	if ws.Debug {
+		log.Printf("[WS/TX]: %s\n", string(payload))
+	}
+
+	return ws.conn.WriteMessage(opcode, payload)
+}
+
+func (ws *Websocket) WriteClose() error {
+
+	// Stop heartbeat and reconnect logic
+	ws.cancel()
+
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+
+	if ws.conn == nil {
+		return nil
+	}
+
+	return ws.conn.WriteClose(1000, nil)
+}
+
+func (ws *Websocket) handle(raw []byte) {
 
 	eventType, err := eventTypeFromJSON(raw)
 	if err != nil {
@@ -219,51 +316,11 @@ func handle(s *Session, raw []byte) {
 
 	switch eventType {
 	case "Error":
-
-		if len(s.handlersError) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersError {
-			h(s, event.(*EventError))
-		}
+		dispatch(ws.session, raw, ws.session.handlersError, eventConstructor)
 	case "Bulk":
-
-		if len(s.handlersBulk) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersBulk {
-			h(s, event.(*EventBulk))
-		}
+		dispatch(ws.session, raw, ws.session.handlersBulk, eventConstructor)
 	case "Pong":
-
-		if len(s.handlersPong) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersPong {
-			h(s, event.(*EventPong))
-		}
-
+		dispatch(ws.session, raw, ws.session.handlersPong, eventConstructor)
 	case
 		"MessageUpdate",
 		"ServerUpdate",
@@ -272,427 +329,85 @@ func handle(s *Session, raw []byte) {
 		"WebhookUpdate",
 		"UserUpdate",
 		"ServerMemberUpdate":
-
-		// note: if this is empty, none of the above listed events will dispatch.
-		// bad design.
-		if len(s.handlersAbstractEventUpdate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		aeu := event.(*AbstractEventUpdate)
-		for _, h := range s.handlersAbstractEventUpdate {
-			h(s, aeu)
-		}
+		dispatch(ws.session, raw, ws.session.handlersAbstractEventUpdate, eventConstructor)
 	case "Authenticated":
-
-		if len(s.handlersAuthenticated) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersAuthenticated {
-			h(s, event.(*EventAuthenticated))
-		}
+		dispatch(ws.session, raw, ws.session.handlersAuthenticated, eventConstructor)
 	case "Auth":
-
-		if len(s.handlersAuth) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersAuth {
-			h(s, event.(*EventAuth))
-		}
+		dispatch(ws.session, raw, ws.session.handlersAuth, eventConstructor)
 	case "Ready":
-
-		if len(s.handlersReady) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersReady {
-			h(s, event.(*EventReady))
-		}
+		dispatch(ws.session, raw, ws.session.handlersReady, eventConstructor)
 	case "Message":
-
-		if len(s.handlersMessage) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessage {
-			h(s, event.(*EventMessage))
-		}
+		dispatch(ws.session, raw, ws.session.handlersMessage, eventConstructor)
 	case "MessageAppend":
-
-		if len(s.handlersMessageAppend) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessageAppend {
-			h(s, event.(*EventMessageAppend))
-		}
+		dispatch(ws.session, raw, ws.session.handlersMessageAppend, eventConstructor)
 	case "MessageDelete":
-
-		if len(s.handlersMessageDelete) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessageDelete {
-			h(s, event.(*EventMessageDelete))
-		}
+		dispatch(ws.session, raw, ws.session.handlersMessageDelete, eventConstructor)
 	case "MessageReact":
-
-		if len(s.handlersMessageReact) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessageReact {
-			h(s, event.(*EventMessageReact))
-		}
+		dispatch(ws.session, raw, ws.session.handlersMessageReact, eventConstructor)
 	case "MessageUnreact":
-
-		if len(s.handlersMessageUnreact) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersMessageUnreact {
-			h(s, event.(*EventMessageUnreact))
-		}
+		dispatch(ws.session, raw, ws.session.handlersMessageUnreact, eventConstructor)
 	case "ChannelCreate":
-
-		if len(s.handlersChannelCreate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersChannelCreate {
-			h(s, event.(*EventChannelCreate))
-		}
+		dispatch(ws.session, raw, ws.session.handlersChannelCreate, eventConstructor)
 	case "ChannelDelete":
-
-		if len(s.handlersChannelDelete) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersChannelDelete {
-			h(s, event.(*EventChannelDelete))
-		}
+		dispatch(ws.session, raw, ws.session.handlersChannelDelete, eventConstructor)
 	case "ChannelGroupJoin":
-
-		if len(s.handlersGroupJoin) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersGroupJoin {
-			h(s, event.(*EventChannelGroupJoin))
-		}
+		dispatch(ws.session, raw, ws.session.handlersGroupJoin, eventConstructor)
 	case "ChannelGroupLeave":
-
-		if len(s.handlersGroupLeave) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersGroupLeave {
-			h(s, event.(*EventChannelGroupLeave))
-		}
+		dispatch(ws.session, raw, ws.session.handlersGroupLeave, eventConstructor)
 	case "ChannelStartTyping":
-
-		if len(s.handlersChannelStartTyping) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersChannelStartTyping {
-			h(s, event.(*EventChannelStartTyping))
-		}
+		dispatch(ws.session, raw, ws.session.handlersChannelStartTyping, eventConstructor)
 	case "ChannelStopTyping":
-
-		if len(s.handlersChannelStopTyping) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersChannelStopTyping {
-			h(s, event.(*EventChannelStopTyping))
-		}
+		dispatch(ws.session, raw, ws.session.handlersChannelStopTyping, eventConstructor)
 	case "ServerCreate":
-
-		if len(s.handlersServerCreate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersServerCreate {
-			h(s, event.(*EventServerCreate))
-		}
+		dispatch(ws.session, raw, ws.session.handlersServerCreate, eventConstructor)
 	case "ServerDelete":
-
-		if len(s.handlersServerDelete) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersServerDelete {
-			h(s, event.(*EventServerDelete))
-		}
+		dispatch(ws.session, raw, ws.session.handlersServerDelete, eventConstructor)
 	case "ServerMemberJoin":
-
-		if len(s.handlersServerMemberJoin) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersServerMemberJoin {
-			h(s, event.(*EventServerMemberJoin))
-		}
+		dispatch(ws.session, raw, ws.session.handlersServerMemberJoin, eventConstructor)
 	case "ServerMemberLeave":
-
-		if len(s.handlersServerMemberLeave) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersServerMemberLeave {
-			h(s, event.(*EventServerMemberLeave))
-		}
+		dispatch(ws.session, raw, ws.session.handlersServerMemberLeave, eventConstructor)
 	case "ChannelAck":
-
-		if len(s.handlersChannelAck) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersChannelAck {
-			h(s, event.(*EventChannelAck))
-		}
+		dispatch(ws.session, raw, ws.session.handlersChannelAck, eventConstructor)
 	case "ServerRoleDelete":
-
-		if len(s.handlersServerRoleDelete) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersServerRoleDelete {
-			h(s, event.(*EventServerRoleDelete))
-		}
+		dispatch(ws.session, raw, ws.session.handlersServerRoleDelete, eventConstructor)
 	case "EmojiCreate":
-
-		if len(s.handlersEmojiCreate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersEmojiCreate {
-			h(s, event.(*EventEmojiCreate))
-		}
+		dispatch(ws.session, raw, ws.session.handlersEmojiCreate, eventConstructor)
 	case "EmojiDelete":
-
-		if len(s.handlersEmojiDelete) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersEmojiDelete {
-			h(s, event.(*EventEmojiDelete))
-		}
+		dispatch(ws.session, raw, ws.session.handlersEmojiDelete, eventConstructor)
 	case "UserSettingsUpdate":
-
-		if len(s.handlersUserSettingsUpdate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersUserSettingsUpdate {
-			h(s, event.(*EventUserSettingsUpdate))
-		}
+		dispatch(ws.session, raw, ws.session.handlersUserSettingsUpdate, eventConstructor)
 	case "UserRelationship":
-
-		if len(s.handlersUserRelationship) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersUserRelationship {
-			h(s, event.(*EventUserRelationship))
-		}
+		dispatch(ws.session, raw, ws.session.handlersUserRelationship, eventConstructor)
 	case "UserPlatformWipe":
-
-		if len(s.handlersUserPlatformWipe) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersUserPlatformWipe {
-			h(s, event.(*EventUserPlatformWipe))
-		}
+		dispatch(ws.session, raw, ws.session.handlersUserPlatformWipe, eventConstructor)
 	case "WebhookCreate":
-
-		if len(s.handlersWebhookCreate) == 0 {
-			return
-		}
-
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
-
-		for _, h := range s.handlersWebhookCreate {
-			h(s, event.(*EventWebhookCreate))
-		}
+		dispatch(ws.session, raw, ws.session.handlersWebhookCreate, eventConstructor)
 	case "WebhookDelete":
+		dispatch(ws.session, raw, ws.session.handlersWebhookDelete, eventConstructor)
+	}
+}
 
-		if len(s.handlersWebhookDelete) == 0 {
-			return
-		}
+// dispatch is a generic helper to unmarshal an event and invoke registered handlers.
+func dispatch[T any](s *Session, raw []byte, handlers []func(*Session, T), constructor func() any) {
 
-		event := eventConstructor()
-		if err = json.Unmarshal(raw, &event); err != nil {
-			log.Printf("unmarshal event: %s: %s", string(raw), err)
-			return
-		}
+	// No registered handlers
+	if len(handlers) == 0 {
+		return
+	}
 
-		for _, h := range s.handlersWebhookDelete {
-			h(s, event.(*EventWebhookDelete))
-		}
+	eventConstructor := constructor()
+	if err := json.Unmarshal(raw, eventConstructor); err != nil {
+		log.Printf("unmarshal event: %s: %s", string(raw), err)
+		return
+	}
+
+	event, ok := eventConstructor.(T)
+	if !ok {
+		log.Printf("event type mismatch for %T", eventConstructor)
+		return
+	}
+
+	for _, h := range handlers {
+		h(s, event)
 	}
 }
