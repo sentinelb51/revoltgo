@@ -16,6 +16,15 @@ func Ptr[T any](v T) *T {
 	return &v
 }
 
+func StrTrimAfter(s string, substr string) string {
+	index := strings.Index(s, substr)
+	if index == -1 {
+		return s
+	}
+
+	return s[:index]
+}
+
 // mergeJSON deserializes the object into JSON, then merges the data into the object.
 // It will also remove any fields specified in the clear map.
 func mergeJSON[T any](object *T, data json.RawMessage, clear []string) {
