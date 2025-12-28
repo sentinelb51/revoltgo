@@ -15,6 +15,11 @@ import (
 	"github.com/goccy/go-json"
 )
 
+// todo: make HTTPClient with UserAgent and other fields (persistent headers? timeout?)
+// make NewHTTPClient(userAgent string) *HTTPClient
+// let Session use it
+// move Ratelimiter to it?
+
 // resolveDestination converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
 // It also allows absolute URLs targeting the CDN. Otherwise, it rejects the URL.
 func resolveDestination(destination string) (string, error) {
@@ -83,7 +88,7 @@ func (s *Session) Request(method, destination string, data, result any) error {
 	request.Header.Set("Content-Type", contentType)
 
 	if s.Selfbot() {
-		request.Header.Set("X-Session-Token", s.Token)
+		request.Header.Set("X-session-Token", s.Token)
 	} else {
 		request.Header.Set("X-Bot-Token", s.Token)
 	}
