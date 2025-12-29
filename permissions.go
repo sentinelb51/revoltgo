@@ -5,10 +5,12 @@ import (
 	"time"
 )
 
-// PermissionAD describes the default allowed and denied permissions
-type PermissionAD struct {
-	Allow uint `json:"a"`
-	Deny  uint `json:"d"`
+// PermissionOverwrite is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L52.
+// todo: why the fuck are there 2: Override and OverrideField: see https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L8
+type PermissionOverwrite struct {
+	Allow int64 `json:"a"`
+	Deny  int64 `json:"d"`
 }
 
 const (
@@ -59,7 +61,7 @@ const (
 )
 
 // ServerPermissions is a utility function to calculate permissions for a user in a Server
-func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
+func (s *State) ServerPermissions(user *User, server *Server) (int64, error) {
 	if server.Owner == user.ID {
 		return PermissionGrantAllSafe, nil
 	}
@@ -70,7 +72,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
 		return 0, fmt.Errorf("member %s not found in %s", user.ID, server.ID)
 	}
 
-	permissions := *server.DefaultPermissions
+	permissions := server.DefaultPermissions
 
 	// Apply role permissions
 	for _, rID := range member.Roles {
@@ -92,7 +94,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (uint, error) {
 }
 
 // ChannelPermissions is a utility function to calculate permissions for a user in a Channel
-func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
+func (s *State) ChannelPermissions(user *User, channel *Channel) (int64, error) {
 	switch channel.ChannelType {
 	case ChannelTypeSavedMessages:
 		return PermissionGrantAllSafe, nil
@@ -113,9 +115,9 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (uint, error) {
 
 		return PermissionPresetDM, nil
 	case ChannelTypeText, ChannelTypeVoice:
-		server := s.Server(channel.Server)
+		server := s.Server(*channel.Server)
 		if server == nil {
-			return 0, fmt.Errorf("server %s not found", channel.Server)
+			return 0, fmt.Errorf("server %s not found", *channel.Server)
 		}
 
 		if server.Owner == user.ID {
