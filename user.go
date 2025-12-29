@@ -18,41 +18,119 @@ const (
 	UserRelationsTypeBlockedOther = "BlockedOther"
 )
 
+// User is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/users.rs#L24
 type User struct {
-	ID            string           `json:"_id"`
-	Username      string           `json:"username"`
-	Discriminator string           `json:"discriminator"`
-	DisplayName   string           `json:"display_name"`
-	Avatar        *Attachment      `json:"avatar"`
-	Relations     []*UserRelations `json:"relations"`
-
-	// Bitfield of user badges
-	Badges int `json:"badges"`
-
-	// User's active status
-	Status *UserStatus `json:"status"`
-
-	// todo: potentially deprecated
-	Profile *UserProfile `json:"profile"`
-
-	// Enum of user flags
-	Flags *int `json:"flags"`
-
-	// Racism?!1
-	Privileged bool `json:"privileged"`
-
-	// Bot information, if the user is a bot
-	Bot *Bot `json:"bot"`
-
-	// Your relationship to this user
-	Relationship UserRelationshipType `json:"relationship"`
-
-	// Whether this user is currently online
-	Online bool `json:"online"`
+	ID            string               `json:"_id"`
+	Username      string               `json:"username"`
+	Discriminator string               `json:"discriminator"`
+	Flags         uint32               `json:"flags"`
+	Privileged    bool                 `json:"privileged"`
+	Badges        uint32               `json:"badges"`
+	Online        bool                 `json:"online"`
+	Relations     []UserRelations      `json:"relations"`
+	Relationship  UserRelationshipType `json:"relationship"`
+	DisplayName   *string              `json:"display_name"`
+	Avatar        *Attachment          `json:"avatar"`
+	Status        *UserStatus          `json:"status"`
+	Profile       *UserProfile         `json:"profile"` // todo: deprecated? not present in src
+	Bot           *Bot                 `json:"bot"`
 }
 
-func (s *User) Mention() string {
-	return fmt.Sprintf("<@%s>", s.ID)
+func (u *User) update(data PartialUser) {
+	if data.Username != nil {
+		u.Username = *data.Username
+	}
+
+	if data.Discriminator != nil {
+		u.Discriminator = *data.Discriminator
+	}
+
+	if data.DisplayName != nil {
+		u.DisplayName = data.DisplayName
+	}
+
+	if data.Avatar != nil {
+		u.Avatar = data.Avatar
+	}
+
+	if data.Relations != nil {
+		u.Relations = *data.Relations
+	}
+
+	if data.Badges != nil {
+		u.Badges = *data.Badges
+	}
+
+	if data.Status != nil {
+		u.Status = data.Status
+	}
+
+	if data.Flags != nil {
+		u.Flags = *data.Flags
+	}
+
+	if data.Privileged != nil {
+		u.Privileged = *data.Privileged
+	}
+
+	if data.Bot != nil {
+		u.Bot = data.Bot
+	}
+
+	if data.Relationship != nil {
+		u.Relationship = *data.Relationship
+	}
+
+	if data.Online != nil {
+		u.Online = *data.Online
+	}
+}
+
+func (u *User) clear(fields []string) {
+	for _, field := range fields {
+		switch field {
+		case "ProfileContent":
+			if u.Profile != nil {
+				u.Profile.Content = ""
+			}
+		case "ProfileBackground":
+			if u.Profile != nil {
+				u.Profile.Background = nil
+			}
+		case "StatusText":
+			if u.Status != nil {
+				u.Status.Text = ""
+			}
+		case "Avatar":
+			u.Avatar = nil
+		case "DisplayName":
+			u.DisplayName = nil
+		default:
+			fmt.Printf("User.Clear(): unknown field %s\n", field)
+		}
+	}
+}
+
+type PartialUser struct {
+	ID            *string               `json:"_id"`
+	Username      *string               `json:"username"`
+	Discriminator *string               `json:"discriminator"`
+	Flags         *uint32               `json:"flags"`
+	Privileged    *bool                 `json:"privileged"`
+	Badges        *uint32               `json:"badges"`
+	Online        *bool                 `json:"online"`
+	Relations     *[]UserRelations      `json:"relations"`
+	Relationship  *UserRelationshipType `json:"relationship"`
+	DisplayName   *string               `json:"display_name"`
+	Avatar        *Attachment           `json:"avatar"`
+	Status        *UserStatus           `json:"status"`
+	Profile       *UserProfile          `json:"profile,omitempty"` // todo: deprecated? not present in src
+	Bot           *Bot                  `json:"bot"`
+}
+
+func (u *User) Mention() string {
+	return fmt.Sprintf("<@%s>", u.ID)
 }
 
 type UserProfile struct {

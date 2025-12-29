@@ -44,8 +44,6 @@ type WebsocketChannelTyping struct {
 	Channel string               `json:"channel"`
 }
 
-// todo: migrate fields like heartbeat from Session to websocket?
-
 type Websocket struct {
 	url     string
 	session *Session
@@ -117,7 +115,6 @@ func (ws *Websocket) Uptime() time.Duration {
 	return uptime
 }
 
-// connect dials a new gws connection.
 func (ws *Websocket) connect() {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
@@ -222,7 +219,7 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 		log.Println("Connection closed.")
 	}
 
-	// Trigger reconnect if the session is still active
+	// Trigger reconnect if session is still active
 	if ws.ShouldReconnect && ws.ctx.Err() == nil {
 		go ws.reconnectLoop()
 	}
@@ -308,106 +305,27 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
-	eventConstructor, ok := eventToStruct[eventType]
-	if !ok {
-		log.Printf("unknown event type: %s", eventType)
+	handlers, found := ws.session.handlers[eventType]
+	if !found {
 		return
 	}
 
-	switch eventType {
-	case "Error":
-		dispatch(ws.session, raw, ws.session.handlersError, eventConstructor)
-	case "Bulk":
-		dispatch(ws.session, raw, ws.session.handlersBulk, eventConstructor)
-	case "Pong":
-		dispatch(ws.session, raw, ws.session.handlersPong, eventConstructor)
-	case
-		"MessageUpdate",
-		"ServerUpdate",
-		"ChannelUpdate",
-		"ServerRoleUpdate",
-		"WebhookUpdate",
-		"UserUpdate",
-		"ServerMemberUpdate":
-		dispatch(ws.session, raw, ws.session.handlersAbstractEventUpdate, eventConstructor)
-	case "Authenticated":
-		dispatch(ws.session, raw, ws.session.handlersAuthenticated, eventConstructor)
-	case "Auth":
-		dispatch(ws.session, raw, ws.session.handlersAuth, eventConstructor)
-	case "Ready":
-		dispatch(ws.session, raw, ws.session.handlersReady, eventConstructor)
-	case "Message":
-		dispatch(ws.session, raw, ws.session.handlersMessage, eventConstructor)
-	case "MessageAppend":
-		dispatch(ws.session, raw, ws.session.handlersMessageAppend, eventConstructor)
-	case "MessageDelete":
-		dispatch(ws.session, raw, ws.session.handlersMessageDelete, eventConstructor)
-	case "MessageReact":
-		dispatch(ws.session, raw, ws.session.handlersMessageReact, eventConstructor)
-	case "MessageUnreact":
-		dispatch(ws.session, raw, ws.session.handlersMessageUnreact, eventConstructor)
-	case "ChannelCreate":
-		dispatch(ws.session, raw, ws.session.handlersChannelCreate, eventConstructor)
-	case "ChannelDelete":
-		dispatch(ws.session, raw, ws.session.handlersChannelDelete, eventConstructor)
-	case "ChannelGroupJoin":
-		dispatch(ws.session, raw, ws.session.handlersGroupJoin, eventConstructor)
-	case "ChannelGroupLeave":
-		dispatch(ws.session, raw, ws.session.handlersGroupLeave, eventConstructor)
-	case "ChannelStartTyping":
-		dispatch(ws.session, raw, ws.session.handlersChannelStartTyping, eventConstructor)
-	case "ChannelStopTyping":
-		dispatch(ws.session, raw, ws.session.handlersChannelStopTyping, eventConstructor)
-	case "ServerCreate":
-		dispatch(ws.session, raw, ws.session.handlersServerCreate, eventConstructor)
-	case "ServerDelete":
-		dispatch(ws.session, raw, ws.session.handlersServerDelete, eventConstructor)
-	case "ServerMemberJoin":
-		dispatch(ws.session, raw, ws.session.handlersServerMemberJoin, eventConstructor)
-	case "ServerMemberLeave":
-		dispatch(ws.session, raw, ws.session.handlersServerMemberLeave, eventConstructor)
-	case "ChannelAck":
-		dispatch(ws.session, raw, ws.session.handlersChannelAck, eventConstructor)
-	case "ServerRoleDelete":
-		dispatch(ws.session, raw, ws.session.handlersServerRoleDelete, eventConstructor)
-	case "EmojiCreate":
-		dispatch(ws.session, raw, ws.session.handlersEmojiCreate, eventConstructor)
-	case "EmojiDelete":
-		dispatch(ws.session, raw, ws.session.handlersEmojiDelete, eventConstructor)
-	case "UserSettingsUpdate":
-		dispatch(ws.session, raw, ws.session.handlersUserSettingsUpdate, eventConstructor)
-	case "UserRelationship":
-		dispatch(ws.session, raw, ws.session.handlersUserRelationship, eventConstructor)
-	case "UserPlatformWipe":
-		dispatch(ws.session, raw, ws.session.handlersUserPlatformWipe, eventConstructor)
-	case "WebhookCreate":
-		dispatch(ws.session, raw, ws.session.handlersWebhookCreate, eventConstructor)
-	case "WebhookDelete":
-		dispatch(ws.session, raw, ws.session.handlersWebhookDelete, eventConstructor)
-	}
-}
-
-// dispatch is a generic helper to unmarshal an event and invoke registered handlers.
-func dispatch[T any](s *Session, raw []byte, handlers []func(*Session, T), constructor func() any) {
-
-	// No registered handlers
 	if len(handlers) == 0 {
 		return
 	}
 
-	eventConstructor := constructor()
-	if err := json.Unmarshal(raw, eventConstructor); err != nil {
-		log.Printf("unmarshal event: %s: %s", string(raw), err)
-		return
+	constructor, found := eventConstructors[eventType]
+	if !found {
+		log.Println("Unknown event type:", eventType)
 	}
 
-	event, ok := eventConstructor.(T)
-	if !ok {
-		log.Printf("event type mismatch for %T", eventConstructor)
+	event := constructor()
+	if err := json.Unmarshal(raw, event); err != nil {
+		log.Println("Failed to unmarshal event:", err)
 		return
 	}
 
 	for _, h := range handlers {
-		h(s, event)
+		h(ws.session, event)
 	}
 }

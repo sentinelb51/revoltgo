@@ -60,65 +60,7 @@ type Session struct {
 
 	/* Event handlers */
 
-	// Authentication-related handlers
-	handlersReady         []func(*Session, *EventReady)
-	handlersAuth          []func(*Session, *EventAuth)
-	handlersPong          []func(*Session, *EventPong)
-	handlersAuthenticated []func(*Session, *EventAuthenticated)
-
-	// User-related handlers
-	handlersUserUpdate         []func(*Session, *EventUserUpdate)
-	handlersUserSettingsUpdate []func(*Session, *EventUserSettingsUpdate)
-	handlersUserRelationship   []func(*Session, *EventUserRelationship)
-	handlersUserPlatformWipe   []func(*Session, *EventUserPlatformWipe)
-
-	// Message-related handlers
-	handlersMessage        []func(*Session, *EventMessage)
-	handlersMessageAppend  []func(*Session, *EventMessageAppend)
-	handlersMessageUpdate  []func(*Session, *EventMessageUpdate)
-	handlersMessageDelete  []func(*Session, *EventMessageDelete)
-	handlersMessageReact   []func(*Session, *EventMessageReact)
-	handlersMessageUnreact []func(*Session, *EventMessageUnreact)
-
-	// Channel-related handlers
-	handlersChannelCreate      []func(*Session, *EventChannelCreate)
-	handlersChannelUpdate      []func(*Session, *EventChannelUpdate)
-	handlersChannelDelete      []func(*Session, *EventChannelDelete)
-	handlersChannelStartTyping []func(*Session, *EventChannelStartTyping)
-	handlersChannelStopTyping  []func(*Session, *EventChannelStopTyping)
-	handlersChannelAck         []func(*Session, *EventChannelAck)
-
-	// Group-related handlers
-	handlersGroupJoin  []func(*Session, *EventChannelGroupJoin)
-	handlersGroupLeave []func(*Session, *EventChannelGroupLeave)
-
-	// Server-related handlers
-	handlersServerCreate []func(*Session, *EventServerCreate)
-	handlersServerUpdate []func(*Session, *EventServerUpdate)
-	handlersServerDelete []func(*Session, *EventServerDelete)
-
-	// ServerRole-related handlers
-	handlersServerRoleUpdate []func(*Session, *EventServerRoleUpdate)
-	handlersServerRoleDelete []func(*Session, *EventServerRoleDelete)
-
-	// ServerMember-related handlers
-	handlersServerMemberUpdate []func(*Session, *EventServerMemberUpdate)
-	handlersServerMemberJoin   []func(*Session, *EventServerMemberJoin)
-	handlersServerMemberLeave  []func(*Session, *EventServerMemberLeave)
-
-	// Emoji-related handlers
-	handlersEmojiCreate []func(*Session, *EventEmojiCreate)
-	handlersEmojiDelete []func(*Session, *EventEmojiDelete)
-
-	// Webhook-related handlers
-	handlersWebhookCreate []func(*Session, *EventWebhookCreate)
-	handlersWebhookUpdate []func(*Session, *EventWebhookUpdate)
-	handlersWebhookDelete []func(*Session, *EventWebhookDelete)
-
-	// System event handlers
-	handlersAbstractEventUpdate []func(*Session, *AbstractEventUpdate)
-	handlersError               []func(*Session, *EventError)
-	handlersBulk                []func(*Session, *EventBulk)
+	handlers map[string][]func(*Session, any)
 }
 
 // Selfbot returns whether the session is a selfbot
@@ -131,17 +73,17 @@ func (s *Session) Selfbot() bool {
 func (s *Session) addDefaultHandlers() {
 
 	// The Websocket's first response if authentication was unsuccessful
-	s.AddHandler(func(s *Session, e *EventError) {
+	AddHandler(s, func(s *Session, e *EventError) {
 		log.Printf("Authentication error: %s\n", e.Error)
 	})
 
-	s.AddHandler(func(s *Session, e *EventBulk) {
+	AddHandler(s, func(s *Session, e *EventBulk) {
 		for _, event := range e.V {
 			go s.WS.handle(event)
 		}
 	})
 
-	s.AddHandler(func(s *Session, e *EventReady) {
+	AddHandler(s, func(s *Session, e *EventReady) {
 		s.State.populate(e)
 		s.selfbot = s.State.self != nil && s.State.self.Bot == nil
 	})
@@ -152,260 +94,128 @@ func (s *Session) addDefaultHandlers() {
 	}
 
 	if s.State.TrackUsers() {
-		s.AddHandler(func(s *Session, e *EventUserPlatformWipe) {
+		AddHandler(s, func(s *Session, e *EventUserPlatformWipe) {
 			s.State.platformWipe(e)
 		})
 	}
 
 	if s.State.TrackChannels() {
-		s.AddHandler(func(s *Session, e *EventChannelCreate) {
+		AddHandler(s, func(s *Session, e *EventChannelCreate) {
 			s.State.createChannel(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventChannelDelete) {
+		AddHandler(s, func(s *Session, e *EventChannelDelete) {
 			s.State.deleteChannel(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventChannelGroupJoin) {
+		AddHandler(s, func(s *Session, e *EventChannelGroupJoin) {
 			s.State.addGroupParticipant(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventChannelGroupLeave) {
+		AddHandler(s, func(s *Session, e *EventChannelGroupLeave) {
 			s.State.removeGroupParticipant(e)
 		})
 	}
 
 	if s.State.TrackServers() {
-		s.AddHandler(func(s *Session, e *EventServerCreate) {
+		AddHandler(s, func(s *Session, e *EventServerCreate) {
 			s.State.createServer(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventServerDelete) {
+		AddHandler(s, func(s *Session, e *EventServerDelete) {
 			s.State.deleteServer(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventServerRoleDelete) {
+		AddHandler(s, func(s *Session, e *EventServerRoleDelete) {
 			s.State.deleteServerRole(e)
 		})
 	}
 
 	if s.State.TrackMembers() {
-		s.AddHandler(func(s *Session, e *EventServerMemberJoin) {
+		AddHandler(s, func(s *Session, e *EventServerMemberJoin) {
 			s.State.createServerMember(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventServerMemberLeave) {
+		AddHandler(s, func(s *Session, e *EventServerMemberLeave) {
 			s.State.deleteServerMember(e)
 		})
 	}
 
 	if s.State.TrackEmojis() {
-		s.AddHandler(func(s *Session, e *EventEmojiCreate) {
+		AddHandler(s, func(s *Session, e *EventEmojiCreate) {
 			s.State.createEmoji(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventEmojiDelete) {
+		AddHandler(s, func(s *Session, e *EventEmojiDelete) {
 			s.State.deleteEmoji(e)
 		})
 	}
 
 	if s.State.TrackWebhooks() {
-		s.AddHandler(func(s *Session, e *EventWebhookCreate) {
+		AddHandler(s, func(s *Session, e *EventWebhookCreate) {
 			s.State.createWebhook(e)
 		})
 
-		s.AddHandler(func(s *Session, e *EventWebhookDelete) {
+		AddHandler(s, func(s *Session, e *EventWebhookDelete) {
 			s.State.deleteWebhook(e)
 		})
 	}
 
-	s.AddHandler(func(s *Session, e *AbstractEventUpdate) {
-		e.standardise()
+	AddHandler(s, func(s *Session, e *EventServerUpdate) {
+		s.State.updateServer(e)
+	})
 
-		switch e.Type {
-		case "ServerUpdate":
-			s.State.updateServer(e)
+	AddHandler(s, func(s *Session, e *EventServerMemberUpdate) {
+		s.State.updateServerMember(e)
+	})
 
-			if len(s.handlersServerUpdate) == 0 {
-				return
-			}
+	AddHandler(s, func(s *Session, e *EventChannelUpdate) {
+		s.State.updateChannel(e)
+	})
 
-			event := e.EventServerUpdate()
+	AddHandler(s, func(s *Session, e *EventUserUpdate) {
+		s.State.updateUser(e)
+	})
 
-			for _, h := range s.handlersServerUpdate {
-				h(s, event)
-			}
-		case "ServerMemberUpdate":
-			s.State.updateServerMember(e)
+	AddHandler(s, func(s *Session, e *EventServerRoleUpdate) {
+		s.State.updateServerRole(e)
+	})
 
-			if len(s.handlersServerMemberUpdate) == 0 {
-				return
-			}
-
-			event := e.EventServerMemberUpdate()
-
-			for _, h := range s.handlersServerMemberUpdate {
-				h(s, event)
-			}
-		case "ChannelUpdate":
-			s.State.updateChannel(e)
-
-			if len(s.handlersChannelUpdate) == 0 {
-				return
-			}
-
-			event := e.EventChannelUpdate()
-
-			for _, h := range s.handlersChannelUpdate {
-				h(s, event)
-			}
-		case "UserUpdate":
-			s.State.updateUser(e)
-
-			if len(s.handlersUserUpdate) == 0 {
-				return
-			}
-
-			event := e.EventUserUpdate()
-
-			for _, h := range s.handlersUserUpdate {
-				h(s, event)
-			}
-		case "ServerRoleUpdate":
-			s.State.updateServerRole(e)
-
-			if len(s.handlersServerRoleUpdate) == 0 {
-				return
-			}
-
-			event := e.EventServerRoleUpdate()
-
-			for _, h := range s.handlersServerRoleUpdate {
-				h(s, event)
-			}
-		case "WebhookUpdate":
-			s.State.updateWebhook(e)
-
-			if len(s.handlersWebhookUpdate) == 0 {
-				return
-			}
-
-			event := e.EventWebhookUpdate()
-
-			for _, h := range s.handlersWebhookUpdate {
-				h(s, event)
-			}
-		}
+	AddHandler(s, func(s *Session, e *EventWebhookUpdate) {
+		s.State.updateWebhook(e)
 	})
 }
 
-// AddHandler registers an event handler based on function signature
-func (s *Session) AddHandler(handler any) {
-	switch h := handler.(type) {
-	case func(*Session, *AbstractEventUpdate):
-		s.handlersAbstractEventUpdate = append(s.handlersAbstractEventUpdate, h)
-	case func(*Session, *EventError):
-		s.handlersError = append(s.handlersError, h)
-	case func(*Session, *EventBulk):
-		s.handlersBulk = append(s.handlersBulk, h)
-	case func(*Session, *EventReady):
-		s.handlersReady = append(s.handlersReady, h)
-	case func(*Session, *EventAuth):
-		s.handlersAuth = append(s.handlersAuth, h)
-	case func(*Session, *EventPong):
-		s.handlersPong = append(s.handlersPong, h)
-	case func(*Session, *EventAuthenticated):
-		s.handlersAuthenticated = append(s.handlersAuthenticated, h)
-	case func(*Session, *EventUserUpdate):
-		s.handlersUserUpdate = append(s.handlersUserUpdate, h)
-	case func(*Session, *EventServerUpdate):
-		s.handlersServerUpdate = append(s.handlersServerUpdate, h)
-	case func(*Session, *EventChannelUpdate):
-		s.handlersChannelUpdate = append(s.handlersChannelUpdate, h)
-	case func(*Session, *EventServerRoleUpdate):
-		s.handlersServerRoleUpdate = append(s.handlersServerRoleUpdate, h)
-	case func(*Session, *EventWebhookUpdate):
-		s.handlersWebhookUpdate = append(s.handlersWebhookUpdate, h)
-	case func(*Session, *EventServerMemberUpdate):
-		s.handlersServerMemberUpdate = append(s.handlersServerMemberUpdate, h)
-	case func(*Session, *EventMessage):
-		s.handlersMessage = append(s.handlersMessage, h)
-	case func(*Session, *EventMessageAppend):
-		s.handlersMessageAppend = append(s.handlersMessageAppend, h)
-	case func(*Session, *EventMessageUpdate):
-		s.handlersMessageUpdate = append(s.handlersMessageUpdate, h)
-	case func(*Session, *EventMessageDelete):
-		s.handlersMessageDelete = append(s.handlersMessageDelete, h)
-	case func(*Session, *EventMessageReact):
-		s.handlersMessageReact = append(s.handlersMessageReact, h)
-	case func(*Session, *EventMessageUnreact):
-		s.handlersMessageUnreact = append(s.handlersMessageUnreact, h)
-	case func(*Session, *EventChannelCreate):
-		s.handlersChannelCreate = append(s.handlersChannelCreate, h)
-	case func(*Session, *EventChannelDelete):
-		s.handlersChannelDelete = append(s.handlersChannelDelete, h)
-	case func(*Session, *EventChannelStartTyping):
-		s.handlersChannelStartTyping = append(s.handlersChannelStartTyping, h)
-	case func(*Session, *EventChannelStopTyping):
-		s.handlersChannelStopTyping = append(s.handlersChannelStopTyping, h)
-	case func(*Session, *EventChannelAck):
-		s.handlersChannelAck = append(s.handlersChannelAck, h)
-	case func(*Session, *EventChannelGroupJoin):
-		s.handlersGroupJoin = append(s.handlersGroupJoin, h)
-	case func(*Session, *EventChannelGroupLeave):
-		s.handlersGroupLeave = append(s.handlersGroupLeave, h)
-	case func(*Session, *EventServerCreate):
-		s.handlersServerCreate = append(s.handlersServerCreate, h)
-	case func(*Session, *EventServerDelete):
-		s.handlersServerDelete = append(s.handlersServerDelete, h)
-	case func(*Session, *EventServerMemberJoin):
-		s.handlersServerMemberJoin = append(s.handlersServerMemberJoin, h)
-	case func(*Session, *EventServerMemberLeave):
-		s.handlersServerMemberLeave = append(s.handlersServerMemberLeave, h)
-	case func(*Session, *EventServerRoleDelete):
-		s.handlersServerRoleDelete = append(s.handlersServerRoleDelete, h)
-	case func(*Session, *EventEmojiCreate):
-		s.handlersEmojiCreate = append(s.handlersEmojiCreate, h)
-	case func(*Session, *EventEmojiDelete):
-		s.handlersEmojiDelete = append(s.handlersEmojiDelete, h)
-	case func(*Session, *EventUserSettingsUpdate):
-		s.handlersUserSettingsUpdate = append(s.handlersUserSettingsUpdate, h)
-	case func(*Session, *EventUserRelationship):
-		s.handlersUserRelationship = append(s.handlersUserRelationship, h)
-	case func(*Session, *EventUserPlatformWipe):
-		s.handlersUserPlatformWipe = append(s.handlersUserPlatformWipe, h)
-	case func(*Session, *EventWebhookCreate):
-		s.handlersWebhookCreate = append(s.handlersWebhookCreate, h)
-	case func(*Session, *EventWebhookDelete):
-		s.handlersWebhookDelete = append(s.handlersWebhookDelete, h)
-	default:
+// AddHandler registers an event handler using generics.
+// It infers the event name from the handler's argument type, removing the need for a type switch.
+func AddHandler[T any](s *Session, handler func(*Session, T)) {
 
-		handlerType := reflect.TypeOf(handler)
-
-		if handlerType.Kind() != reflect.Func {
-			log.Printf("Handler %s not registered: expected a function, got: %v", handlerType, handlerType)
-			return
-		}
-
-		// Get the amount of arguments
-		inputSize := handlerType.NumIn()
-		inputSizeExpected := 2
-		if inputSize != inputSizeExpected {
-			log.Printf("Handler %s not registered: expected %d arguments, got: %d", handlerType, inputSizeExpected, inputSize)
-			return
-		}
-
-		secondArgument := handlerType.In(1)
-		secondArgumentName := secondArgument.String()
-		secondArgumentExpected := strings.ReplaceAll(secondArgumentName, "revoltgo.", "revoltgo.Event")
-
-		if secondArgumentName != secondArgumentExpected {
-			log.Printf(
-				"Handler %s not registered: %s is not an event. Did you mean: %s\n",
-				handlerType, secondArgumentName, secondArgumentExpected,
-			)
-		}
+	if s.handlers == nil {
+		s.handlers = make(map[string][]func(*Session, any))
 	}
+
+	// Optimization: Get the type of T without allocating a zero value using *new(T)
+	t := reflect.TypeOf((*T)(nil)).Elem()
+
+	// Fix: Drill down through pointers to find the underlying struct.
+	// reflect.Type.Name() returns an empty string for pointers (e.g., *EventMessage),
+	// so we must find the struct type (EventMessage) to get the correct name.
+	// todo: look if this is needed
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	// Strip "Event" prefix (e.g., "EventMessage" -> "Message")
+	name := strings.TrimPrefix(t.Name(), "Event")
+
+	// Safety check (assuming eventConstructors is defined elsewhere)
+	if _, found := eventConstructors[name]; !found {
+		log.Fatalf("attempting to bind handler for unsupported event type: %s", name)
+	}
+
+	s.handlers[name] = append(s.handlers[name], func(s *Session, e any) {
+		handler(s, e.(T))
+	})
 }
 
 func (s *Session) IsConnected() bool {
@@ -690,20 +500,20 @@ func (s *Session) ServersRoleCreate(sID string, data ServerRoleCreateData) (role
 	return
 }
 
-func (s *Session) PermissionsSet(sID, rID string, data PermissionAD) (err error) {
+func (s *Session) PermissionsSet(sID, rID string, data PermissionOverwrite) (err error) {
 	endpoint := EndpointServerPermissions(sID, rID)
 	err = s.Request(http.MethodPut, endpoint, data, nil)
 	return
 }
 
 // ChannelPermissionsSet sets permissions for the specified role in this channel.
-func (s *Session) ChannelPermissionsSet(cID, rID string, data PermissionAD) (err error) {
+func (s *Session) ChannelPermissionsSet(cID, rID string, data PermissionOverwrite) (err error) {
 	endpoint := EndpointChannelsPermissions(cID, rID)
 	return s.Request(http.MethodPut, endpoint, data, nil)
 }
 
 // ChannelPermissionsSetDefault sets permissions for the default role in this channel.
-func (s *Session) ChannelPermissionsSetDefault(cID string, data PermissionAD) (err error) {
+func (s *Session) ChannelPermissionsSetDefault(cID string, data PermissionOverwrite) (err error) {
 	return s.ChannelPermissionsSet(cID, "default", data)
 }
 

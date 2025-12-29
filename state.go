@@ -231,56 +231,61 @@ func (s *State) Webhook(id string) *Webhook {
 */
 
 func (s *State) addUser(user *User) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackAPICalls || user == nil {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.users[user.ID] = user
 }
 
 func (s *State) addServer(server *Server) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackAPICalls || server == nil {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.servers[server.ID] = server
 }
 
 func (s *State) addChannel(channel *Channel) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackAPICalls || channel == nil {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.channels[channel.ID] = channel
 }
 
 func (s *State) addServerMember(member *ServerMember) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackAPICalls || member == nil {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.members.add(member)
 }
 
 func (s *State) addServerMembersAndUsers(data *ServerMembers) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackBulkAPICalls || data == nil {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	for _, user := range data.Users {
 		s.users[user.ID] = user
@@ -294,23 +299,25 @@ func (s *State) addServerMembersAndUsers(data *ServerMembers) {
 }
 
 func (s *State) addEmoji(emoji *Emoji) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackAPICalls || emoji == nil {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.emojis[emoji.ID] = emoji
 }
 
 func (s *State) addWebhooks(webhook []*Webhook) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackBulkAPICalls || webhook == nil {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	for _, w := range webhook {
 		s.webhooks[w.ID] = w
@@ -379,20 +386,20 @@ func (s *State) populate(ready *EventReady) {
 
 func (s *State) platformWipe(event *EventUserPlatformWipe) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	delete(s.users, event.UserID)
+	s.mu.Unlock()
 }
 
-func (s *State) updateServerRole(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateServerRole(event *EventServerRoleUpdate) {
 
 	if !s.trackServers {
 		return
 	}
 
-	server := s.servers[event.ID.StringID]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	server := s.servers[event.ID]
 	if server == nil {
 		log.Printf("update for role %s in unknown server %s\n", event.RoleID, event.ID)
 		return
@@ -404,16 +411,18 @@ func (s *State) updateServerRole(event *AbstractEventUpdate) {
 		return
 	}
 
-	mergeJSON[ServerRole](role, event.Data, event.Clear)
+	role.update(event.Data)
+	role.clear(event.Clear)
 }
 
 func (s *State) deleteServerRole(data *EventServerRoleDelete) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackServers {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	server := s.servers[data.ID]
 	if server != nil {
@@ -422,12 +431,13 @@ func (s *State) deleteServerRole(data *EventServerRoleDelete) {
 }
 
 func (s *State) createServerMember(data *EventServerMemberJoin) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackMembers {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	member := &ServerMember{
 		ID:       MemberCompositeID{User: data.User, Server: data.ID},
@@ -461,44 +471,39 @@ func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 	delete(s.members, data.User)
 }
 
-func (s *State) updateServerMember(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateServerMember(event *EventServerMemberUpdate) {
 
 	if !s.trackMembers {
 		return
 	}
 
-	mID := event.ID.MemberID
-	members := s.members[mID.Server]
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
+	members := s.members[event.ID.User]
 	if members == nil {
 		members = make(map[string]*ServerMember, initialMembersSize)
-		s.members[mID.Server] = members
+		s.members[event.ID.Server] = members
 	}
 
-	member := members[mID.User]
+	member := members[event.ID.User]
 	if member == nil {
-		member = &ServerMember{ID: mID}
-		members[mID.User] = member
+		member = &ServerMember{ID: event.ID}
+		members[event.ID.User] = member
 	}
 
-	mergeJSON[ServerMember](member, event.Data, event.Clear)
+	member.update(event.Data)
+	member.clear(event.Clear)
 }
 
 func (s *State) createChannel(event *EventChannelCreate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackChannels {
 		return
 	}
 
-	server := s.servers[event.Server]
-	if server == nil {
-		log.Printf("channel %s created in unknown server %s\n", event.ID, event.Server)
-		return
-	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.channels[event.ID] = event.Channel
 
@@ -506,18 +511,27 @@ func (s *State) createChannel(event *EventChannelCreate) {
 		return
 	}
 
-	if event.Server != "" {
-		server.Channels = append(server.Channels, event.ID)
+	if event.Server == nil {
+		return // Channel was not created in server
 	}
+
+	server := s.servers[*event.Server]
+	if server == nil {
+		log.Printf("channel %s created in unknown server %s\n", event.ID, *event.Server)
+		return
+	}
+
+	server.Channels = append(server.Channels, event.ID)
 }
 
 func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackChannels {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	channel := s.channels[event.ID]
 	if channel == nil {
@@ -529,12 +543,13 @@ func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
 }
 
 func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackChannels {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	channel := s.channels[event.ID]
 	if channel == nil {
@@ -550,30 +565,33 @@ func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
 	}
 }
 
-func (s *State) updateChannel(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateChannel(event *EventChannelUpdate) {
 
 	if !s.trackChannels {
 		return
 	}
 
-	channel := s.channels[event.ID.StringID]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	channel := s.channels[event.ID]
 	if channel == nil {
 		log.Printf("unknown channel updated %s\n", event.ID)
 		return
 	}
 
-	mergeJSON[Channel](channel, event.Data, event.Clear)
+	channel.update(event.Data)
+	channel.clear(event.Clear)
 }
 
 func (s *State) deleteChannel(event *EventChannelDelete) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackChannels {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	channel := s.channels[event.ID]
 	if channel == nil {
@@ -583,8 +601,13 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 
 	delete(s.channels, event.ID)
 
-	server := s.servers[channel.Server]
+	if !s.trackServers {
+		return
+	}
+
+	server := s.servers[*channel.Server]
 	if server == nil {
+		log.Printf("channel %s deleted from unknown server %s\n", event.ID, *channel.Server)
 		return
 	}
 
@@ -597,12 +620,13 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 }
 
 func (s *State) createServer(event *EventServerCreate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackServers {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.servers[event.ID] = event.Server
 
@@ -638,30 +662,33 @@ func (s *State) createServer(event *EventServerCreate) {
 	}
 }
 
-func (s *State) updateServer(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateServer(event *EventServerUpdate) {
 
 	if !s.trackServers {
 		return
 	}
 
-	server := s.servers[event.ID.StringID]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	server := s.servers[event.ID]
 	if server == nil {
 		log.Printf("unknown server update %s\n", event.ID)
 		return
 	}
 
-	mergeJSON[Server](server, event.Data, event.Clear)
+	server.update(event.Data)
+	server.clear(event.Clear)
 }
 
 func (s *State) deleteServer(event *EventServerDelete) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackServers {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	delete(s.servers, event.ID)
 
@@ -672,81 +699,89 @@ func (s *State) deleteServer(event *EventServerDelete) {
 	delete(s.members, event.ID)
 }
 
-func (s *State) updateUser(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateUser(event *EventUserUpdate) {
 
 	if !s.trackUsers {
 		return
 	}
 
-	user := s.users[event.ID.StringID]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user := s.users[event.ID]
 	if user == nil {
 		// For self-bots, this will ignore a lot of events; maybe add more mechanisms for caching users?
 		// log.Printf("unknown user update %s\n", event.ID)
 		return
 	}
 
-	mergeJSON[User](user, event.Data, event.Clear)
+	user.update(event.Data)
+	user.clear(event.Clear)
 }
 
 func (s *State) createEmoji(event *EventEmojiCreate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackEmojis {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.emojis[event.ID] = event.Emoji
 }
 
 func (s *State) deleteEmoji(event *EventEmojiDelete) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackEmojis {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	delete(s.emojis, event.ID)
 }
 
 func (s *State) createWebhook(event *EventWebhookCreate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackWebhooks {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.webhooks[event.ID] = event.Webhook
 }
 
-func (s *State) updateWebhook(event *AbstractEventUpdate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) updateWebhook(event *EventWebhookUpdate) {
 
 	if !s.trackWebhooks {
 		return
 	}
 
-	webhook := s.webhooks[event.ID.StringID]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	webhook := s.webhooks[event.ID]
 	if webhook == nil {
 		log.Printf("unknown webhook update %s\n", event.ID)
 		return
 	}
 
-	mergeJSON[Webhook](webhook, event.Data, event.Clear)
+	webhook.update(event.Data)
+	webhook.clear(event.Remove) // todo: does WebhookUpdate still call clear "Remove" in the API WS?
 }
 
 func (s *State) deleteWebhook(event *EventWebhookDelete) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if !s.trackWebhooks {
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	delete(s.webhooks, event.ID)
 }

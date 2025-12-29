@@ -1,75 +1,273 @@
 package revoltgo
 
-import (
-	"bytes"
-	"fmt"
+import "github.com/goccy/go-json"
+
+type EventErrorType string
+
+const (
+	EventErrorTypeLabelMe               EventErrorType = "LabelMe"
+	EventErrorTypeInternalError         EventErrorType = "InternalError"
+	EventErrorTypeInvalidSession        EventErrorType = "InvalidSession"
+	EventErrorTypeOnboardingNotFinished EventErrorType = "OnboardingNotFinished"
+	EventErrorTypeAlreadyAuthenticated  EventErrorType = "AlreadyAuthenticated"
 )
 
-func aeuConstructor() any {
-	return new(AbstractEventUpdate)
+type EventError struct {
+	Event
+	// https://developers.revolt.chat/developers/events/protocol.html#error
+	Error EventErrorType `json:"error"`
 }
 
-const jsonSkipAheadKeyType = len(`{"type":"`)
-
-// eventTypeFromJSON extracts the event type from the JSON data.
-func eventTypeFromJSON(data []byte) (string, error) {
-	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
-	if closingTagIndex < 0 {
-		return "", fmt.Errorf("closing quote of type field not found")
-	}
-
-	result := data[jsonSkipAheadKeyType : jsonSkipAheadKeyType+closingTagIndex]
-	return string(result), nil
+type EventBulk struct {
+	Event
+	V []json.RawMessage `json:"v"`
 }
 
-var eventToStruct = map[string]func() any{
-	"Error": func() any { return new(EventError) },
-	"Bulk":  func() any { return new(EventBulk) },
+type EventPong struct {
+	Event
+	Data int64 `json:"data"`
+}
 
-	"Authenticated": func() any { return new(EventAuthenticated) },
-	"Ready":         func() any { return new(EventReady) },
-	"Pong":          func() any { return new(EventPong) },
-	"Auth":          func() any { return new(EventAuth) },
+// EventReady provides information about objects relative to the user.
+// This is used to populate the session's cache
+type EventReady struct {
+	Event
+	Users    []*User         `json:"users"`
+	Servers  []*Server       `json:"servers"`
+	Channels []*Channel      `json:"channels"`
+	Members  []*ServerMember `json:"members"`
+	Emojis   []*Emoji        `json:"emojis"`
+}
 
-	/* All update events are abstracted away. */
-	"MessageUpdate":      aeuConstructor,
-	"ServerUpdate":       aeuConstructor,
-	"ChannelUpdate":      aeuConstructor,
-	"ServerRoleUpdate":   aeuConstructor,
-	"WebhookUpdate":      aeuConstructor,
-	"UserUpdate":         aeuConstructor,
-	"ServerMemberUpdate": aeuConstructor,
+type AuthType string
 
-	"Message":               func() any { return new(EventMessage) },
-	"MessageAppend":         func() any { return new(EventMessageAppend) },
-	"MessageDelete":         func() any { return new(EventMessageDelete) },
-	"BulkMessageDelete":     func() any { return new(EventBulkMessageDelete) },
-	"MessageReact":          func() any { return new(EventMessageReact) },
-	"MessageUnreact":        func() any { return new(EventMessageUnreact) },
-	"MessageRemoveReaction": func() any { return new(EventMessageRemoveReaction) },
+const (
+	EventTypeAuthDeleteSession     AuthType = "DeleteSession"
+	EventTypeAuthDeleteAllSessions AuthType = "DeleteAllSessions"
+)
 
-	"ChannelCreate":      func() any { return new(EventChannelCreate) },
-	"ChannelDelete":      func() any { return new(EventChannelDelete) },
-	"ChannelAck":         func() any { return new(EventChannelAck) },
-	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
-	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
+type EventAuth struct {
+	Event
+	EventType AuthType `json:"event_type"`
+	UserID    string   `json:"user_id"`
+	SessionID string   `json:"session_id"`
 
-	"ChannelGroupJoin":  func() any { return new(EventChannelGroupJoin) },
-	"ChannelGroupLeave": func() any { return new(EventChannelGroupLeave) },
+	// Only present when... I forgot.
+	ExcludeSessionID string `json:"exclude_session_id"`
+}
 
-	"ServerCreate":      func() any { return new(EventServerCreate) },
-	"ServerDelete":      func() any { return new(EventServerDelete) },
-	"ServerRoleDelete":  func() any { return new(EventServerRoleDelete) },
-	"ServerMemberJoin":  func() any { return new(EventServerMemberJoin) },
-	"ServerMemberLeave": func() any { return new(EventServerMemberLeave) },
+// EventAuthenticated is sent after the client has authenticated.
+type EventAuthenticated struct {
+	Event
+}
 
-	"EmojiCreate": func() any { return new(EventEmojiCreate) },
-	"EmojiDelete": func() any { return new(EventEmojiDelete) },
+type EventMessage struct {
+	Event
+	Message
+}
 
-	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
-	"UserRelationship":   func() any { return new(EventUserRelationship) },
-	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
+// EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
+type EventServerUpdate struct {
+	Event
+	ID    string        `json:"id"`
+	Data  PartialServer `json:"data"`
+	Clear []string      `json:"clear"`
+}
 
-	"WebhookCreate": func() any { return new(EventWebhookCreate) },
-	"WebhookDelete": func() any { return new(EventWebhookDelete) },
+// EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
+type EventChannelUpdate struct {
+	Event
+	ID    string         `json:"id"`
+	Data  PartialChannel `json:"data"`
+	Clear []string       `json:"clear"`
+}
+
+// EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
+type EventServerRoleUpdate struct {
+	Event
+	ID     string            `json:"id"`
+	RoleID string            `json:"role_id"`
+	Data   PartialServerRole `json:"data"`
+	Clear  []string          `json:"clear"`
+}
+
+// EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
+type EventServerMemberUpdate struct {
+	Event
+	ID    MemberCompositeID   `json:"id"`
+	Data  PartialServerMember `json:"data"`
+	Clear []string            `json:"clear"`
+}
+
+type EventUserUpdate struct {
+	Event
+	ID    string      `json:"id"`
+	Data  PartialUser `json:"data"`
+	Clear []string    `json:"clear"`
+}
+
+type EventWebhookUpdate struct {
+	Event
+	ID     string         `json:"id"`
+	Data   PartialWebhook `json:"data"`
+	Remove []string       `json:"remove"` // todo: why is this "remove" and not "clear"?
+}
+
+type EventMessageUpdate struct {
+	Event
+	ID      string  `json:"id"`
+	Channel string  `json:"channel"`
+	Data    Message `json:"data"`
+}
+
+type EventMessageAppend struct {
+	ID      string  `json:"id"`
+	Channel string  `json:"channel"`
+	Append  Message `json:"append"`
+}
+
+type EventMessageDelete struct {
+	Event
+	ID      string `json:"id"`
+	Channel string `json:"channel"`
+}
+
+type EventBulkMessageDelete struct {
+	Event
+	Channel string   `json:"channel"`
+	IDs     []string `json:"ids"`
+}
+
+// EventChannelStartTyping is sent when a user starts typing in a channel.
+type EventChannelStartTyping struct {
+	Event
+	ID   string `json:"id"`
+	User string `json:"user,omitempty"`
+}
+
+// EventChannelStopTyping is sent when a user stops typing in a channel.
+type EventChannelStopTyping struct {
+	EventChannelStartTyping
+}
+
+type EventChannelAck struct {
+	Event
+	ID        string `json:"id"`
+	User      string `json:"user"`
+	MessageID string `json:"message_id"`
+}
+
+// EventChannelCreate is sent when a channel is created.
+// This is dispatched in conjunction with EventServerUpdate
+type EventChannelCreate struct {
+	Event
+	*Channel
+}
+
+// EventChannelDelete is sent when a channel is deleted.
+type EventChannelDelete struct {
+	Event
+	ID string `json:"id"`
+}
+
+// EventServerMemberLeave is sent when a user leaves a server.
+type EventServerMemberLeave struct {
+	Event
+	ID     string `json:"id"`
+	User   string `json:"user"`
+	Reason string `json:"reason"`
+}
+
+// EventServerCreate is sent when a server is created (joined).
+type EventServerCreate struct {
+	Event
+	ID       string     `json:"id"`
+	Server   *Server    `json:"server"`
+	Channels []*Channel `json:"channels"`
+	Emojis   []*Emoji   `json:"emojis"`
+}
+
+type EventServerRoleDelete struct {
+	Event
+	ID     string `json:"id"`
+	RoleID string `json:"role_id"`
+}
+
+type EventServerMemberJoin struct {
+	Event
+	ID   string `json:"id"`
+	User string `json:"user"`
+}
+
+type EventServerDelete struct {
+	Event
+	ID string `json:"id"`
+}
+
+type EventMessageReact struct {
+	Event
+	ID        string `json:"id"`
+	ChannelID string `json:"channel_id"`
+	UserID    string `json:"user_id"`
+	EmojiID   string `json:"emoji_id"`
+}
+
+// EventMessageUnreact is sent when a user removes a singular reaction from a message.
+type EventMessageUnreact struct {
+	EventMessageReact
+}
+
+// EventMessageRemoveReaction is sent when all the reactions are removed from a message.
+type EventMessageRemoveReaction struct {
+	ID        string `json:"id"`
+	ChannelID string `json:"channel_id"`
+	EmojiID   string `json:"emoji_id"`
+}
+
+type EventChannelGroupJoin struct {
+	Event
+	ID   string `json:"id"`
+	User string `json:"user"`
+}
+
+type EventChannelGroupLeave struct {
+	EventChannelGroupJoin
+}
+
+type EventEmojiCreate struct {
+	Event
+	*Emoji
+}
+
+type EventEmojiDelete struct {
+	Event
+	ID string `json:"id"`
+}
+
+type EventUserRelationship struct {
+	Event
+	ID   string `json:"id"`
+	User *User  `json:"user"`
+}
+
+type EventUserPlatformWipe struct {
+	Event
+	UserID string `json:"user_id"`
+	Flags  int    `json:"flags"`
+}
+
+type EventUserSettingsUpdate struct {
+	Event
+	// Update is a tuple of (int, string); update time, and the data in JSON
+	Update map[string]UpdateTuple `json:"update"`
+}
+
+type EventWebhookCreate struct {
+	Event
+	*Webhook
+}
+
+type EventWebhookDelete struct {
+	Event
+	ID string `json:"id"`
 }
