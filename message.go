@@ -7,52 +7,62 @@ import (
 type (
 	MessageSystemType       string
 	MessageEmbedSpecialType string
+	MessageFlagsType        uint32
 )
 
 const (
-	MessageSystemTypeText                      MessageSystemType = "text"
-	MessageSystemTypeUserAdded                 MessageSystemType = "user_added"
-	MessageSystemTypeUserRemove                MessageSystemType = "user_remove"
-	MessageSystemTypeUserJoined                MessageSystemType = "user_joined"
-	MessageSystemTypeUserLeft                  MessageSystemType = "user_left"
-	MessageSystemTypeUserKicked                MessageSystemType = "user_kicked"
-	MessageSystemTypeUserBanned                MessageSystemType = "user_banned"
-	MessageSystemTypeChannelRenamed            MessageSystemType = "channel_renamed"
-	MessageSystemTypeChannelDescriptionChanged MessageSystemType = "channel_description_changed"
-	MessageSystemTypeChannelIconChanged        MessageSystemType = "channel_icon_changed"
-	MessageSystemTypeChannelOwnershipChanged   MessageSystemType = "channel_ownership_changed"
+	MessageSystemText                      MessageSystemType = "text"
+	MessageSystemUserAdded                 MessageSystemType = "user_added"
+	MessageSystemUserRemove                MessageSystemType = "user_remove"
+	MessageSystemUserJoined                MessageSystemType = "user_joined"
+	MessageSystemUserLeft                  MessageSystemType = "user_left"
+	MessageSystemUserKicked                MessageSystemType = "user_kicked"
+	MessageSystemUserBanned                MessageSystemType = "user_banned"
+	MessageSystemChannelRenamed            MessageSystemType = "channel_renamed"
+	MessageSystemChannelDescriptionChanged MessageSystemType = "channel_description_changed"
+	MessageSystemChannelIconChanged        MessageSystemType = "channel_icon_changed"
+	MessageSystemChannelOwnershipChanged   MessageSystemType = "channel_ownership_changed"
 )
 
 const (
-	MessageEmbedSpecialTypeNone       = "None"
-	MessageEmbedSpecialTypeGIF        = "GIF"
-	MessageEmbedSpecialTypeYouTube    = "YouTube"
-	MessageEmbedSpecialTypeLightspeed = "Lightspeed"
-	MessageEmbedSpecialTypeTwitch     = "Twitch"
-	MessageEmbedSpecialTypeSpotify    = "Spotify"
-	MessageEmbedSpecialTypeSoundcloud = "Soundcloud"
-	MessageEmbedSpecialTypeBandcamp   = "Bandcamp"
-	MessageEmbedSpecialTypeStreamable = "Streamable"
+	MessageEmbedSpecialNone       MessageEmbedSpecialType = "None"
+	MessageEmbedSpecialGIF        MessageEmbedSpecialType = "GIF"
+	MessageEmbedSpecialYouTube    MessageEmbedSpecialType = "YouTube"
+	MessageEmbedSpecialLightspeed MessageEmbedSpecialType = "Lightspeed"
+	MessageEmbedSpecialTwitch     MessageEmbedSpecialType = "Twitch"
+	MessageEmbedSpecialSpotify    MessageEmbedSpecialType = "Spotify"
+	MessageEmbedSpecialSoundcloud MessageEmbedSpecialType = "Soundcloud"
+	MessageEmbedSpecialBandcamp   MessageEmbedSpecialType = "Bandcamp"
+	MessageEmbedSpecialStreamable MessageEmbedSpecialType = "Streamable"
+)
+
+const (
+	// MessageFlagsSuppressNotifications  will not send push / desktop notifications
+	MessageFlagsSuppressNotifications MessageFlagsType = 1
+	// MessageFlagsMentionsEveryone will mention all users who can see the channel
+	MessageFlagsMentionsEveryone MessageFlagsType = 2
+	// MessageFlagsMentionsOnline will mention all users who are online and can see the channel.
+	// This cannot be true if MentionsEveryone is true
+	MessageFlagsMentionsOnline MessageFlagsType = 3
 )
 
 // Message contains information about a message.
 type Message struct {
-	ID          string          `json:"_id"`
-	Nonce       string          `json:"nonce"`
-	Channel     string          `json:"channel"`
-	Author      string          `json:"author"`
-	Webhook     *MessageWebhook `json:"webhook"`
-	Content     string          `json:"content"`
-	System      *MessageSystem  `json:"system"`
-	Attachments []*Attachment   `json:"attachments"`
-	Edited      time.Time       `json:"edited"`
-	Embeds      []*MessageEmbed `json:"embeds"`
-	Mentions    []string        `json:"mentions"`
-	Replies     []string        `json:"replies"`
-
-	// Map of emoji ID to array of user ID who reacted to it
-	Reactions map[string][]string `json:"reactions"`
-
+	ID           string               `json:"_id"`
+	Nonce        string               `json:"nonce"`
+	Channel      string               `json:"channel"`
+	Author       string               `json:"author"`
+	Content      string               `json:"content"`
+	Mentions     []string             `json:"mentions"`
+	Replies      []string             `json:"replies"`
+	Reactions    map[string][]string  `json:"reactions"` // Emoji ID to array of users IDs that reacted
+	Pinned       bool                 `json:"pinned"`
+	Flags        MessageFlagsType     `json:"flags"`
+	Webhook      *MessageWebhook      `json:"webhook"`
+	System       *MessageSystem       `json:"system"`
+	Embeds       []*MessageEmbed      `json:"embeds"`
+	Attachments  []*Attachment        `json:"attachments"`
+	Edited       time.Time            `json:"edited"`
 	Interactions *MessageInteractions `json:"interactions"`
 	Masquerade   *MessageMasquerade   `json:"masquerade"`
 }
@@ -98,7 +108,7 @@ type MessageEmbedSpecial struct {
 	Timestamp time.Time               `json:"timestamp,omitempty"`
 
 	// Identifies the type of content for types: Lightspeed, Twitch, Spotify, and Bandcamp
-	ContentType string `json:"content_type"`
+	ContentType string `json:"content_type"` // todo: make enums
 }
 
 type MessageEmbedImage struct {
