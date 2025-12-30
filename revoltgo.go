@@ -8,7 +8,7 @@ Sometimes I will leave TO-DO comments for things I want to globally change later
 */
 package revoltgo
 
-const VERSION = "v3.0.0-beta.1"
+const VERSION = "v3.0.0-beta.2"
 
 type RootData struct {
 	Revolt   string `json:"revolt"`
