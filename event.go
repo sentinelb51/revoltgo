@@ -22,7 +22,6 @@ type Event struct {
 	Type string `json:"type"`
 }
 
-// EventType returns the string representation of the event type.
 func (e *Event) String() string {
 	return e.Type
 }

@@ -205,12 +205,12 @@ func AddHandler[T any](s *Session, handler func(*Session, T)) {
 		t = t.Elem()
 	}
 
-	// Strip "Event" prefix (e.g., "EventMessage" -> "Message")
+	// Convert "EventMessage" struct name to "Message" event name
 	name := strings.TrimPrefix(t.Name(), "Event")
 
 	// Safety check (assuming eventConstructors is defined elsewhere)
 	if _, found := eventConstructors[name]; !found {
-		log.Fatalf("attempting to bind handler for unsupported event type: %s", name)
+		log.Fatalf("attempting to bind handler for unsupported event type: %s", t.Name())
 	}
 
 	s.handlers[name] = append(s.handlers[name], func(s *Session, e any) {
