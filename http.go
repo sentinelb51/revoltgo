@@ -5,24 +5,100 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
 )
 
-// todo: make HTTPClient with UserAgent and other fields (persistent headers? timeout?)
-// make NewHTTPClient(userAgent string) *HTTPClient
-// let Session use it
-// move Ratelimiter to it?
+const (
+	httpHeaderSessionToken = "X-Session-Token"
+	httpHeaderBotToken     = "X-Bot-Token"
+)
 
-// resolveDestination converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
+type HTTPClient struct {
+	Debug bool
+
+	mu          sync.RWMutex
+	client      *http.Client
+	session     *Session
+	ratelimiter *Ratelimiter
+	headers     map[string]string
+}
+
+func newHTTPClient(session *Session) *HTTPClient {
+	return &HTTPClient{
+		session:     session,
+		client:      &http.Client{Timeout: 10 * time.Second},
+		ratelimiter: newRatelimiter(),
+		headers: map[string]string{
+			"User-Agent": fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
+		},
+	}
+}
+
+// SetTimeout sets the HTTP client timeout between 1 and 300 seconds
+func (c *HTTPClient) SetTimeout(timeout time.Duration) error {
+	const (
+		minTimeout = time.Second
+		maxTimeout = 300 * time.Second
+	)
+
+	if timeout < minTimeout {
+		return fmt.Errorf("timeout %s < %s", timeout, minTimeout)
+	}
+
+	if timeout > maxTimeout {
+		return fmt.Errorf("timeout %s > %s", timeout, maxTimeout)
+	}
+
+	c.client.Timeout = timeout
+	return nil
+}
+
+// AddHeader adds a header and checks if it already exists
+func (c *HTTPClient) AddHeader(key, value string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, exists := c.headers[key]; exists {
+		return fmt.Errorf("header %q already exists", key)
+	}
+
+	c.headers[key] = value
+	return nil
+}
+
+// SetHeader overwrites a header. Use AddHeader to avoid overwriting existing headers.
+func (c *HTTPClient) SetHeader(key, value string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.headers[key] = value
+}
+
+// RemoveHeader removes a header
+func (c *HTTPClient) RemoveHeader(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.headers, key)
+}
+
+// Header retrieves a header value
+func (c *HTTPClient) Header(key string) string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.headers[key]
+}
+
+// ResolveURL converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
 // It also allows absolute URLs targeting the CDN. Otherwise, it rejects the URL.
-func resolveDestination(destination string) (string, error) {
+func (c *HTTPClient) ResolveURL(destination string) (string, error) {
 	destination = strings.TrimSpace(destination)
 	if destination == "" {
 		return "", fmt.Errorf("destination empty")
@@ -50,6 +126,42 @@ func sameHostname(a, b *url.URL) bool {
 	return strings.EqualFold(a.Host, b.Host)
 }
 
+// printDebugTX logs the outgoing request details if debugging is enabled.
+func (c *HTTPClient) printDebugTX(method, destination string, data any) {
+	if !c.Debug {
+		return
+	}
+
+	var payload string
+	if data != nil {
+		if _, ok := data.(*File); ok {
+			payload = "[Multipart File]"
+		} else {
+			if b, err := json.Marshal(data); err == nil {
+				payload = string(b)
+			}
+		}
+	}
+	log.Printf("[HTTP/TX] %s %s -> %s", method, destination, payload)
+}
+
+// printDebugRX logs the incoming response details if debugging is enabled.
+// It reads the body and restores it so it can be read again later.
+func (c *HTTPClient) printDebugRX(response *http.Response) {
+	if !c.Debug {
+		return
+	}
+
+	// Read body for logging
+	bodyBytes, _ := io.ReadAll(response.Body)
+	response.Body.Close() // Close original network reader
+
+	log.Printf("[HTTP/RX] %d %s", response.StatusCode, string(bodyBytes))
+
+	// Restore body with NopCloser over a buffer for handleResponse
+	response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+}
+
 /*
 Request sends a JSON Request with "method" to a destination URL
 - "result" will be used to decode the response into, and
@@ -58,12 +170,11 @@ Request sends a JSON Request with "method" to a destination URL
 - If the "data" is a *File, it will be uploaded as a multipart form
 This function automatically handles rate-limiting and response status codes
 */
-func (s *Session) Request(method, destination string, data, result any) error {
-
+func (c *HTTPClient) Request(method, destination string, data, result any) error {
 	// Handle ratelimits before appending the API URL to reduce key size
-	rl := s.Ratelimiter.get(method, destination)
+	rl := c.ratelimiter.get(method, destination)
 
-	destination, err := resolveDestination(destination)
+	destination, err := c.ResolveURL(destination)
 	if err != nil {
 		return err
 	}
@@ -74,7 +185,7 @@ func (s *Session) Request(method, destination string, data, result any) error {
 		}
 	}
 
-	reader, contentType, err := prepareRequestBody(data)
+	reader, contentType, err := c.prepareRequestBody(data)
 	if err != nil {
 		return err
 	}
@@ -84,44 +195,57 @@ func (s *Session) Request(method, destination string, data, result any) error {
 		return err
 	}
 
-	request.Header.Set("User-Agent", s.UserAgent)
 	request.Header.Set("Content-Type", contentType)
 
-	if s.Selfbot() {
-		request.Header.Set("X-session-Token", s.Token)
+	c.mu.RLock()
+	for k, v := range c.headers {
+		request.Header.Set(k, v)
+	}
+	c.mu.RUnlock()
+
+	if c.session.Selfbot() {
+		request.Header.Set(httpHeaderSessionToken, c.session.Token)
 	} else {
-		request.Header.Set("X-Bot-Token", s.Token)
+		request.Header.Set(httpHeaderBotToken, c.session.Token)
 	}
 
-	response, err := s.HTTP.Do(request)
+	if c.Debug {
+		c.printDebugTX(method, destination, data)
+	}
+
+	response, err := c.client.Do(request)
 	if err != nil {
 		return err
 	}
+
+	if c.Debug {
+		c.printDebugRX(response)
+	}
+
 	defer response.Body.Close()
 
 	if err = rl.update(response.Header); err != nil {
 		return err
 	}
 
-	// Process response based on status code
-	return handleResponse(response.StatusCode, response.Body, result)
+	return c.handleResponse(response.StatusCode, response.Body, result)
 }
 
 // prepareRequestBody prepares an appropriate Request body and determines the content type
-func prepareRequestBody(body any) (io.Reader, string, error) {
+func (c *HTTPClient) prepareRequestBody(body any) (io.Reader, string, error) {
 	if body == nil {
 		return http.NoBody, "application/json", nil
 	}
 
 	if file, ok := body.(*File); ok {
-		return prepareFileUpload(file)
+		return c.prepareFileUpload(file)
 	}
 
-	return prepareJSONBody(body)
+	return c.prepareJSONBody(body)
 }
 
 // prepareFileUpload prepares a multipart form for uploading a file
-func prepareFileUpload(file *File) (io.Reader, string, error) {
+func (c *HTTPClient) prepareFileUpload(file *File) (io.Reader, string, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -142,7 +266,7 @@ func prepareFileUpload(file *File) (io.Reader, string, error) {
 }
 
 // prepareJSONBody encodes data as JSON
-func prepareJSONBody(body any) (io.Reader, string, error) {
+func (c *HTTPClient) prepareJSONBody(body any) (io.Reader, string, error) {
 	data, err := json.Marshal(body)
 	if err != nil {
 		return nil, "", fmt.Errorf("json.Marshal: %w", err)
@@ -152,7 +276,7 @@ func prepareJSONBody(body any) (io.Reader, string, error) {
 }
 
 // handleResponse processes the API response
-func handleResponse(statusCode int, body io.Reader, result any) error {
+func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) error {
 	switch statusCode {
 	case http.StatusNoContent:
 		return nil
@@ -171,40 +295,7 @@ func handleResponse(statusCode int, body io.Reader, result any) error {
 	return nil
 }
 
-type RootData struct {
-	Revolt   string `json:"revolt"`
-	Features struct {
-		Captcha struct {
-			Enabled bool   `json:"enabled"`
-			Key     string `json:"key"`
-		} `json:"captcha"`
-		Email      bool `json:"email"`
-		InviteOnly bool `json:"invite_only"`
-		Autumn     struct {
-			Enabled bool   `json:"enabled"`
-			URL     string `json:"url"`
-		} `json:"autumn"`
-		January struct {
-			Enabled bool   `json:"enabled"`
-			URL     string `json:"url"`
-		} `json:"january"`
-		Voso struct {
-			Enabled bool   `json:"enabled"`
-			URL     string `json:"url"`
-			WS      string `json:"ws"`
-		} `json:"voso"`
-	} `json:"features"`
-	WS    string `json:"ws"`
-	App   string `json:"app"`
-	VapID string `json:"vapid"`
-	Build struct {
-		CommitSha       string `json:"commit_sha"`
-		CommitTimestamp string `json:"commit_timestamp"`
-		SemVer          string `json:"semver"`
-		OriginURL       string `json:"origin_url"`
-		Timestamp       string `json:"timestamp"`
-	} `json:"build"`
-}
+/* HTTP data that can be sent to the REST API */
 
 type LoginData struct {
 	Email        string `json:"email"`
@@ -250,11 +341,9 @@ type SessionEditData struct {
 }
 
 type PasswordResetConfirmData struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
-
-	// Whether to log out of all sessions
-	RemoveSessions bool `json:"remove_sessions"`
+	Token          string `json:"token"`
+	Password       string `json:"password"`
+	RemoveSessions bool   `json:"remove_sessions"` // Whether to log out of all sessions
 }
 
 type AccountChangePasswordData struct {
@@ -356,8 +445,7 @@ type EmojiCreateData struct {
 }
 
 type ChannelJoinCallData struct {
-	// Name of the node to join
-	Node string `json:"node,omitempty"`
+	Node string `json:"node,omitempty"` // Name of the node to join
 
 	// Whether to force disconnect any other existing voice connections
 	// Useful for disconnecting on another device and joining on a new one
