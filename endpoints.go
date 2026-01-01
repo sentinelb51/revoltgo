@@ -22,45 +22,6 @@ import (
 	 - Follow the same hierarchical structure as the constants
 */
 
-/* TODO:
-Missing Endpoints
-
-	Users
-		/users/dms (List DMs)
-		/users/friend (List friends/requests - distinct from /users/{id}/friend)
-
-	Bots
-		/bots/create
-		/bots/@me (Fetch owned bots)
-
-	Channels
-		/channels/create
-		/channels/{target}/members (Voice channel members)
-		/channels/{target}/search
-		/channels/{target}/messages/{msg}/pin
-		/channels/{target}/messages/bulk (Bulk delete)
-
-	Servers
-		/servers/create
-		/servers/{target}/invites (List server invites)
-		/servers/{target}/emojis
-		/servers/{target}/roles/ranks (Role reordering)
-
-	Auth (MFA)
-		/auth/mfa/ticket
-		/auth/mfa/recovery
-		/auth/mfa/methods
-		/auth/mfa/totp
-
-	Webhooks
-		/webhooks/{webhook_id}
-		/webhooks/{webhook_id}/{token}
-		/webhooks/{webhook_id}/{token}/github
-
-	Miscellaneous
-		/policy/acknowledge
-*/
-
 /* These base URLs are used by the Session.Request method */
 var (
 	apiURL = "https://api.stoat.chat"
@@ -101,9 +62,8 @@ func SetCDNURL(newURL string) error {
 }
 
 const (
-	URLUsersUsername = "/users/me/username"
-
 	URLUsers              = "/users/%s"
+	URLUsersUsername      = "/users/me/username"
 	URLUsersMutual        = URLUsers + "/mutual"
 	URLUsersDM            = URLUsers + "/dm"
 	URLUsersFlags         = URLUsers + "/flags"
@@ -111,20 +71,21 @@ const (
 	URLUsersBlock         = URLUsers + "/block"
 	URLUsersProfile       = URLUsers + "/profile"
 	URLUsersRelationships = URLUsers + "/relationships"
-
 	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
 
-	URLServers         = "/servers/%s"
-	URLServersAck      = URLServers + "/ack"
-	URLServersChannels = URLServers + "/channels"
-	URLServersMembers  = URLServers + "/members"
-	URLServersMember   = URLServersMembers + "/%s"
-	URLServersBans     = URLServers + "/bans"
-	URLServersBan      = URLServersBans + "/%s"
-	URLServersRoles    = URLServers + "/roles"
-	URLServersRole     = URLServers + "/roles/%s"
-
+	URLServers            = "/servers/%s"
+	URLServersAck         = URLServers + "/ack"
+	URLServersChannels    = URLServers + "/channels"
+	URLServersMembers     = URLServers + "/members"
+	URLServersMember      = URLServersMembers + "/%s"
+	URLServersBans        = URLServers + "/bans"
+	URLServersBan         = URLServersBans + "/%s"
+	URLServersRoles       = URLServers + "/roles"
+	URLServersRole        = URLServers + "/roles/%s"
 	URLServersPermissions = URLServers + "/permissions/%s"
+	URLServersInvites     = URLServers + "/invites"
+	URLServersEmojis      = URLServers + "/emojis"
+	URLServersRolesRanks  = URLServers + "/roles/ranks"
 
 	URLChannels                 = "/channels/%s"
 	URLChannelsAckMessage       = URLChannels + "/ack/%s"
@@ -140,6 +101,12 @@ const (
 	URLChannelsPermissions      = URLChannels + "/permissions/%s"
 	URLChannelsRecipients       = URLChannels + "/recipients/%s"
 	URLChannelsWebhooks         = URLChannels + "/webhooks"
+	URLChannelsSearch           = URLChannels + "/search"
+	URLChannelsMessagesPin      = URLChannelsMessages + "/%s/pin"
+
+	URLWebhooks              = "/webhooks/%s"
+	URLWebhooksWebhook       = URLWebhooks + "/%s"
+	URLWebhooksWebhookGitHub = URLWebhooksWebhook + "/github"
 
 	URLInvites = "/invites/%s"
 
@@ -147,6 +114,7 @@ const (
 	URLBotsInvite = URLBots + "/invite"
 
 	URLAuth         = "/auth"
+	URLAuthMFA      = URLAuth + "/mfa/%s"
 	URLAuthAccount  = URLAuth + "/account/%s"
 	URLAuthSessions = URLAuth + "/session/%s"
 
@@ -160,6 +128,8 @@ const (
 	URLPush = "/push/%s"
 
 	URLSafetyReport = "/safety/report"
+
+	URLPolicy = "/policy/%s"
 )
 
 func EndpointOnboard(action string) string {
