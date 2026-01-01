@@ -2,27 +2,28 @@ package revoltgo
 
 import (
 	"fmt"
-	"time"
 )
+
+//go:generate msgp -tests=false -io=false
 
 // Server is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/servers.rs#L14
 type Server struct {
-	ID                 string                 `json:"_id"`
-	Owner              string                 `json:"owner"`
-	Name               string                 `json:"name"`
-	Description        string                 `json:"description"`
-	Channels           []string               `json:"channels"`
-	Categories         []*ServerCategory      `json:"categories"`
-	SystemMessages     ServerSystemMessages   `json:"system_messages"`
-	Roles              map[string]*ServerRole `json:"roles"` // Roles is a map of role ID to ServerRole structs.
-	DefaultPermissions int64                  `json:"default_permissions"`
-	Flags              uint32                 `json:"flags"`
-	NSFW               bool                   `json:"nsfw"`
-	Analytics          bool                   `json:"analytics"`
-	Discoverable       bool                   `json:"discoverable"`
-	Icon               *Attachment            `json:"icon"`
-	Banner             *Attachment            `json:"banner"`
+	ID                 string                 `msg:"_id"`
+	Owner              string                 `msg:"owner"`
+	Name               string                 `msg:"name"`
+	Description        string                 `msg:"description"`
+	Channels           []string               `msg:"channels"`
+	Categories         []*ServerCategory      `msg:"categories"`
+	SystemMessages     ServerSystemMessages   `msg:"system_messages"`
+	Roles              map[string]*ServerRole `msg:"roles"` // Roles is a map of role ID to ServerRole structs.
+	DefaultPermissions int64                  `msg:"default_permissions"`
+	Flags              uint32                 `msg:"flags"`
+	NSFW               bool                   `msg:"nsfw"`
+	Analytics          bool                   `msg:"analytics"`
+	Discoverable       bool                   `msg:"discoverable"`
+	Icon               *Attachment            `msg:"icon"`
+	Banner             *Attachment            `msg:"banner"`
 }
 
 func (s *Server) update(data PartialServer) {
@@ -52,7 +53,7 @@ func (s *Server) update(data PartialServer) {
 	}
 
 	if data.Roles != nil {
-		s.Roles = *data.Roles
+		s.Roles = data.Roles
 	}
 
 	if data.DefaultPermissions != nil {
@@ -101,30 +102,30 @@ func (s *Server) clear(fields []string) {
 
 // PartialServer is only found within EventServerUpdate and used to update the state.
 type PartialServer struct {
-	Owner              *string                 `json:"owner,omitempty"`
-	Name               *string                 `json:"name,omitempty"`
-	Description        *string                 `json:"description,omitempty"`
-	Channels           *[]string               `json:"channels,omitempty"`
-	Categories         *[]*ServerCategory      `json:"categories,omitempty"`
-	SystemMessages     *ServerSystemMessages   `json:"system_messages,omitempty"`
-	Roles              *map[string]*ServerRole `json:"roles,omitempty"`
-	DefaultPermissions *int64                  `json:"default_permissions,omitempty"`
-	Icon               *Attachment             `json:"icon,omitempty"`
-	Banner             *Attachment             `json:"banner,omitempty"`
-	Flags              *uint32                 `json:"flags,omitempty"`
-	NSFW               *bool                   `json:"nsfw,omitempty"`
-	Analytics          *bool                   `json:"analytics,omitempty"`
-	Discoverable       *bool                   `json:"discoverable,omitempty"`
+	Owner              *string                `msg:"owner,omitempty"`
+	Name               *string                `msg:"name,omitempty"`
+	Description        *string                `msg:"description,omitempty"`
+	Channels           *[]string              `msg:"channels,omitempty"`
+	Categories         *[]*ServerCategory     `msg:"categories,omitempty"`
+	SystemMessages     *ServerSystemMessages  `msg:"system_messages,omitempty"`
+	Roles              map[string]*ServerRole `msg:"roles,omitempty"`
+	DefaultPermissions *int64                 `msg:"default_permissions,omitempty"`
+	Icon               *Attachment            `msg:"icon,omitempty"`
+	Banner             *Attachment            `msg:"banner,omitempty"`
+	Flags              *uint32                `msg:"flags,omitempty"`
+	NSFW               *bool                  `msg:"nsfw,omitempty"`
+	Analytics          *bool                  `msg:"analytics,omitempty"`
+	Discoverable       *bool                  `msg:"discoverable,omitempty"`
 }
 
 // ServerRole is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/servers/model.rs#L70
 type ServerRole struct {
-	Name        string              `json:"name"`
-	Permissions PermissionOverwrite `json:"permissions"`
-	Colour      *string             `json:"colour"`
-	Hoist       bool                `json:"hoist"`
-	Rank        int64               `json:"rank"`
+	Name        string              `msg:"name"`
+	Permissions PermissionOverwrite `msg:"permissions"`
+	Colour      *string             `msg:"colour"`
+	Hoist       bool                `msg:"hoist"`
+	Rank        int64               `msg:"rank"`
 }
 
 func (r *ServerRole) update(data PartialServerRole) {
@@ -161,41 +162,41 @@ func (r *ServerRole) clear(fields []string) {
 }
 
 type PartialServerRole struct {
-	Name        *string              `json:"name,omitempty"`
-	Permissions *PermissionOverwrite `json:"permissions,omitempty"`
-	Colour      *string              `json:"colour,omitempty"`
-	Hoist       *bool                `json:"hoist,omitempty"`
-	Rank        *int64               `json:"rank,omitempty"`
+	Name        *string              `msg:"name,omitempty"`
+	Permissions *PermissionOverwrite `msg:"permissions,omitempty"`
+	Colour      *string              `msg:"colour,omitempty"`
+	Hoist       *bool                `msg:"hoist,omitempty"`
+	Rank        *int64               `msg:"rank,omitempty"`
 }
 
 // ServerCategory Server categories struct.
 type ServerCategory struct {
-	ID       string   `json:"id"`
-	Title    string   `json:"title"`
-	Channels []string `json:"channels"`
+	ID       string   `msg:"id"`
+	Title    string   `msg:"title"`
+	Channels []string `msg:"channels"`
 }
 
 // ServerSystemMessages System messages struct.
 type ServerSystemMessages struct {
-	UserJoined string `json:"user_joined,omitempty"`
-	UserLeft   string `json:"user_left,omitempty"`
-	UserKicked string `json:"user_kicked,omitempty"`
-	UserBanned string `json:"user_banned,omitempty"`
+	UserJoined string `msg:"user_joined,omitempty"`
+	UserLeft   string `msg:"user_left,omitempty"`
+	UserKicked string `msg:"user_kicked,omitempty"`
+	UserBanned string `msg:"user_banned,omitempty"`
 }
 
 // ServerMember is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/server_members.rs#L44
 type ServerMember struct {
-	ID       MemberCompositeID `json:"_id"`
-	JoinedAt time.Time         `json:"joined_at"`
+	ID       MemberCompositeID `msg:"_id"`
+	JoinedAt Timestamp         `msg:"joined_at"`
 
-	Nickname *string     `json:"nickname"`
-	Avatar   *Attachment `json:"avatar"`
-	Timeout  *time.Time  `json:"timeout"`
+	Nickname *string     `msg:"nickname"`
+	Avatar   *Attachment `msg:"avatar"`
+	Timeout  Timestamp   `msg:"timeout"`
 
-	Roles      []string `json:"roles"`
-	CanPublish bool     `json:"can_publish"`
-	CanReceive bool     `json:"can_receive"`
+	Roles      []string `msg:"roles"`
+	CanPublish bool     `msg:"can_publish"`
+	CanReceive bool     `msg:"can_receive"`
 }
 
 func (m *ServerMember) update(data PartialServerMember) {
@@ -212,7 +213,7 @@ func (m *ServerMember) update(data PartialServerMember) {
 		m.Roles = *data.Roles
 	}
 
-	if data.Timeout != nil {
+	if !data.Timeout.IsZero() {
 		m.Timeout = data.Timeout
 	}
 
@@ -240,12 +241,12 @@ func (m *ServerMember) clear(fields []string) {
 }
 
 type PartialServerMember struct {
-	Nickname   *string     `json:"nickname,omitempty"`
-	Avatar     *Attachment `json:"avatar,omitempty"`
-	Roles      *[]string   `json:"roles,omitempty"`
-	Timeout    *time.Time  `json:"timeout,omitempty"`
-	CanPublish *bool       `json:"can_publish,omitempty"`
-	CanReceive *bool       `json:"can_receive,omitempty"`
+	Nickname   *string     `msg:"nickname,omitempty"`
+	Avatar     *Attachment `msg:"avatar,omitempty"`
+	Roles      *[]string   `msg:"roles,omitempty"`
+	Timeout    Timestamp   `msg:"timeout,omitempty"`
+	CanPublish *bool       `msg:"can_publish,omitempty"`
+	CanReceive *bool       `msg:"can_receive,omitempty"`
 }
 
 // Mention is a proxy function that calls ServerMember.ID.Mention().
@@ -254,8 +255,8 @@ func (m *ServerMember) Mention() string {
 }
 
 type MemberCompositeID struct {
-	User   string `json:"user"`
-	Server string `json:"server"`
+	User   string `msg:"user"`
+	Server string `msg:"server"`
 }
 
 func (m MemberCompositeID) Mention() string {
@@ -263,16 +264,16 @@ func (m MemberCompositeID) Mention() string {
 }
 
 type ServerMembers struct {
-	Members []*ServerMember `json:"members"`
-	Users   []*User         `json:"users"`
+	Members []*ServerMember `msg:"members"`
+	Users   []*User         `msg:"users"`
 }
 
 type ServerBans struct {
-	Users []*User      `json:"users"`
-	Bans  []*ServerBan `json:"bans"`
+	Users []*User      `msg:"users"`
+	Bans  []*ServerBan `msg:"bans"`
 }
 
 type ServerBan struct {
-	ID     MemberCompositeID `json:"_id"`
-	Reason string            `json:"reason"`
+	ID     MemberCompositeID `msg:"_id"`
+	Reason string            `msg:"reason"`
 }

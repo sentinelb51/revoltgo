@@ -5,12 +5,14 @@ import (
 	"time"
 )
 
+//go:generate msgp -tests=false -io=false
+
 // PermissionOverwrite is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L52.
 // todo: why the fuck are there 2: Override and OverrideField: see https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L8
 type PermissionOverwrite struct {
-	Allow int64 `json:"a"`
-	Deny  int64 `json:"d"`
+	Allow int64 `msg:"a"`
+	Deny  int64 `msg:"d"`
 }
 
 const (
@@ -86,7 +88,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (int64, error) {
 	}
 
 	// Apply timeout permissions if necessary
-	if member.Timeout != nil && time.Now().Before(*member.Timeout) {
+	if !member.Timeout.IsZero() && time.Now().Before(member.Timeout.Time) {
 		permissions &= PermissionPresetTimeout
 	}
 

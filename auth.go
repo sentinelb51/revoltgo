@@ -1,51 +1,53 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 type LoginResponse struct {
-	Result       string              `json:"result"`
-	ID           string              `json:"_id"`
-	UserID       string              `json:"user_id"`
-	Token        string              `json:"token"`
-	Name         string              `json:"name"`
-	Subscription WebpushSubscription `json:"subscription"`
+	Result       string              `msg:"result"`
+	ID           string              `msg:"_id"`
+	UserID       string              `msg:"user_id"`
+	Token        string              `msg:"token"`
+	Name         string              `msg:"name"`
+	Subscription WebpushSubscription `msg:"subscription"`
 }
 
 type Sessions struct {
-	ID   string `json:"_id"`
-	Name string `json:"name"`
+	ID   string `msg:"_id"`
+	Name string `msg:"name"`
 }
 type Account struct {
-	ID    string `json:"_id"`
-	Email string `json:"email"`
+	ID    string `msg:"_id"`
+	Email string `msg:"email"`
 }
 
 type Onboarding struct {
-	Onboarding bool `json:"onboarding"`
+	Onboarding bool `msg:"onboarding"`
 }
 
 type MFA struct {
 	// Unvalidated or authorised MFA ticket; used to resolve the correct account
-	MfaTicket string `json:"mfa_ticket"`
+	MfaTicket string `msg:"mfa_ticket"`
 
 	// MFA response
-	MfaResponse MFAResponse `json:"mfa_response"`
+	MfaResponse MFAResponse `msg:"mfa_response"`
 
 	// Friendly name used for the session
-	FriendlyName string `json:"friendly_name"`
+	FriendlyName string `msg:"friendly_name"`
 }
 
 type MFAResponse struct {
-	Password string `json:"password"`
+	Password string `msg:"password"`
 }
 
 type ChangeEmail struct {
-	Ticket Ticket `json:"ticket"` // Why is this nested
+	Ticket Ticket `msg:"ticket"` // Why is this nested
 }
 
 type Ticket struct {
-	ID           string `json:"_id"`
-	AccountID    string `json:"account_id"`
-	Token        string `json:"token"`
-	Validated    bool   `json:"validated"`
-	Authorised   bool   `json:"authorised"`
-	LastTOTPCode string `json:"last_totp_code"`
+	ID           string `msg:"_id"`
+	AccountID    string `msg:"account_id"`
+	Token        string `msg:"token"`
+	Validated    bool   `msg:"validated"`
+	Authorised   bool   `msg:"authorised"`
+	LastTOTPCode string `msg:"last_totp_code"`
 }

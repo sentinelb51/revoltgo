@@ -11,48 +11,48 @@ package revoltgo
 const VERSION = "v3.0.0-beta.2"
 
 type RootData struct {
-	WS       string           `json:"ws"`
-	App      string           `json:"app"`
-	VapID    string           `json:"vapid"`
-	Revolt   string           `json:"revolt"`
-	Build    RootDataBuild    `json:"build"`
-	Features RootDataFeatures `json:"features"`
+	WS       string           `msg:"ws"`
+	App      string           `msg:"app"`
+	VapID    string           `msg:"vapid"`
+	Revolt   string           `msg:"revolt"`
+	Build    RootDataBuild    `msg:"build"`
+	Features RootDataFeatures `msg:"features"`
 }
 
 type RootDataFeaturesCaptcha struct {
-	Enabled bool   `json:"enabled"`
-	Key     string `json:"key"`
+	Enabled bool   `msg:"enabled"`
+	Key     string `msg:"key"`
 }
 
 type RootDataFeaturesAutumn struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url"`
+	Enabled bool   `msg:"enabled"`
+	URL     string `msg:"url"`
 }
 
 type RootDataFeaturesJanuary struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url"`
+	Enabled bool   `msg:"enabled"`
+	URL     string `msg:"url"`
 }
 
 type RootDataFeaturesVoso struct {
-	Enabled bool   `json:"enabled"`
-	URL     string `json:"url"`
-	WS      string `json:"ws"`
+	Enabled bool   `msg:"enabled"`
+	URL     string `msg:"url"`
+	WS      string `msg:"ws"`
 }
 
 type RootDataFeatures struct {
-	Captcha    RootDataFeaturesCaptcha `json:"captcha"`
-	Email      bool                    `json:"email"`
-	InviteOnly bool                    `json:"invite_only"`
-	Autumn     RootDataFeaturesAutumn  `json:"autumn"`
-	January    RootDataFeaturesJanuary `json:"january"`
-	Voso       RootDataFeaturesVoso    `json:"voso"`
+	Captcha    RootDataFeaturesCaptcha `msg:"captcha"`
+	Email      bool                    `msg:"email"`
+	InviteOnly bool                    `msg:"invite_only"`
+	Autumn     RootDataFeaturesAutumn  `msg:"autumn"`
+	January    RootDataFeaturesJanuary `msg:"january"`
+	Voso       RootDataFeaturesVoso    `msg:"voso"`
 }
 
 type RootDataBuild struct {
-	CommitSha       string `json:"commit_sha"`
-	CommitTimestamp string `json:"commit_timestamp"`
-	SemVer          string `json:"semver"`
-	OriginURL       string `json:"origin_url"`
-	Timestamp       string `json:"timestamp"`
+	CommitSha       string `msg:"commit_sha"`
+	CommitTimestamp string `msg:"commit_timestamp"`
+	SemVer          string `msg:"semver"`
+	OriginURL       string `msg:"origin_url"`
+	Timestamp       string `msg:"timestamp"`
 }

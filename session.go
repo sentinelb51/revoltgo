@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
+	"github.com/tinylib/msgp/msgp"
 )
 
 func New(token string) *Session {
@@ -256,7 +256,7 @@ func (s *Session) Open() (err error) {
 
 	parameters := url.Values{}
 	parameters.Set("token", s.Token)
-	parameters.Set("format", "json")
+	parameters.Set("format", "msgpack")
 	parameters.Set("version", "1")
 
 	wsURL, err := url.Parse(query.WS)
@@ -273,14 +273,20 @@ func (s *Session) Open() (err error) {
 }
 
 // WriteSocket writes data to the Websocket in JSON
+// WriteSocket writes data to the Websocket in MessagePack
 func (s *Session) WriteSocket(data any) error {
-	payload, err := json.Marshal(data)
+	// Ensure the data implements msgp.Marshaler (requires code generation)
+	marshaler, ok := data.(msgp.Marshaler)
+	if !ok {
+		return fmt.Errorf("type %T does not implement msgp.Marshaler", data)
+	}
+
+	payload, err := marshaler.MarshalMsg(nil)
 	if err != nil {
 		return err
 	}
 
-	// Should we use WriteAsync?
-	return s.WS.WriteMessage(gws.OpcodeText, payload)
+	return s.WS.WriteMessage(gws.OpcodeBinary, payload)
 }
 
 func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {

@@ -15,7 +15,10 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
+	"github.com/tinylib/msgp/msgp"
 )
+
+//go:generate msgp -tests=false -io=false
 
 const (
 	httpHeaderSessionToken = "X-Session-Token"
@@ -545,7 +548,12 @@ type ChannelEditData struct {
 	Remove      []string `json:"remove"`
 }
 
-type SyncSettingsData map[string]UpdateTuple
+type SyncSettingsDataTuple struct {
+	Timestamp time.Time `msg:"0"`
+	Value     msgp.Raw  `msg:"1"` // Enjoy using this.
+}
+
+type SyncSettingsData map[string]SyncSettingsDataTuple
 
 type SyncSettingsFetchData struct {
 	Keys []string `json:"keys"`

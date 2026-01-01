@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/url"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/goccy/go-json"
@@ -143,11 +142,6 @@ func sliceRemoveIndex[T any](slice []T, index int) []T {
 
 	// Exclude last element, effectively removing it
 	return slice[:size]
-}
-
-type UpdateTuple struct {
-	Timestamp time.Time       `json:"0"`
-	Value     json.RawMessage `json:"1"` // Enjoy using this.
 }
 
 func mustParseURL(raw string) *url.URL {

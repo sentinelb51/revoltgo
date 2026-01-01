@@ -1,19 +1,21 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 type Group struct {
-	ID          string   `json:"_id"`
-	OwnerID     string   `json:"owner"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Users       []string `json:"users"`
+	ID          string   `msg:"_id"`
+	OwnerID     string   `msg:"owner"`
+	Name        string   `msg:"name"`
+	Description string   `msg:"description,omitempty"`
+	Users       []string `msg:"users"`
 }
 
 type FetchedGroupMembers struct {
-	Messages []*Message `json:"messages"`
-	Users    []*User    `json:"users"`
+	Messages []*Message `msg:"messages"`
+	Users    []*User    `msg:"users"`
 }
 
 type GroupSystemMessages struct {
-	UserJoined string `json:"user_joined,omitempty"`
-	UserLeft   string `json:"user_left,omitempty"`
+	UserJoined string `msg:"user_joined,omitempty"`
+	UserLeft   string `msg:"user_left,omitempty"`
 }

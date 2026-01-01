@@ -1,5 +1,7 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 type InviteType string
 
 const (
@@ -8,34 +10,34 @@ const (
 )
 
 type Invite struct {
-	Type               InviteType  `json:"type"`
-	ServerID           string      `json:"server_id"`
-	ServerName         string      `json:"server_name"`
-	ServerIcon         *Attachment `json:"server_icon"`
-	ServerBanner       *Attachment `json:"server_banner"`
-	ServerFlags        uint32      `json:"server_flags"`
-	ChannelID          string      `json:"channel_id"`
-	ChannelName        string      `json:"channel_name"`
-	ChannelDescription string      `json:"channel_description"`
-	UserName           string      `json:"user_name"`
-	UserAvatar         *Attachment `json:"user_avatar"`
-	MemberCount        uint64      `json:"member_count"`
+	Type               InviteType  `msg:"type"`
+	ServerID           string      `msg:"server_id"`
+	ServerName         string      `msg:"server_name"`
+	ServerIcon         *Attachment `msg:"server_icon"`
+	ServerBanner       *Attachment `msg:"server_banner"`
+	ServerFlags        uint32      `msg:"server_flags"`
+	ChannelID          string      `msg:"channel_id"`
+	ChannelName        string      `msg:"channel_name"`
+	ChannelDescription string      `msg:"channel_description"`
+	UserName           string      `msg:"user_name"`
+	UserAvatar         *Attachment `msg:"user_avatar"`
+	MemberCount        uint64      `msg:"member_count"`
 }
 
 type InviteJoin struct {
-	Type     InviteType `json:"type"`
+	Type     InviteType `msg:"type"`
 	Channels []*Channel
-	Server   *Server `json:"server"`
+	Server   *Server `msg:"server"`
 }
 
 // InviteCreate seems deprecated/no longer documented
 // todo: remove in the future
 type InviteCreate struct {
-	Type InviteType `json:"type"`
+	Type InviteType `msg:"type"`
 
 	// ID is the code of the invite
-	ID      string `json:"_id"`
-	Server  string `json:"server"`
-	Creator string `json:"creator"`
-	Channel string `json:"channel"`
+	ID      string `msg:"_id"`
+	Server  string `msg:"server"`
+	Creator string `msg:"creator"`
+	Channel string `msg:"channel"`
 }

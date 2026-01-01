@@ -1,5 +1,7 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 type AttachmentMetadataType string
 
 const (
@@ -11,33 +13,33 @@ const (
 )
 
 type Attachment struct {
-	ID string `json:"_id"`
+	ID string `msg:"_id"`
 
 	// Tag / bucket this file was uploaded to
-	Tag string `json:"tag"`
+	Tag string `msg:"tag"`
 
 	// Original filename
-	Filename string `json:"filename"`
+	Filename string `msg:"filename"`
 
 	// Metadata associated with file
-	Metadata *AttachmentMetadata `json:"metadata"`
+	Metadata *AttachmentMetadata `msg:"metadata"`
 
 	// Raw content type of this file
-	ContentType string `json:"content_type"`
+	ContentType string `msg:"content_type"`
 
 	// Size of this file (in bytes)
-	Size int `json:"size"`
+	Size int `msg:"size"`
 
 	// Whether this file was deleted
-	Deleted bool `json:"deleted"`
+	Deleted bool `msg:"deleted"`
 
 	// Whether this file was reported
-	Reported bool `json:"reported"`
+	Reported bool `msg:"reported"`
 
-	MessageID string `json:"message_id"`
-	UserID    string `json:"user_id"`
-	ServerID  string `json:"server_id"`
-	ObjectID  string `json:"object_id"`
+	MessageID string `msg:"message_id"`
+	UserID    string `msg:"user_id"`
+	ServerID  string `msg:"server_id"`
+	ObjectID  string `msg:"object_id"`
 }
 
 func (a Attachment) URL(size string) string {
@@ -45,8 +47,8 @@ func (a Attachment) URL(size string) string {
 }
 
 type AttachmentMetadata struct {
-	Type AttachmentMetadataType `json:"type"`
+	Type AttachmentMetadataType `msg:"type"`
 
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	Width  int `msg:"width"`
+	Height int `msg:"height"`
 }

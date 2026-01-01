@@ -1,49 +1,51 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 type Bot struct {
-	ID string `json:"_id"`
+	ID string `msg:"_id"`
 
 	// User ID of the bot owner
-	Owner string `json:"owner"`
+	Owner string `msg:"owner"`
 
 	// Token used to authenticate requests for this bot
-	Token string `json:"token"`
+	Token string `msg:"token"`
 
 	// Whether the bot is public (may be invited by anyone)
-	Public bool `json:"public"`
+	Public bool `msg:"public"`
 
 	// Whether to enable analytics
-	Analytics bool `json:"analytics"`
+	Analytics bool `msg:"analytics"`
 
 	// Whether this bot should be publicly discoverable
-	Discoverable bool `json:"discoverable"`
+	Discoverable bool `msg:"discoverable"`
 
 	// Reserved; URL for handling interactions
-	InteractionsURL string `json:"interactions_url"`
+	InteractionsURL string `msg:"interactions_url"`
 
 	// URL for terms of service
-	TermsOfServiceURL string `json:"terms_of_service_url"`
+	TermsOfServiceURL string `msg:"terms_of_service_url"`
 
 	// URL for privacy policy
-	PrivacyPolicyURL string `json:"privacy_policy_url"`
+	PrivacyPolicyURL string `msg:"privacy_policy_url"`
 
 	// Enum of bot flags
-	Flags int `json:"flags"`
+	Flags int `msg:"flags"`
 }
 
 type PublicBot struct {
-	ID          string      `json:"_id"`
-	Username    string      `json:"username"`
-	Avatar      *Attachment `json:"avatar"`
-	Description string      `json:"description"`
+	ID          string      `msg:"_id"`
+	Username    string      `msg:"username"`
+	Avatar      *Attachment `msg:"avatar"`
+	Description string      `msg:"description"`
 }
 
 type FetchedBot struct {
-	Bot  *Bot  `json:"bot"`
-	User *User `json:"user"`
+	Bot  *Bot  `msg:"bot"`
+	User *User `msg:"user"`
 }
 
 type FetchedBots struct {
-	Bots  []*Bot  `json:"bots"`
-	Users []*User `json:"users"`
+	Bots  []*Bot  `msg:"bots"`
+	Users []*User `msg:"users"`
 }

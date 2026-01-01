@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"log"
@@ -9,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
+	"github.com/tinylib/msgp/msgp"
 )
 
 func init() {
@@ -30,18 +31,18 @@ const (
 )
 
 type WebsocketMessageAuthenticate struct {
-	Type  WebsocketMessageType `json:"type"`
-	Token string               `json:"token"`
+	Type  WebsocketMessageType `msg:"type"`
+	Token string               `msg:"token"`
 }
 
 type WebsocketMessagePing struct {
-	Type WebsocketMessageType `json:"type"`
-	Data int64                `json:"data"`
+	Type WebsocketMessageType `msg:"type"`
+	Data int64                `msg:"data"`
 }
 
 type WebsocketChannelTyping struct {
-	Type    WebsocketMessageType `json:"type"`
-	Channel string               `json:"channel"`
+	Type    WebsocketMessageType `msg:"type"`
+	Channel string               `msg:"channel"`
 }
 
 type Websocket struct {
@@ -83,6 +84,15 @@ func newWebsocket(session *Session, url string) *Websocket {
 		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
 	}
+}
+
+func (ws *Websocket) printDebugData(data []byte) {
+	var buf bytes.Buffer
+	if _, err := msgp.CopyToJSON(&buf, bytes.NewReader(data)); err != nil {
+		log.Printf("Failed to convert msgpack to JSON for debug: %s\n", err)
+		return
+	}
+	log.Printf("[WS/RX/JSON]: %s\n", buf.String())
 }
 
 func (ws *Websocket) IsConnected() bool {
@@ -260,7 +270,7 @@ func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 	_ = message.Close()
 
 	if ws.Debug {
-		log.Printf("[WS/RX]: %s\n", string(buffer))
+		ws.printDebugData(data)
 	}
 
 	// Dispatch in separate goroutine; don't block ReadLoop
@@ -299,7 +309,7 @@ func (ws *Websocket) WriteClose() error {
 
 func (ws *Websocket) handle(raw []byte) {
 
-	eventType, err := eventTypeFromJSON(raw)
+	eventType, err := eventTypeFromMSGP(raw)
 	if err != nil {
 		log.Printf("event type detection failed: %s\n", err)
 		return
@@ -320,7 +330,15 @@ func (ws *Websocket) handle(raw []byte) {
 	}
 
 	event := constructor()
-	if err := json.Unmarshal(raw, event); err != nil {
+	unmarshaler, exists := event.(msgp.Unmarshaler)
+	if !exists {
+		log.Printf("event '%s' does not implement msgp.Unmarshaler\n"+
+			"Did you forget to run msgp_codegen.py?", eventType)
+		return
+	}
+
+	_, err = unmarshaler.UnmarshalMsg(raw)
+	if err != nil {
 		log.Println("Failed to unmarshal event:", err)
 		return
 	}

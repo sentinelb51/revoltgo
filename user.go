@@ -3,8 +3,10 @@ package revoltgo
 import (
 	"fmt"
 
-	"github.com/goccy/go-json"
+	"github.com/tinylib/msgp/msgp"
 )
+
+//go:generate msgp -tests=false -io=false
 
 type UserRelationshipType string
 
@@ -21,20 +23,20 @@ const (
 // User is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/users.rs#L24
 type User struct {
-	ID            string               `json:"_id"`
-	Username      string               `json:"username"`
-	Discriminator string               `json:"discriminator"`
-	Flags         uint32               `json:"flags"`
-	Privileged    bool                 `json:"privileged"`
-	Badges        uint32               `json:"badges"`
-	Online        bool                 `json:"online"`
-	Relations     []UserRelations      `json:"relations"`
-	Relationship  UserRelationshipType `json:"relationship"`
-	DisplayName   *string              `json:"display_name"`
-	Avatar        *Attachment          `json:"avatar"`
-	Status        *UserStatus          `json:"status"`
-	Profile       *UserProfile         `json:"profile"` // todo: deprecated? not present in src
-	Bot           *Bot                 `json:"bot"`
+	ID            string               `msg:"_id"`
+	Username      string               `msg:"username"`
+	Discriminator string               `msg:"discriminator"`
+	Flags         uint32               `msg:"flags"`
+	Privileged    bool                 `msg:"privileged"`
+	Badges        uint32               `msg:"badges"`
+	Online        bool                 `msg:"online"`
+	Relations     []UserRelations      `msg:"relations"`
+	Relationship  UserRelationshipType `msg:"relationship"`
+	DisplayName   *string              `msg:"display_name"`
+	Avatar        *Attachment          `msg:"avatar"`
+	Status        *UserStatus          `msg:"status"`
+	Profile       *UserProfile         `msg:"profile"` // todo: deprecated? not present in src
+	Bot           *Bot                 `msg:"bot"`
 }
 
 func (u *User) update(data PartialUser) {
@@ -113,20 +115,20 @@ func (u *User) clear(fields []string) {
 }
 
 type PartialUser struct {
-	ID            *string               `json:"_id"`
-	Username      *string               `json:"username"`
-	Discriminator *string               `json:"discriminator"`
-	Flags         *uint32               `json:"flags"`
-	Privileged    *bool                 `json:"privileged"`
-	Badges        *uint32               `json:"badges"`
-	Online        *bool                 `json:"online"`
-	Relations     *[]UserRelations      `json:"relations"`
-	Relationship  *UserRelationshipType `json:"relationship"`
-	DisplayName   *string               `json:"display_name"`
-	Avatar        *Attachment           `json:"avatar"`
-	Status        *UserStatus           `json:"status"`
-	Profile       *UserProfile          `json:"profile,omitempty"` // todo: deprecated? not present in src
-	Bot           *Bot                  `json:"bot"`
+	ID            *string               `msg:"_id"`
+	Username      *string               `msg:"username"`
+	Discriminator *string               `msg:"discriminator"`
+	Flags         *uint32               `msg:"flags"`
+	Privileged    *bool                 `msg:"privileged"`
+	Badges        *uint32               `msg:"badges"`
+	Online        *bool                 `msg:"online"`
+	Relations     *[]UserRelations      `msg:"relations"`
+	Relationship  *UserRelationshipType `msg:"relationship"`
+	DisplayName   *string               `msg:"display_name"`
+	Avatar        *Attachment           `msg:"avatar"`
+	Status        *UserStatus           `msg:"status"`
+	Profile       *UserProfile          `msg:"profile,omitempty"` // todo: deprecated? not present in src
+	Bot           *Bot                  `msg:"bot"`
 }
 
 func (u *User) Mention() string {
@@ -134,13 +136,13 @@ func (u *User) Mention() string {
 }
 
 type UserProfile struct {
-	Content    string      `json:"content,omitempty"`
-	Background *Attachment `json:"background,omitempty"`
+	Content    string      `msg:"content,omitempty"`
+	Background *Attachment `msg:"background,omitempty"`
 }
 
 type UserRelations struct {
-	ID     string               `json:"_id"`
-	Status UserRelationshipType `json:"status"`
+	ID     string               `msg:"_id"`
+	Status UserRelationshipType `msg:"status"`
 }
 
 type UserStatusPresence string
@@ -154,21 +156,21 @@ const (
 )
 
 type UserStatus struct {
-	Text     string             `json:"text,omitempty"`
-	Presence UserStatusPresence `json:"presence"`
+	Text     string             `msg:"text,omitempty"`
+	Presence UserStatusPresence `msg:"presence"`
 }
 
 type BotInformation struct {
-	Owner string `json:"owner"`
+	Owner string `msg:"owner"`
 }
 
 type MutualFriendsAndServersResponse struct {
-	Users   []string `json:"users"`
-	Servers []string `json:"servers"`
+	Users   []string `msg:"users"`
+	Servers []string `msg:"servers"`
 }
 
 // UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason
 type UserSettings struct {
 	Updated int
-	Data    json.RawMessage
+	Data    msgp.Raw
 }

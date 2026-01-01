@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+//go:generate msgp -tests=false -io=false
+
 const jsonSkipAheadKeyType = len(`{"type":"`)
 
 // eventTypeFromJSON extracts the event type from the JSON data.
@@ -18,8 +20,28 @@ func eventTypeFromJSON(data []byte) (string, error) {
 	return string(result), nil
 }
 
+func eventTypeFromMSGP(data []byte) (string, error) {
+
+	start := 6 // skip map header and "type" key
+	header := data[start]
+
+	if header < 0xA0 || header > 0xBF {
+		return "", fmt.Errorf("expected fixstr, got byte 0x%X", header)
+	}
+
+	start++
+	size := int(header & 0x1F)
+	end := start + size
+
+	if end > len(data) {
+		return "", fmt.Errorf("given size %d exceeds data length %d", size, len(data))
+	}
+
+	return string(data[start:end]), nil
+}
+
 type Event struct {
-	Type string `json:"type"`
+	Type string `msg:"type"`
 }
 
 func (e *Event) String() string {

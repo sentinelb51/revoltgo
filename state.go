@@ -441,7 +441,7 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 
 	member := &ServerMember{
 		ID:       MemberCompositeID{User: data.User, Server: data.ID},
-		JoinedAt: time.Now(),
+		JoinedAt: Timestamp{Time: time.Now()},
 	}
 
 	s.members.add(member)
@@ -505,7 +505,7 @@ func (s *State) createChannel(event *EventChannelCreate) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.channels[event.ID] = event.Channel
+	s.channels[event.ID] = &event.Channel
 
 	if !s.trackServers {
 		return
@@ -637,7 +637,7 @@ func (s *State) createServer(event *EventServerCreate) {
 		}
 
 		if id, err := ulid.Parse(event.Server.ID); err == nil {
-			member.JoinedAt = ulid.Time(id.Time())
+			member.JoinedAt = Timestamp{Time: ulid.Time(id.Time())}
 		}
 
 		s.members.add(member)
@@ -728,7 +728,7 @@ func (s *State) createEmoji(event *EventEmojiCreate) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.emojis[event.ID] = event.Emoji
+	s.emojis[event.ID] = &event.Emoji
 }
 
 func (s *State) deleteEmoji(event *EventEmojiDelete) {
@@ -752,7 +752,7 @@ func (s *State) createWebhook(event *EventWebhookCreate) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.webhooks[event.ID] = event.Webhook
+	s.webhooks[event.ID] = &event.Webhook
 }
 
 func (s *State) updateWebhook(event *EventWebhookUpdate) {
