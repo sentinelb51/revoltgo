@@ -22,6 +22,45 @@ import (
 	 - Follow the same hierarchical structure as the constants
 */
 
+/* TODO:
+Missing Endpoints
+
+	Users
+		/users/dms (List DMs)
+		/users/friend (List friends/requests - distinct from /users/{id}/friend)
+
+	Bots
+		/bots/create
+		/bots/@me (Fetch owned bots)
+
+	Channels
+		/channels/create
+		/channels/{target}/members (Voice channel members)
+		/channels/{target}/search
+		/channels/{target}/messages/{msg}/pin
+		/channels/{target}/messages/bulk (Bulk delete)
+
+	Servers
+		/servers/create
+		/servers/{target}/invites (List server invites)
+		/servers/{target}/emojis
+		/servers/{target}/roles/ranks (Role reordering)
+
+	Auth (MFA)
+		/auth/mfa/ticket
+		/auth/mfa/recovery
+		/auth/mfa/methods
+		/auth/mfa/totp
+
+	Webhooks
+		/webhooks/{webhook_id}
+		/webhooks/{webhook_id}/{token}
+		/webhooks/{webhook_id}/{token}/github
+
+	Miscellaneous
+		/policy/acknowledge
+*/
+
 /* These base URLs are used by the Session.Request method */
 var (
 	apiURL = "https://api.stoat.chat"
