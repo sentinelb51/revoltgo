@@ -5,12 +5,15 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
 	"github.com/lxzan/gws"
 	"github.com/tinylib/msgp/msgp"
 )
+
+const ExpressLoginFile string = ".auth_token"
 
 func New(token string) *Session {
 	session := &Session{
@@ -30,16 +33,58 @@ func New(token string) *Session {
 // You are expected to store and re-use the token for future sessions.
 func NewWithLogin(data LoginData) (*Session, LoginResponse, error) {
 	session := New("")
+	session.selfbot = true
+
+	if data.FriendlyName == "" {
+		data.FriendlyName = fmt.Sprintf("RevoltGo/%s (%d)", VERSION, os.Getpid())
+	}
+
 	mfa, err := session.Login(data)
 	if err == nil {
 		session.Token = mfa.Token
-		session.selfbot = true
 	}
 
 	return session, mfa, err
 }
 
-// todo: NewWithLoginExpress which automatically saves the token to a file
+// NewWithExpressLogin exchanges an email and password for a session token, and then creates a new session.
+// Unlike NewWithLogin, this automatically reads and writes the token to a file for you.
+// Make sure you trust the environment where this is run, as the token is stored in plaintext.
+func NewWithExpressLogin(data LoginData) (*Session, error) {
+
+	var token string
+
+	// Check if file exists
+	if _, err := os.Stat(ExpressLoginFile); err == nil {
+		// File exists, read the token
+		bytes, err := os.ReadFile(ExpressLoginFile)
+		if err != nil {
+			return nil, err
+		}
+
+		token = string(bytes)
+	}
+
+	// If token exists, use it
+	if token != "" {
+		log.Println("Attempting to re-use existing token")
+		session := New(token)
+		session.selfbot = true
+		return session, nil
+	}
+
+	// Otherwise, perform login
+	log.Println("Performing authentication...")
+	session, mfa, err := NewWithLogin(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save token to file
+	log.Println("Saving authentication token for re-use")
+	err = os.WriteFile(ExpressLoginFile, []byte(mfa.Token), 0600)
+	return session, err
+}
 
 // Session represents a connection to the Revolt API.
 type Session struct {
