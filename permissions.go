@@ -11,8 +11,8 @@ import (
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L52.
 // todo: why the fuck are there 2: Override and OverrideField: see https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L8
 type PermissionOverwrite struct {
-	Allow int64 `msg:"a"`
-	Deny  int64 `msg:"d"`
+	Allow int64 `msg:"a" json:"a,omitempty"`
+	Deny  int64 `msg:"d" json:"d,omitempty"`
 }
 
 const (

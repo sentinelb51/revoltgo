@@ -19,28 +19,28 @@ const (
 type EventError struct {
 	Event
 	// https://developers.revolt.chat/developers/events/protocol.html#error
-	Error EventErrorType `msg:"error"`
+	Error EventErrorType `msg:"error" json:"error,omitempty"`
 }
 
 type EventBulk struct {
 	Event
-	V []msgp.Raw `msg:"v"`
+	V []msgp.Raw `msg:"v" json:"v,omitempty"`
 }
 
 type EventPong struct {
 	Event
-	Data int64 `msg:"data"`
+	Data int64 `msg:"data" json:"data,omitempty"`
 }
 
 // EventReady provides information about objects relative to the user.
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
-	Users    []*User         `msg:"users"`
-	Servers  []*Server       `msg:"servers"`
-	Channels []*Channel      `msg:"channels"`
-	Members  []*ServerMember `msg:"members"`
-	Emojis   []*Emoji        `msg:"emojis"`
+	Users    []*User         `msg:"users" json:"users,omitempty"`
+	Servers  []*Server       `msg:"servers" json:"servers,omitempty"`
+	Channels []*Channel      `msg:"channels" json:"channels,omitempty"`
+	Members  []*ServerMember `msg:"members" json:"members,omitempty"`
+	Emojis   []*Emoji        `msg:"emojis" json:"emojis,omitempty"`
 }
 
 type AuthType string
@@ -52,12 +52,12 @@ const (
 
 type EventAuth struct {
 	Event
-	EventType AuthType `msg:"event_type"`
-	UserID    string   `msg:"user_id"`
-	SessionID string   `msg:"session_id"`
+	EventType AuthType `msg:"event_type" json:"event_type,omitempty"`
+	UserID    string   `msg:"user_id" json:"user_id,omitempty"`
+	SessionID string   `msg:"session_id" json:"session_id,omitempty"`
 
 	// Only present when... I forgot.
-	ExcludeSessionID string `msg:"exclude_session_id"`
+	ExcludeSessionID string `msg:"exclude_session_id" json:"exclude_session_id,omitempty"`
 }
 
 // EventAuthenticated is sent after the client has authenticated.
@@ -73,80 +73,80 @@ type EventMessage struct {
 // EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
 type EventServerUpdate struct {
 	Event `msg:",flatten"`
-	ID    string        `msg:"id"`
-	Data  PartialServer `msg:"data"`
-	Clear []string      `msg:"clear"`
+	ID    string        `msg:"id" json:"id,omitempty"`
+	Data  PartialServer `msg:"data" json:"data,omitempty"`
+	Clear []string      `msg:"clear" json:"clear,omitempty"`
 }
 
 // EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
 type EventChannelUpdate struct {
 	Event `msg:",flatten"`
-	ID    string         `msg:"id"`
-	Data  PartialChannel `msg:"data"`
-	Clear []string       `msg:"clear"`
+	ID    string         `msg:"id" json:"id,omitempty"`
+	Data  PartialChannel `msg:"data" json:"data,omitempty"`
+	Clear []string       `msg:"clear" json:"clear,omitempty"`
 }
 
 // EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
 type EventServerRoleUpdate struct {
 	Event  `msg:",flatten"`
-	ID     string            `msg:"id"`
-	RoleID string            `msg:"role_id"`
-	Data   PartialServerRole `msg:"data"`
-	Clear  []string          `msg:"clear"`
+	ID     string            `msg:"id" json:"id,omitempty"`
+	RoleID string            `msg:"role_id" json:"role_id,omitempty"`
+	Data   PartialServerRole `msg:"data" json:"data,omitempty"`
+	Clear  []string          `msg:"clear" json:"clear,omitempty"`
 }
 
 // EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
 type EventServerMemberUpdate struct {
 	Event `msg:",flatten"`
-	ID    MemberCompositeID   `msg:"id"`
-	Data  PartialServerMember `msg:"data"`
-	Clear []string            `msg:"clear"`
+	ID    MemberCompositeID   `msg:"id" json:"id,omitempty"`
+	Data  PartialServerMember `msg:"data" json:"data,omitempty"`
+	Clear []string            `msg:"clear" json:"clear,omitempty"`
 }
 
 type EventUserUpdate struct {
 	Event `msg:",flatten"`
-	ID    string      `msg:"id"`
-	Data  PartialUser `msg:"data"`
-	Clear []string    `msg:"clear"`
+	ID    string      `msg:"id" json:"id,omitempty"`
+	Data  PartialUser `msg:"data" json:"data,omitempty"`
+	Clear []string    `msg:"clear" json:"clear,omitempty"`
 }
 
 type EventWebhookUpdate struct {
 	Event  `msg:",flatten"`
-	ID     string         `msg:"id"`
-	Data   PartialWebhook `msg:"data"`
-	Remove []string       `msg:"remove"` // todo: why is this "remove" and not "clear"?
+	ID     string         `msg:"id" json:"id,omitempty"`
+	Data   PartialWebhook `msg:"data" json:"data,omitempty"`
+	Remove []string       `msg:"remove" json:"remove,omitempty"` // todo: why is this "remove" and not "clear"?
 }
 
 type EventMessageUpdate struct {
 	Event   `msg:",flatten"`
-	ID      string  `msg:"id"`
-	Channel string  `msg:"channel"`
-	Data    Message `msg:"data"`
+	ID      string  `msg:"id" json:"id,omitempty"`
+	Channel string  `msg:"channel" json:"channel,omitempty"`
+	Data    Message `msg:"data" json:"data,omitempty"`
 }
 
 type EventMessageAppend struct {
-	ID      string  `msg:"id"`
-	Channel string  `msg:"channel"`
-	Append  Message `msg:"append"`
+	ID      string  `msg:"id" json:"id,omitempty"`
+	Channel string  `msg:"channel" json:"channel,omitempty"`
+	Append  Message `msg:"append" json:"append,omitempty"`
 }
 
 type EventMessageDelete struct {
 	Event   `msg:",flatten"`
-	ID      string `msg:"id"`
-	Channel string `msg:"channel"`
+	ID      string `msg:"id" json:"id,omitempty"`
+	Channel string `msg:"channel" json:"channel,omitempty"`
 }
 
 type EventBulkMessageDelete struct {
 	Event   `msg:",flatten"`
-	Channel string   `msg:"channel"`
-	IDs     []string `msg:"ids"`
+	Channel string   `msg:"channel" json:"channel,omitempty"`
+	IDs     []string `msg:"ids" json:"ids,omitempty"`
 }
 
 // EventChannelStartTyping is sent when a user starts typing in a channel.
 type EventChannelStartTyping struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
-	User  string `msg:"user,omitempty"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  string `msg:"user" json:"user,omitempty"`
 }
 
 // EventChannelStopTyping is sent when a user stops typing in a channel.
@@ -156,9 +156,9 @@ type EventChannelStopTyping struct {
 
 type EventChannelAck struct {
 	Event     `msg:",flatten"`
-	ID        string `msg:"id"`
-	User      string `msg:"user"`
-	MessageID string `msg:"message_id"`
+	ID        string `msg:"id" json:"id,omitempty"`
+	User      string `msg:"user" json:"user,omitempty"`
+	MessageID string `msg:"message_id" json:"message_id,omitempty"`
 }
 
 // EventChannelCreate is sent when a channel is created.
@@ -171,49 +171,49 @@ type EventChannelCreate struct {
 // EventChannelDelete is sent when a channel is deleted.
 type EventChannelDelete struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
+	ID    string `msg:"id" json:"id,omitempty"`
 }
 
 // EventServerMemberLeave is sent when a user leaves a server.
 type EventServerMemberLeave struct {
 	Event  `msg:",flatten"`
-	ID     string `msg:"id"`
-	User   string `msg:"user"`
-	Reason string `msg:"reason"`
+	ID     string `msg:"id" json:"id,omitempty"`
+	User   string `msg:"user" json:"user,omitempty"`
+	Reason string `msg:"reason" json:"reason,omitempty"`
 }
 
 // EventServerCreate is sent when a server is created (joined).
 type EventServerCreate struct {
 	Event    `msg:",flatten"`
-	ID       string     `msg:"id"`
-	Server   *Server    `msg:"server"`
-	Channels []*Channel `msg:"channels"`
-	Emojis   []*Emoji   `msg:"emojis"`
+	ID       string     `msg:"id" json:"id,omitempty"`
+	Server   *Server    `msg:"server" json:"server,omitempty"`
+	Channels []*Channel `msg:"channels" json:"channels,omitempty"`
+	Emojis   []*Emoji   `msg:"emojis" json:"emojis,omitempty"`
 }
 
 type EventServerRoleDelete struct {
 	Event  `msg:",flatten"`
-	ID     string `msg:"id"`
-	RoleID string `msg:"role_id"`
+	ID     string `msg:"id" json:"id,omitempty"`
+	RoleID string `msg:"role_id" json:"role_id,omitempty"`
 }
 
 type EventServerMemberJoin struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
-	User  string `msg:"user"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  string `msg:"user" json:"user,omitempty"`
 }
 
 type EventServerDelete struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
+	ID    string `msg:"id" json:"id,omitempty"`
 }
 
 type EventMessageReact struct {
 	Event     `msg:",flatten"`
-	ID        string `msg:"id"`
-	ChannelID string `msg:"channel_id"`
-	UserID    string `msg:"user_id"`
-	EmojiID   string `msg:"emoji_id"`
+	ID        string `msg:"id" json:"id,omitempty"`
+	ChannelID string `msg:"channel_id" json:"channel_id,omitempty"`
+	UserID    string `msg:"user_id" json:"user_id,omitempty"`
+	EmojiID   string `msg:"emoji_id" json:"emoji_id,omitempty"`
 }
 
 // EventMessageUnreact is sent when a user removes a singular reaction from a message.
@@ -223,15 +223,15 @@ type EventMessageUnreact struct {
 
 // EventMessageRemoveReaction is sent when all the reactions are removed from a message.
 type EventMessageRemoveReaction struct {
-	ID        string `msg:"id"`
-	ChannelID string `msg:"channel_id"`
-	EmojiID   string `msg:"emoji_id"`
+	ID        string `msg:"id" json:"id,omitempty"`
+	ChannelID string `msg:"channel_id" json:"channel_id,omitempty"`
+	EmojiID   string `msg:"emoji_id" json:"emoji_id,omitempty"`
 }
 
 type EventChannelGroupJoin struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
-	User  string `msg:"user"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  string `msg:"user" json:"user,omitempty"`
 }
 
 type EventChannelGroupLeave struct {
@@ -245,25 +245,25 @@ type EventEmojiCreate struct {
 
 type EventEmojiDelete struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
+	ID    string `msg:"id" json:"id,omitempty"`
 }
 
 type EventUserRelationship struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
-	User  *User  `msg:"user"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  *User  `msg:"user" json:"user,omitempty"`
 }
 
 type EventUserPlatformWipe struct {
 	Event
-	UserID string `msg:"user_id"`
-	Flags  int    `msg:"flags"`
+	UserID string `msg:"user_id" json:"user_id,omitempty"`
+	Flags  int    `msg:"flags" json:"flags,omitempty"`
 }
 
 type EventUserSettingsUpdate struct {
 	Event `msg:",flatten"`
 	// Update is a tuple of (int, string); update time, and the data in JSON
-	Update map[string]SyncSettingsDataTuple `msg:"update"`
+	Update map[string]SyncSettingsDataTuple `msg:"update" json:"update,omitempty"`
 }
 
 type EventWebhookCreate struct {
@@ -273,5 +273,5 @@ type EventWebhookCreate struct {
 
 type EventWebhookDelete struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id"`
+	ID    string `msg:"id" json:"id,omitempty"`
 }

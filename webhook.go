@@ -7,13 +7,13 @@ import "log"
 // Webhook is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/channel_webhooks/model.rs#L8
 type Webhook struct {
-	ID          string      `msg:"_id"` // Rust: rename = "_id"
-	Name        string      `msg:"name"`
-	Avatar      *Attachment `msg:"avatar"`
-	CreatorID   string      `msg:"creator_id"`
-	ChannelID   string      `msg:"channel_id"`
-	Permissions uint64      `msg:"permissions"`
-	Token       *string     `msg:"token"`
+	ID          string      `msg:"_id" json:"_id,omitempty"` // Rust: rename = "_id"
+	Name        string      `msg:"name" json:"name,omitempty"`
+	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
+	CreatorID   string      `msg:"creator_id" json:"creator_id,omitempty"`
+	ChannelID   string      `msg:"channel_id" json:"channel_id,omitempty"`
+	Permissions uint64      `msg:"permissions" json:"permissions,omitempty"`
+	Token       *string     `msg:"token" json:"token,omitempty"`
 }
 
 func (w *Webhook) update(data PartialWebhook) {
@@ -54,15 +54,15 @@ func (w *Webhook) clear(fields []string) {
 }
 
 type PartialWebhook struct {
-	Name        *string     `msg:"name,omitempty"`
-	Avatar      *Attachment `msg:"avatar,omitempty"`
-	CreatorID   *string     `msg:"creator_id,omitempty"`
-	ChannelID   *string     `msg:"channel_id,omitempty"`
-	Permissions *uint64     `msg:"permissions,omitempty"`
-	Token       *string     `msg:"token,omitempty"`
+	Name        *string     `msg:"name" json:"name,omitempty"`
+	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
+	CreatorID   *string     `msg:"creator_id" json:"creator_id,omitempty"`
+	ChannelID   *string     `msg:"channel_id" json:"channel_id,omitempty"`
+	Permissions *uint64     `msg:"permissions" json:"permissions,omitempty"`
+	Token       *string     `msg:"token" json:"token,omitempty"`
 }
 
 type WebhookCreate struct {
-	Name   string `msg:"name"`
-	Avatar string `msg:"avatar,omitempty"`
+	Name   string `msg:"name" json:"name,omitempty"`
+	Avatar string `msg:"avatar" json:"avatar,omitempty"`
 }

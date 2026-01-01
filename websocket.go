@@ -31,18 +31,18 @@ const (
 )
 
 type WebsocketMessageAuthenticate struct {
-	Type  WebsocketMessageType `msg:"type"`
-	Token string               `msg:"token"`
+	Type  WebsocketMessageType `msg:"type" json:"type,omitempty"`
+	Token string               `msg:"token" json:"token,omitempty"`
 }
 
 type WebsocketMessagePing struct {
-	Type WebsocketMessageType `msg:"type"`
-	Data int64                `msg:"data"`
+	Type WebsocketMessageType `msg:"type" json:"type,omitempty"`
+	Data int64                `msg:"data" json:"data,omitempty"`
 }
 
 type WebsocketChannelTyping struct {
-	Type    WebsocketMessageType `msg:"type"`
-	Channel string               `msg:"channel"`
+	Type    WebsocketMessageType `msg:"type" json:"type,omitempty"`
+	Channel string               `msg:"channel" json:"channel,omitempty"`
 }
 
 type Websocket struct {

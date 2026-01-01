@@ -14,5 +14,5 @@ type File struct {
 // FileAttachment is the response from the API when uploading a file.
 // To upload a file, you must reference this ID in MessageSend.Attachments.
 type FileAttachment struct {
-	ID string `json:"id"`
+	ID string `msg:"id" json:"id,omitempty"`
 }

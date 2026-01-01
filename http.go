@@ -301,94 +301,94 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 /* HTTP data that can be sent to the REST API */
 
 type LoginData struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	FriendlyName string `json:"friendly_name"`
+	Email        string `msg:"email" json:"email,omitempty"`
+	Password     string `msg:"password" json:"password,omitempty"`
+	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitempty"`
 }
 
 type BotEditData struct {
-	Name            string   `json:"name"`
-	Public          bool     `json:"public"`
-	Analytics       bool     `json:"analytics"`
-	InteractionsURL string   `json:"interactions_url"`
-	Remove          []string `json:"remove"`
+	Name            string   `msg:"name" json:"name,omitempty"`
+	Public          bool     `msg:"public" json:"public,omitempty"`
+	Analytics       bool     `msg:"analytics" json:"analytics,omitempty"`
+	InteractionsURL string   `msg:"interactions_url" json:"interactions_url,omitempty"`
+	Remove          []string `msg:"remove" json:"remove,omitempty"`
 }
 
 type BotInviteData struct {
-	Server string `json:"server"`
-	Group  string `json:"group"`
+	Server string `msg:"server" json:"server,omitempty"`
+	Group  string `msg:"group" json:"group,omitempty"`
 }
 
 type BotCreateData struct {
-	Name string `json:"name"`
+	Name string `msg:"name" json:"name,omitempty"`
 }
 
 type AccountCreateData struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Invite   string `json:"invite"`
-	Captcha  string `json:"captcha"`
+	Email    string `msg:"email" json:"email,omitempty"`
+	Password string `msg:"password" json:"password,omitempty"`
+	Invite   string `msg:"invite" json:"invite,omitempty"`
+	Captcha  string `msg:"captcha" json:"captcha,omitempty"`
 }
 
 type AccountReverifyData struct {
-	Email   string `json:"email"`
-	Captcha string `json:"captcha"`
+	Email   string `msg:"email" json:"email,omitempty"`
+	Captcha string `msg:"captcha" json:"captcha,omitempty"`
 }
 
 type OnboardingCompleteData struct {
-	Username string `json:"username"`
+	Username string `msg:"username" json:"username,omitempty"`
 }
 
 type SessionEditData struct {
-	FriendlyName string `json:"friendly_name"`
+	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitempty"`
 }
 
 type PasswordResetConfirmData struct {
-	Token          string `json:"token"`
-	Password       string `json:"password"`
-	RemoveSessions bool   `json:"remove_sessions"` // Whether to log out of all sessions
+	Token          string `msg:"token" json:"token,omitempty"`
+	Password       string `msg:"password" json:"password,omitempty"`
+	RemoveSessions bool   `msg:"remove_sessions" json:"remove_sessions,omitempty"` // Whether to log out of all sessions
 }
 
 type AccountChangePasswordData struct {
-	Password        string `json:"password"`
-	CurrentPassword string `json:"current_password"`
+	Password        string `msg:"password" json:"password,omitempty"`
+	CurrentPassword string `msg:"current_password" json:"current_password,omitempty"`
 }
 
 type AccountChangeEmailData struct {
-	Email           string `json:"email"`
-	CurrentPassword string `json:"current_password"`
+	Email           string `msg:"email" json:"email,omitempty"`
+	CurrentPassword string `msg:"current_password" json:"current_password,omitempty"`
 }
 
 type AccountDeleteConfirmData struct {
-	Token string `json:"token"`
+	Token string `msg:"token" json:"token,omitempty"`
 }
 
 type UserEditData struct {
-	DisplayName string       `json:"display_name,omitempty"`
-	Avatar      string       `json:"avatar,omitempty"`
-	Status      *UserStatus  `json:"status,omitempty"`
-	Profile     *UserProfile `json:"profile,omitempty"`
-	Badges      *int         `json:"badges,omitempty"`
-	Flags       *int         `json:"flags,omitempty"`
-	Remove      []string     `json:"remove,omitempty"`
+	DisplayName string       `msg:"display_name" json:"display_name,omitempty"`
+	Avatar      string       `msg:"avatar" json:"avatar,omitempty"`
+	Status      *UserStatus  `msg:"status" json:"status,omitempty"`
+	Profile     *UserProfile `msg:"profile" json:"profile,omitempty"`
+	Badges      *int         `msg:"badges" json:"badges,omitempty"`
+	Flags       *int         `msg:"flags" json:"flags,omitempty"`
+	Remove      []string     `msg:"remove" json:"remove,omitempty"`
 }
 
 type UsernameData struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `msg:"username" json:"username,omitempty"`
+	Password string `msg:"password" json:"password,omitempty"`
 }
 
 // GroupCreateData describes how a group should be created
 type GroupCreateData struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Users       []string `json:"users"`
-	NSFW        bool     `json:"nsfw"`
+	Name        string   `msg:"name" json:"name,omitempty"`
+	Description string   `msg:"description" json:"description,omitempty"`
+	Users       []string `msg:"users" json:"users,omitempty"`
+	NSFW        bool     `msg:"nsfw" json:"nsfw,omitempty"`
 }
 
 type ServerCreateData struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Name        string `msg:"name" json:"name,omitempty"`
+	Description string `msg:"description" json:"description,omitempty"`
 }
 
 type ServerEditDataRemove string
@@ -402,16 +402,16 @@ const (
 )
 
 type ServerEditData struct {
-	Name           string                 `json:"name,omitempty"`
-	Description    string                 `json:"description,omitempty"`
-	Icon           string                 `json:"icon,omitempty"`
-	Banner         string                 `json:"banner,omitempty"`
-	Categories     []*ServerCategory      `json:"categories,omitempty"`
-	SystemMessages *ServerSystemMessages  `json:"system_messages,omitempty"`
-	Flags          int                    `json:"flags,omitempty"`
-	Discoverable   *bool                  `json:"discoverable,omitempty"`
-	Analytics      *bool                  `json:"analytics,omitempty"`
-	Remove         []ServerEditDataRemove `json:"remove"`
+	Name           string                 `msg:"name" json:"name,omitempty"`
+	Description    string                 `msg:"description" json:"description,omitempty"`
+	Icon           string                 `msg:"icon" json:"icon,omitempty"`
+	Banner         string                 `msg:"banner" json:"banner,omitempty"`
+	Categories     []*ServerCategory      `msg:"categories" json:"categories,omitempty"`
+	SystemMessages *ServerSystemMessages  `msg:"system_messages" json:"system_messages,omitempty"`
+	Flags          int                    `msg:"flags" json:"flags,omitempty"`
+	Discoverable   *bool                  `msg:"discoverable" json:"discoverable,omitempty"`
+	Analytics      *bool                  `msg:"analytics" json:"analytics,omitempty"`
+	Remove         []ServerEditDataRemove `msg:"remove" json:"remove,omitempty"`
 }
 
 type ServerChannelCreateDataType string
@@ -422,41 +422,41 @@ const (
 )
 
 type ServerChannelCreateData struct {
-	Type        ServerChannelCreateDataType `json:"type"`
-	Name        string                      `json:"name"`
-	Description string                      `json:"description,omitempty"`
-	NSFW        bool                        `json:"nsfw,omitempty"`
+	Type        ServerChannelCreateDataType `msg:"type" json:"type,omitempty"`
+	Name        string                      `msg:"name" json:"name,omitempty"`
+	Description string                      `msg:"description" json:"description,omitempty"`
+	NSFW        bool                        `msg:"nsfw" json:"nsfw,omitempty"`
 }
 
 type ServerMemberEditData struct {
-	Nickname string    `json:"nickname,omitempty"`
-	Avatar   string    `json:"avatar,omitempty"`
-	Roles    []string  `json:"roles,omitempty"`
-	Timeout  time.Time `json:"timeout,omitempty"`
-	Remove   []string  `json:"remove,omitempty"`
+	Nickname string    `msg:"nickname" json:"nickname,omitempty"`
+	Avatar   string    `msg:"avatar" json:"avatar,omitempty"`
+	Roles    []string  `msg:"roles" json:"roles,omitempty"`
+	Timeout  time.Time `msg:"timeout" json:"timeout,omitempty"`
+	Remove   []string  `msg:"remove" json:"remove,omitempty"`
 }
 
 type MessageEditData struct {
-	Content string          `json:"content,omitempty"`
-	Embeds  []*MessageEmbed `json:"embeds,omitempty"`
+	Content string          `msg:"content" json:"content,omitempty"`
+	Embeds  []*MessageEmbed `msg:"embeds" json:"embeds,omitempty"`
 }
 
 type EmojiCreateData struct {
-	Name   string       `json:"name"`
-	Parent *EmojiParent `json:"parent"`
-	NSFW   bool         `json:"nsfw"`
+	Name   string       `msg:"name" json:"name,omitempty"`
+	Parent *EmojiParent `msg:"parent" json:"parent,omitempty"`
+	NSFW   bool         `msg:"nsfw" json:"nsfw,omitempty"`
 }
 
 type ChannelJoinCallData struct {
-	Node string `json:"node,omitempty"` // Name of the node to join
+	Node string `msg:"node" json:"node,omitempty"` // Name of the node to join
 
 	// Whether to force disconnect any other existing voice connections
 	// Useful for disconnecting on another device and joining on a new one
-	ForceDisconnect bool `json:"force_disconnect,omitempty"`
+	ForceDisconnect bool `msg:"force_disconnect" json:"force_disconnect,omitempty"`
 
 	// Users which should be notified of the call starting
 	// Only used when the user is the first one connected.
-	Recipients []string `json:"recipients,omitempty"`
+	Recipients []string `msg:"recipients" json:"recipients,omitempty"`
 }
 
 type ChannelMessagesParamsSortType string
@@ -469,22 +469,22 @@ const (
 
 type ChannelMessagesParams struct {
 	// Maximum number of messages to fetch. For nearby messages, this is (limit + 1)
-	Limit int `json:"limit,omitempty"`
+	Limit int `msg:"limit" json:"limit,omitempty"`
 
 	// Message ID before which messages should be fetched
-	Before string `json:"before,omitempty"`
+	Before string `msg:"before" json:"before,omitempty"`
 
 	// Message ID after which messages should be fetched
-	After string `json:"after,omitempty"`
+	After string `msg:"after" json:"after,omitempty"`
 
 	// Message sort direction
-	Sort ChannelMessagesParamsSortType `json:"sort,omitempty"`
+	Sort ChannelMessagesParamsSortType `msg:"sort" json:"sort,omitempty"`
 
 	// Message ID to search around. Specifying this ignores Before, After, and Sort
-	Nearby string `json:"nearby,omitempty"`
+	Nearby string `msg:"nearby" json:"nearby,omitempty"`
 
 	// Whether to include user (and member, if server channel) objects
-	IncludeUsers bool `json:"include_users,omitempty"`
+	IncludeUsers bool `msg:"include_users" json:"include_users,omitempty"`
 }
 
 func (p ChannelMessagesParams) Encode() string {
@@ -518,43 +518,43 @@ func (p ChannelMessagesParams) Encode() string {
 }
 
 type ServerRoleEditData struct {
-	Name   string   `json:"name,omitempty"`
-	Colour string   `json:"colour,omitempty"`
-	Hoist  *bool    `json:"hoist"`
-	Rank   *int     `json:"rank"`
-	Remove []string `json:"remove,omitempty"`
+	Name   string   `msg:"name" json:"name,omitempty"`
+	Colour string   `msg:"colour" json:"colour,omitempty"`
+	Hoist  *bool    `msg:"hoist" json:"hoist,omitempty"`
+	Rank   *int     `msg:"rank" json:"rank,omitempty"`
+	Remove []string `msg:"remove" json:"remove,omitempty"`
 }
 
 type ServerRoleCreateData struct {
-	Name string `json:"name"`
-	Rank int    `json:"rank"`
+	Name string `msg:"name" json:"name,omitempty"`
+	Rank int    `msg:"rank" json:"rank,omitempty"`
 }
 
 type PermissionsSetDefaultData struct {
-	Permissions uint `json:"permissions"`
+	Permissions uint `msg:"permissions" json:"permissions,omitempty"`
 }
 
 type ChannelMessageBulkDeleteData struct {
-	IDs []string `json:"ids"`
+	IDs []string `msg:"ids" json:"ids,omitempty"`
 }
 
 type ChannelEditData struct {
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Owner       string   `json:"owner,omitempty"`
-	Icon        string   `json:"icon,omitempty"`
-	NSFW        bool     `json:"nsfw,omitempty"`
-	Archived    bool     `json:"archived,omitempty"`
-	Remove      []string `json:"remove"`
+	Name        string   `msg:"name" json:"name,omitempty"`
+	Description string   `msg:"description" json:"description,omitempty"`
+	Owner       string   `msg:"owner" json:"owner,omitempty"`
+	Icon        string   `msg:"icon" json:"icon,omitempty"`
+	NSFW        bool     `msg:"nsfw" json:"nsfw,omitempty"`
+	Archived    bool     `msg:"archived" json:"archived,omitempty"`
+	Remove      []string `msg:"remove" json:"remove,omitempty"`
 }
 
 type SyncSettingsDataTuple struct {
-	Timestamp time.Time `msg:"0"`
-	Value     msgp.Raw  `msg:"1"` // Enjoy using this.
+	Timestamp time.Time `msg:"0" json:"0,omitempty"`
+	Value     msgp.Raw  `msg:"1" json:"1,omitempty"` // Enjoy using this.
 }
 
 type SyncSettingsData map[string]SyncSettingsDataTuple
 
 type SyncSettingsFetchData struct {
-	Keys []string `json:"keys"`
+	Keys []string `msg:"keys" json:"keys,omitempty"`
 }

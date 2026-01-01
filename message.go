@@ -46,99 +46,99 @@ const (
 
 // Message contains information about a message.
 type Message struct {
-	ID           string               `msg:"_id"`
-	Nonce        string               `msg:"nonce"`
-	Channel      string               `msg:"channel"`
-	Author       string               `msg:"author"`
-	Content      string               `msg:"content"`
-	Mentions     []string             `msg:"mentions"`
-	Replies      []string             `msg:"replies"`
-	Reactions    map[string][]string  `msg:"reactions"` // Emoji ID to array of users IDs that reacted
-	Pinned       bool                 `msg:"pinned"`
-	Flags        MessageFlagsType     `msg:"flags"`
-	Webhook      *MessageWebhook      `msg:"webhook"`
-	System       *MessageSystem       `msg:"system"`
-	Embeds       []*MessageEmbed      `msg:"embeds"`
-	Attachments  []*Attachment        `msg:"attachments"`
-	Edited       Timestamp            `msg:"edited"`
-	Interactions *MessageInteractions `msg:"interactions"`
-	Masquerade   *MessageMasquerade   `msg:"masquerade"`
+	ID           string               `msg:"_id" json:"_id,omitempty"`
+	Nonce        string               `msg:"nonce" json:"nonce,omitempty"`
+	Channel      string               `msg:"channel" json:"channel,omitempty"`
+	Author       string               `msg:"author" json:"author,omitempty"`
+	Content      string               `msg:"content" json:"content,omitempty"`
+	Mentions     []string             `msg:"mentions" json:"mentions,omitempty"`
+	Replies      []string             `msg:"replies" json:"replies,omitempty"`
+	Reactions    map[string][]string  `msg:"reactions" json:"reactions,omitempty"` // Emoji ID to array of users IDs that reacted
+	Pinned       bool                 `msg:"pinned" json:"pinned,omitempty"`
+	Flags        MessageFlagsType     `msg:"flags" json:"flags,omitempty"`
+	Webhook      *MessageWebhook      `msg:"webhook" json:"webhook,omitempty"`
+	System       *MessageSystem       `msg:"system" json:"system,omitempty"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
+	Attachments  []*Attachment        `msg:"attachments" json:"attachments,omitempty"`
+	Edited       Timestamp            `msg:"edited" json:"edited,omitempty"`
+	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
+	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
 }
 
 type MessageWebhook struct {
-	Name   string `msg:"name"`
-	Avatar string `msg:"avatar"`
+	Name   string `msg:"name" json:"name,omitempty"`
+	Avatar string `msg:"avatar" json:"avatar,omitempty"`
 }
 
 type MessageInteractions struct {
-	Reactions []string `msg:"reactions"`
+	Reactions []string `msg:"reactions" json:"reactions,omitempty"`
 
 	// Whether reactions should be restricted to the given list
-	RestrictReactions bool `msg:"restrict_reactions"`
+	RestrictReactions bool `msg:"restrict_reactions" json:"restrict_reactions,omitempty"`
 }
 
 type MessageSystem struct {
-	Type MessageSystemType `msg:"type"`
-	ID   string            `msg:"id"`
+	Type MessageSystemType `msg:"type" json:"type,omitempty"`
+	ID   string            `msg:"id" json:"id,omitempty"`
 }
 
 type MessageEdited struct {
-	Date int `msg:"$date"`
+	Date int `msg:"$date" json:"$date,omitempty"`
 }
 
 type MessageEmbed struct {
-	Type        string               `msg:"type"`
-	URL         string               `msg:"url,omitempty"`
-	OriginalURL string               `msg:"original_url,omitempty"`
-	Special     *MessageEmbedSpecial `msg:"special,omitempty"`
-	Title       string               `msg:"title,omitempty"`
-	Description string               `msg:"description,omitempty"`
-	Image       *MessageEmbedImage   `msg:"image,omitempty"`
-	Video       *MessageEmbedVideo   `msg:"video,omitempty"`
-	SiteName    string               `msg:"site_name,omitempty"`
-	IconURL     string               `msg:"icon_url,omitempty"`
-	Colour      string               `msg:"colour,omitempty"`
+	Type        string               `msg:"type" json:"type,omitempty"`
+	URL         string               `msg:"url" json:"url,omitempty"`
+	OriginalURL string               `msg:"original_url" json:"original_url,omitempty"`
+	Special     *MessageEmbedSpecial `msg:"special" json:"special,omitempty"`
+	Title       string               `msg:"title" json:"title,omitempty"`
+	Description string               `msg:"description" json:"description,omitempty"`
+	Image       *MessageEmbedImage   `msg:"image" json:"image,omitempty"`
+	Video       *MessageEmbedVideo   `msg:"video" json:"video,omitempty"`
+	SiteName    string               `msg:"site_name" json:"site_name,omitempty"`
+	IconURL     string               `msg:"icon_url" json:"icon_url,omitempty"`
+	Colour      string               `msg:"colour" json:"colour,omitempty"`
 }
 
 type MessageEmbedSpecial struct {
-	Type      MessageEmbedSpecialType `msg:"type"`
-	ID        string                  `msg:"id"`
-	Timestamp Timestamp               `msg:"timestamp,omitempty"`
+	Type      MessageEmbedSpecialType `msg:"type" json:"type,omitempty"`
+	ID        string                  `msg:"id" json:"id,omitempty"`
+	Timestamp Timestamp               `msg:"timestamp" json:"timestamp,omitempty"`
 
 	// Identifies the type of content for types: Lightspeed, Twitch, Spotify, and Bandcamp
-	ContentType string `msg:"content_type"` // todo: make enums
+	ContentType string `msg:"content_type" json:"content_type,omitempty"` // todo: make enums
 }
 
 type MessageEmbedImage struct {
-	Size   string `msg:"size"`
-	URL    string `msg:"url"`
-	Width  int    `msg:"width"`
-	Height int    `msg:"height"`
+	Size   string `msg:"size" json:"size,omitempty"`
+	URL    string `msg:"url" json:"url,omitempty"`
+	Width  int    `msg:"width" json:"width,omitempty"`
+	Height int    `msg:"height" json:"height,omitempty"`
 }
 
 type MessageEmbedVideo struct {
-	URL    string `msg:"url"`
-	Width  int    `msg:"width"`
-	Height int    `msg:"height"`
+	URL    string `msg:"url" json:"url,omitempty"`
+	Width  int    `msg:"width" json:"width,omitempty"`
+	Height int    `msg:"height" json:"height,omitempty"`
 }
 
 // MessageSend is used for sending messages to channels
 type MessageSend struct {
-	Content      string               `msg:"content"`
-	Attachments  []string             `msg:"attachments,omitempty"`
-	Replies      []*MessageReplies    `msg:"replies,omitempty"`
-	Embeds       []*MessageEmbed      `msg:"embeds,omitempty"`
-	Masquerade   *MessageMasquerade   `msg:"masquerade,omitempty"`
-	Interactions *MessageInteractions `msg:"interactions,omitempty"`
+	Content      string               `msg:"content" json:"content,omitempty"`
+	Attachments  []string             `msg:"attachments" json:"attachments,omitempty"`
+	Replies      []*MessageReplies    `msg:"replies" json:"replies,omitempty"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
+	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
+	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
 }
 
 type MessageMasquerade struct {
-	Name   string `msg:"name,omitempty"`
-	Avatar string `msg:"avatar,omitempty"`
-	Colour string `msg:"colour,omitempty"`
+	Name   string `msg:"name" json:"name,omitempty"`
+	Avatar string `msg:"avatar" json:"avatar,omitempty"`
+	Colour string `msg:"colour" json:"colour,omitempty"`
 }
 
 type MessageReplies struct {
-	ID      string `msg:"id"`
-	Mention bool   `msg:"mention"`
+	ID      string `msg:"id" json:"id,omitempty"`
+	Mention bool   `msg:"mention" json:"mention,omitempty"`
 }
