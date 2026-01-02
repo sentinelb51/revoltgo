@@ -63,7 +63,7 @@ func SetCDNURL(newURL string) error {
 
 const (
 	URLUsers              = "/users/%s"
-	URLUsersUsername      = "/users/me/username"
+	URLUsersUsername      = "/users/@me/username"
 	URLUsersMutual        = URLUsers + "/mutual"
 	URLUsersDM            = URLUsers + "/dm"
 	URLUsersFlags         = URLUsers + "/flags"
@@ -95,9 +95,7 @@ const (
 	URLChannelsMessage          = URLChannelsMessages + "/%s"
 	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
 	URLChannelsMessageReaction  = URLChannelsMessageReactions + "/%s"
-	URLChannelsTyping           = URLChannels + "/typing"
 	URLChannelsInvites          = URLChannels + "/invites"
-	URLChannelsInvite           = URLChannelsInvites + "/%s"
 	URLChannelsPermissions      = URLChannels + "/permissions/%s"
 	URLChannelsRecipients       = URLChannels + "/recipients/%s"
 	URLChannelsSearch           = URLChannels + "/search"
@@ -220,8 +218,20 @@ func EndpointInvite(sID string) string {
 	return fmt.Sprintf(URLInvites, sID)
 }
 
+func EndpointServersInvites(sID string) string {
+	return fmt.Sprintf(URLServersInvites, sID)
+}
+
 func EndpointServersRoles(sID string) string {
 	return fmt.Sprintf(URLServersRoles, sID)
+}
+
+func EndpointServersRolesRanks(sID string) string {
+	return fmt.Sprintf(URLServersRolesRanks, sID)
+}
+
+func EndpointServersEmojis(sID string) string {
+	return fmt.Sprintf(URLServersEmojis, sID)
 }
 
 func EndpointServersRole(sID, rID string) string {
@@ -268,16 +278,16 @@ func EndpointChannelsMessage(cID, mID string) string {
 	return fmt.Sprintf(URLChannelsMessage, cID, mID)
 }
 
-func EndpointChannelsTyping(cID string) string {
-	return fmt.Sprintf(URLChannelsTyping, cID)
+func EndpointChannelsMessagesPin(cID, mID string) string {
+	return fmt.Sprintf(URLChannelsMessagesPin, cID, mID)
+}
+
+func EndpointChannelsSearch(cID string) string {
+	return fmt.Sprintf(URLChannelsSearch, cID)
 }
 
 func EndpointChannelsInvites(cID string) string {
 	return fmt.Sprintf(URLChannelsInvites, cID)
-}
-
-func EndpointChannelsInvite(cID, iID string) string {
-	return fmt.Sprintf(URLChannelsInvite, cID, iID)
 }
 
 func EndpointChannelsWebhooks(cID string) string {
@@ -324,6 +334,12 @@ func EndpointSyncSettings(sID string) string {
 
 func EndpointPush(action string) string {
 	return fmt.Sprintf(URLPush, action)
+}
+
+/* Authentication MFA endpoints */
+
+func EndpointAuthMFA(action string) string {
+	return fmt.Sprintf(URLAuthMFA, action)
 }
 
 /* CDN endpoints */

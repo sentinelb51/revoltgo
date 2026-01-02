@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -317,21 +318,30 @@ func (s *Session) Open() (err error) {
 	return
 }
 
-// WriteSocket writes data to the Websocket in JSON
-// WriteSocket writes data to the Websocket in MessagePack
-func (s *Session) WriteSocket(data any) error {
-	// Ensure the data implements msgp.Marshaler (requires code generation)
+// WriteSocketJSON writes data to the websocket in JSON
+func (s *Session) WriteSocketJSON(data any) error {
+	payload, err := json.Marshal(data)
+	if err == nil {
+		err = s.WS.WriteMessage(gws.OpcodeText, payload)
+	}
+
+	return err
+}
+
+// WriteSocketMSGP writes data to the Websocket in MessagePack
+func (s *Session) WriteSocketMSGP(data any) error {
 	marshaler, ok := data.(msgp.Marshaler)
 	if !ok {
-		return fmt.Errorf("type %T does not implement msgp.Marshaler", data)
+		return fmt.Errorf("type %T doesn't implement msgp.Marshaler. "+
+			"Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", data)
 	}
 
 	payload, err := marshaler.MarshalMsg(nil)
-	if err != nil {
-		return err
+	if err == nil {
+		err = s.WS.WriteMessage(gws.OpcodeBinary, payload)
 	}
 
-	return s.WS.WriteMessage(gws.OpcodeBinary, payload)
+	return err
 }
 
 func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {
@@ -444,13 +454,29 @@ func (s *Session) ServerCreate(data ServerCreateData) (server *Server, err error
 // ChannelBeginTyping is a Websocket method to start typing in a channel
 func (s *Session) ChannelBeginTyping(cID string) (err error) {
 	data := WebsocketChannelTyping{Channel: cID, Type: WebsocketMessageTypeBeginTyping}
-	return s.WriteSocket(data)
+	return s.WriteSocketMSGP(data)
+}
+
+func (s *Session) ChannelSearch(cID string, query ChannelSearchParams) (messages []*Message, err error) {
+	endpoint := EndpointChannelsSearch(cID)
+	err = s.HTTP.Request(http.MethodPost, endpoint, query, &messages)
+	return
+}
+
+func (s *Session) ChannelMessagePin(cID, mID string) (err error) {
+	endpoint := EndpointChannelsMessagesPin(cID, mID)
+	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
+}
+
+func (s *Session) ChannelMessageUnpin(cID, mID string) (err error) {
+	endpoint := EndpointChannelsMessagesPin(cID, mID)
+	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 // ChannelEndTyping is a Websocket method to stop typing in a channel
 func (s *Session) ChannelEndTyping(cID string) (err error) {
 	data := WebsocketChannelTyping{Channel: cID, Type: WebsocketMessageTypeEndTyping}
-	return s.WriteSocket(data)
+	return s.WriteSocketMSGP(data)
 }
 
 func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
@@ -515,12 +541,6 @@ func (s *Session) WebhookTokenExecuteGitHub(wID, wToken, githubEventName string,
 	return fmt.Errorf("not implemented")
 }
 
-//func (s *Session) ChannelWebhookEdit(cID, wID string, data WebhookEdit) (webhook *Webhook, err error) {
-//	endpoint := EndpointChannelsWebhook(cID, wID)
-//	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
-//	return
-//}
-
 // GroupCreate creates a group based on the data provided
 // "Users" field is a list of user IDs that will be in the group
 func (s *Session) GroupCreate(data GroupCreateData) (group *Group, err error) {
@@ -559,12 +579,6 @@ func (s *Session) ChannelDelete(cID string) (err error) {
 	return
 }
 
-func (s *Session) ServerAck(serverID string) (err error) {
-	endpoint := EndpointServersAck(serverID)
-	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
-	return
-}
-
 func (s *Session) MessageAck(channelID, messageID string) (err error) {
 	endpoint := EndpointChannelAckMessage(channelID, messageID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
@@ -574,6 +588,18 @@ func (s *Session) MessageAck(channelID, messageID string) (err error) {
 func (s *Session) ServerBans(sID string) (bans []*ServerBans, err error) {
 	endpoint := EndpointServersBans(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bans)
+	return
+}
+
+func (s *Session) ServerAck(serverID string) (err error) {
+	endpoint := EndpointServersAck(serverID)
+	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
+	return
+}
+
+func (s *Session) ServerInvites(sID string) (invites []*Invite, err error) {
+	endpoint := EndpointServersInvites(sID)
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &invites)
 	return
 }
 
@@ -607,9 +633,21 @@ func (s *Session) ServerRoleDelete(sID, rID string) (err error) {
 	return
 }
 
-func (s *Session) ServersRoleEdit(sID, rID string, data ServerRoleEditData) (role *ServerRole, err error) {
+func (s *Session) ServerRoleEdit(sID, rID string, data ServerRoleEditData) (role *ServerRole, err error) {
 	endpoint := EndpointServersRole(sID, rID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &role)
+	return
+}
+
+func (s *Session) ServerEmojis(sID string) (emojis []*Emoji, err error) {
+	endpoint := EndpointServersEmojis(sID)
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &emojis)
+	return
+}
+
+func (s *Session) ServersRoleRanksEdit(sID string, ranks []string) (err error) {
+	endpoint := EndpointServersRolesRanks(sID)
+	err = s.HTTP.Request(http.MethodPatch, endpoint, ranks, nil)
 	return
 }
 
@@ -988,7 +1026,7 @@ func (s *Session) SyncSettingsFetch(payload SyncSettingsFetchData) (data *SyncSe
 
 func (s *Session) SyncSettingsSet(payload SyncSettingsData) error {
 	endpoint := EndpointSync("settings")
-	return s.HTTP.Request(http.MethodPut, endpoint, payload, nil)
+	return s.HTTP.Request(http.MethodPost, endpoint, payload, nil)
 }
 
 func (s *Session) PushSubscribe(data WebpushSubscription) error {
@@ -999,4 +1037,50 @@ func (s *Session) PushSubscribe(data WebpushSubscription) error {
 func (s *Session) PushUnsubscribe(data WebpushSubscription) error {
 	endpoint := EndpointPush("unsubscribe")
 	return s.HTTP.Request(http.MethodPost, endpoint, data, nil)
+}
+
+func (s *Session) AuthMFA() (mfa AuthMFAResponse, err error) {
+	endpoint := EndpointAuthMFA("")
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &mfa)
+	return
+}
+
+func (s *Session) AuthMFACreateTicket(data AuthMFAData) (ticket AuthMFATicketResponse, err error) {
+	endpoint := EndpointAuthMFA("ticket")
+	err = s.HTTP.Request(http.MethodPut, endpoint, data, &ticket)
+	return
+}
+
+func (s *Session) AuthMFARecoveryCodes() (codes []string, err error) {
+	endpoint := EndpointAuthMFA("recovery")
+	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &codes)
+	return
+}
+
+func (s *Session) AuthMFAGenerateRecoveryCodes() (codes []string, err error) {
+	endpoint := EndpointAuthMFA("recovery")
+	err = s.HTTP.Request(http.MethodPatch, endpoint, nil, &codes)
+	return
+}
+
+func (s *Session) AuthMFAMethods() (methods []AuthMFAMethod, err error) {
+	endpoint := EndpointAuthMFA("methods")
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &methods)
+	return
+}
+
+func (s *Session) AuthMFAEnable2FATOTP(data AuthMFAData) (err error) {
+	endpoint := EndpointAuthMFA("totp")
+	return s.HTTP.Request(http.MethodPut, endpoint, data, nil)
+}
+
+func (s *Session) AuthMFADisable2FATOTP() (err error) {
+	endpoint := EndpointAuthMFA("totp")
+	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
+}
+
+func (s *Session) AuthMFAGenerateTOTPSecret() (secret AuthMFATOTPSecretResponse, err error) {
+	endpoint := EndpointAuthMFA("totp")
+	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &secret)
+	return
 }

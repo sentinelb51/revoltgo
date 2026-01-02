@@ -467,6 +467,7 @@ const (
 	ChannelMessagesParamsSortTypeLatest    ChannelMessagesParamsSortType = "Latest"
 )
 
+// ChannelMessagesParams is for /channels/{target}/messages
 type ChannelMessagesParams struct {
 	// Maximum number of messages to fetch. For nearby messages, this is (limit + 1)
 	Limit int `msg:"limit" json:"limit,omitempty"`
@@ -485,6 +486,17 @@ type ChannelMessagesParams struct {
 
 	// Whether to include user (and member, if server channel) objects
 	IncludeUsers bool `msg:"include_users" json:"include_users,omitempty"`
+}
+
+// ChannelSearchParams is for /channels/{target}/search
+type ChannelSearchParams struct {
+	ChannelMessagesParams `msg:",inline"`
+
+	// Whether to only search for pinned messages; cannot be sent with query.
+	Pinned bool `msg:"pinned" json:"pinned,omitempty"`
+
+	// Full-text search query. See https://www.mongodb.com/docs/manual/text-search/#-text-operator
+	Query string `msg:"query" json:"query,omitempty"`
 }
 
 func (p ChannelMessagesParams) Encode() string {
@@ -571,4 +583,11 @@ type WebhookEditData struct {
 	Avatar      string               `msg:"avatar" json:"avatar,omitempty"`
 	Permissions string               `msg:"permissions" json:"permissions,omitempty"`
 	Remove      []WebhookRemoveField `msg:"remove" json:"remove,omitempty"`
+}
+
+// AuthMFAData should only have one of its fields set, and is used for various MFA methods
+type AuthMFAData struct {
+	Password     string `msg:"password" json:"password,omitempty"`
+	RecoveryCode string `msg:"recovery_code" json:"recovery_code,omitempty"`
+	TOTPCode     string `msg:"totp_code" json:"totp_code,omitempty"`
 }

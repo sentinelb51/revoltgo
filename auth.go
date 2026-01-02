@@ -2,6 +2,31 @@ package revoltgo
 
 //go:generate msgp -tests=false -io=false
 
+type AuthMFAMethod string
+
+const (
+	AuthMFAMethodPassword AuthMFAMethod = "Password"
+	AithMFAMethodRecovery AuthMFAMethod = "Recovery"
+	AuthMFAMethodTOTP     AuthMFAMethod = "Totp"
+)
+
+type AuthMFAResponse struct {
+	EmailOtp        bool `msg:"email_otp" json:"email_otp"`
+	TrustedHandover bool `msg:"trusted_handover" json:"trusted_handover"`
+	EmailMfa        bool `msg:"email_mfa" json:"email_mfa"`
+	TotpMfa         bool `msg:"totp_mfa" json:"totp_mfa"`
+	SecurityKeyMfa  bool `msg:"security_key_mfa" json:"security_key_mfa"`
+	RecoveryActive  bool `msg:"recovery_active" json:"recovery_active"`
+}
+
+type AuthMFATicketResponse struct {
+	MFATicket
+}
+
+type AuthMFATOTPSecretResponse struct {
+	Secret string `msg:"secret" json:"secret,omitempty"`
+}
+
 type LoginResponse struct {
 	Result       string              `msg:"result" json:"result,omitempty"`
 	ID           string              `msg:"_id" json:"_id,omitempty"`
@@ -40,10 +65,10 @@ type MFAResponse struct {
 }
 
 type ChangeEmail struct {
-	Ticket Ticket `msg:"ticket" json:"ticket,omitempty"` // Why is this nested
+	Ticket MFATicket `msg:"ticket" json:"ticket,omitempty"` // Why is this nested (seriously, look at AuthMFATicketResponse)
 }
 
-type Ticket struct {
+type MFATicket struct {
 	ID           string `msg:"_id" json:"_id,omitempty"`
 	AccountID    string `msg:"account_id" json:"account_id,omitempty"`
 	Token        string `msg:"token" json:"token,omitempty"`
