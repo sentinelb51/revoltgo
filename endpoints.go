@@ -100,13 +100,13 @@ const (
 	URLChannelsInvite           = URLChannelsInvites + "/%s"
 	URLChannelsPermissions      = URLChannels + "/permissions/%s"
 	URLChannelsRecipients       = URLChannels + "/recipients/%s"
-	URLChannelsWebhooks         = URLChannels + "/webhooks"
 	URLChannelsSearch           = URLChannels + "/search"
 	URLChannelsMessagesPin      = URLChannelsMessages + "/%s/pin"
+	URLChannelsWebhooks         = URLChannels + "/webhooks"
 
-	URLWebhooks              = "/webhooks/%s"
-	URLWebhooksWebhook       = URLWebhooks + "/%s"
-	URLWebhooksWebhookGitHub = URLWebhooksWebhook + "/github"
+	URLWebhooks            = "/webhooks/%s"
+	URLWebhooksToken       = URLWebhooks + "/%s"
+	URLWebhooksTokenGitHub = URLWebhooksToken + "/github"
 
 	URLInvites = "/invites/%s"
 
@@ -282,6 +282,18 @@ func EndpointChannelsInvite(cID, iID string) string {
 
 func EndpointChannelsWebhooks(cID string) string {
 	return fmt.Sprintf(URLChannelsWebhooks, cID)
+}
+
+func EndpointWebhooks(wID string) string {
+	return fmt.Sprintf(URLWebhooks, wID)
+}
+
+func EndpointWebhooksToken(wID, token string) string {
+	return fmt.Sprintf(URLWebhooksToken, wID, token)
+}
+
+func EndpointWebhooksGitHub(wID, token string) string {
+	return fmt.Sprintf(URLWebhooksTokenGitHub, wID, token)
 }
 
 /* Bot endpoints */

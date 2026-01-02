@@ -4,6 +4,13 @@ import "log"
 
 //go:generate msgp -tests=false -io=false
 
+type WebhookRemoveField string
+
+const (
+	WebhookRemoveNickname WebhookRemoveField = "Nickname"
+	WebhookRemoveAvatar   WebhookRemoveField = "Avatar"
+)
+
 // Webhook is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/channel_webhooks/model.rs#L8
 type Webhook struct {
@@ -60,9 +67,4 @@ type PartialWebhook struct {
 	ChannelID   *string     `msg:"channel_id" json:"channel_id,omitempty"`
 	Permissions *uint64     `msg:"permissions" json:"permissions,omitempty"`
 	Token       *string     `msg:"token" json:"token,omitempty"`
-}
-
-type WebhookCreate struct {
-	Name   string `msg:"name" json:"name,omitempty"`
-	Avatar string `msg:"avatar" json:"avatar,omitempty"`
 }

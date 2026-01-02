@@ -230,9 +230,9 @@ func (m *ServerMember) update(data PartialServerMember) {
 func (m *ServerMember) clear(fields []string) {
 	for _, field := range fields {
 		switch field {
-		case "Nickname":
+		case string(WebhookRemoveNickname):
 			m.Nickname = nil
-		case "Avatar":
+		case string(WebhookRemoveAvatar):
 			m.Avatar = nil
 		default:
 			fmt.Printf("ServerMember.clear(): unknown field %s\n", field)

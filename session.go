@@ -460,11 +460,66 @@ func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
 	return
 }
 
-func (s *Session) ChannelWebhooksCreate(cID string, data WebhookCreate) (webhook *Webhook, err error) {
+func (s *Session) ChannelWebhookCreate(cID string, data WebhookCreateData) (webhook *Webhook, err error) {
 	endpoint := EndpointChannelsWebhooks(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &webhook)
 	return
 }
+
+// Webhook fetches a webhook using its ID
+func (s *Session) Webhook(wID string) (webhook *Webhook, err error) {
+	endpoint := EndpointWebhooks(wID)
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhook)
+	return
+}
+
+// WebhookToken fetches a webhook using its ID and token
+func (s *Session) WebhookToken(wID, wToken string) (webhook *Webhook, err error) {
+	endpoint := EndpointWebhooksToken(wID, wToken)
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhook)
+	return
+}
+
+func (s *Session) WebhookTokenExecute(wID, wToken string, data WebhookExecuteData) (message *Message, err error) {
+	endpoint := EndpointWebhooksToken(wID, wToken)
+	err = s.HTTP.Request(http.MethodPost, endpoint, data, &message)
+	return
+}
+
+func (s *Session) WebhookDelete(wID string) (err error) {
+	endpoint := EndpointWebhooks(wID)
+	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
+}
+
+func (s *Session) WebhookTokenDelete(wID, wToken string) (err error) {
+	endpoint := EndpointWebhooksToken(wID, wToken)
+	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
+}
+
+func (s *Session) WebhookEdit(wID string, data WebhookEditData) (webhook *Webhook, err error) {
+	endpoint := EndpointWebhooks(wID)
+	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
+	return
+}
+
+func (s *Session) WebhookTokenEdit(wID, wToken string, data WebhookEditData) (webhook *Webhook, err error) {
+	endpoint := EndpointWebhooksToken(wID, wToken)
+	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
+	return
+}
+
+// WebhookTokenExecuteGitHub is not implemented yet.
+func (s *Session) WebhookTokenExecuteGitHub(wID, wToken, githubEventName string, data []byte) (err error) {
+	// Header: X-Github-EventCopy
+	// Body: application/octet-stream
+	return fmt.Errorf("not implemented")
+}
+
+//func (s *Session) ChannelWebhookEdit(cID, wID string, data WebhookEdit) (webhook *Webhook, err error) {
+//	endpoint := EndpointChannelsWebhook(cID, wID)
+//	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
+//	return
+//}
 
 // GroupCreate creates a group based on the data provided
 // "Users" field is a list of user IDs that will be in the group

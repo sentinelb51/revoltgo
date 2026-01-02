@@ -558,3 +558,17 @@ type SyncSettingsData map[string]SyncSettingsDataTuple
 type SyncSettingsFetchData struct {
 	Keys []string `msg:"keys" json:"keys,omitempty"`
 }
+
+type WebhookCreateData struct {
+	Name   string `msg:"name" json:"name,omitempty"`
+	Avatar string `msg:"avatar" json:"avatar,omitempty"`
+}
+
+type WebhookExecuteData Message
+
+type WebhookEditData struct {
+	Name        string               `msg:"name" json:"name,omitempty"`
+	Avatar      string               `msg:"avatar" json:"avatar,omitempty"`
+	Permissions string               `msg:"permissions" json:"permissions,omitempty"`
+	Remove      []WebhookRemoveField `msg:"remove" json:"remove,omitempty"`
+}
