@@ -1,4 +1,7 @@
 # Introduction
+
+![RevoltGo logo RGO](https://github.com/sentinelb51/revoltgo/blob/main/logo.png)
+
 ### Purpose
 RevoltGo is a low-level API wrapper for the [Revolt API](https://stoat.chat) focused on performance and maintainability.
 
@@ -13,8 +16,6 @@ I have ideas for doing so myself.
 ## Support
 The fastest way to contact me is via the [Revolt support server dedicated for this project](https://rvlt.gg/R55WJBjx).
 Of course, you can always create an issue or a PR.
-
-![RevoltGo logo RGO](https://github.com/sentinelb51/revoltgo/blob/main/logo.png)
 
 # Features
 - **Targets current Go releases and up-to-date dependencies**
