@@ -1,59 +1,49 @@
-## Support server
+# Introduction
+### Purpose
+RevoltGo is a low-level API wrapper for the [Revolt API](https://stoat.chat) focused on performance and maintainability.
 
-We have a Revolt server dedicated to this project, where you can discuss the project,
-suggest features, or highlight issues.
-[**Join our community.**](https://rvlt.gg/R55WJBjx)
+### Context
+Since July 2023 and until now, it has been the the only mature Revolt Go library that, in my opinion, does things right.
+Other projects had poor API coverage and consistency, as well as questionable code and design choices.
 
-## Why use revoltgo
+### Audience
+This has primarily been designed for developing bots and self-bots, but can technically be used for clients.
+I have ideas for doing so myself.
+
+## Support
+The fastest way to contact me is via the [Revolt support server dedicated for this project](https://rvlt.gg/R55WJBjx).
+Of course, you can always create an issue or a PR.
 
 ![RevoltGo logo RGO](https://github.com/sentinelb51/revoltgo/blob/main/logo.png)
 
-At the time of writing, other (few) Revolt Go packages were simply unfeasible. They had:
+# Features
+- **Targets current Go releases and up-to-date dependencies**
+- **Low level bindings, minimal opinionation**, excluding comments
+- **High-performance WebSocket transport using MessagePack** with code-generated serializers for all payloads, while retaining JSON interop where required
+- **In-memory state caching for various objects**, including opportunistic refresh from HTTP calls
+- **REST API ratelimit handling** with some safe-guards against token leaks
+- **Minor utilities** such as a permission calculator, enums, and related helpers
+- **Debug options for both HTTP and Websocket operations**
 
-- Hardcoded JSON payloads
-- Poor API coverage and consistency
-- Interface{} shoved in fields they were too lazy to add a struct for
-- Hard-to-maintain codebase and odd design choices (wrapping Client and Time for each struct)
-- ... this list can go on
+# Getting started
 
-## Features
+## Installation
+Assuming that you have a working Go environment ready, run one of the following commands to install the library.
+If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
 
-RevoltGo as a project provides:
-
-- Broader, up-to-date API coverage and functionality compared to other Revolt Go projects
-- Extensive customisability due to low-level bindings
-- Consistent, cleaner, and maintainable codebase
-
-Additionally, revoltgo provides quality-of-life features such as:
-
-- Permission calculator
-- Lightweight ratelimit handling
-- Automatic re-connects on websocket failures
-- State/cache updates for members, roles, channels, and servers
-
-## Getting started
-
-### Installation
-
-Assuming that you have a working Go environment ready, all you have to do is run
-either of the following commands to install the package:
-
-**Stable release**
+### Stable release
 
 ```bash
 go get github.com/sentinelb51/revoltgo
 ```
 
-**Latest release**
+### Latest release
 
 ```bash
 go get github.com/sentinelb51/revoltgo@latest
 ```
 
-If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
-
-### Usage
-
+## Usage
 Now that the package is installed, you will have to import it
 
 ```go
@@ -86,20 +76,14 @@ signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 <-sc
 ```
 
-When it's time to close the connection, simply close the session as demonstrated below.
-
-```go
-session.Close()
-```
-
-### Examples
+## Examples
 
 The following examples are available in the [examples](https://github.com/sentinelb51/revoltgo/tree/main/examples)
 directory:
 
-- **ping_bot.go**: A simple **bot** that responds to the `!ping` command.
-- **selfbot.go**: A simple **self-bot** that responds to the `!ping` command.
-- **uploads.go**: A simple **bot** that uploads the RevoltGo logo using the command "!upload"
+- **ping_bot.go**: A **bot** that responds to the `!ping` command.
+- **selfbot.go**: A **self-bot** that responds to the `!ping` command.
+- **uploads.go**: A **bot** that uploads the RevoltGo logo using the command "!upload"
 
 ## Resource usage
 

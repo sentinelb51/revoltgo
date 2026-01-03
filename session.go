@@ -332,8 +332,11 @@ func (s *Session) WriteSocketJSON(data any) error {
 func (s *Session) WriteSocketMSGP(data any) error {
 	marshaler, ok := data.(msgp.Marshaler)
 	if !ok {
-		return fmt.Errorf("type %T doesn't implement msgp.Marshaler. "+
-			"Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", data)
+		// todo: maybe err should just be "%T doesn't implement msgp.Marshaler"
+		// todo: test if sending websocket events even works
+		err := fmt.Errorf("%T doesn't implement msgp.Marshaler. Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", data)
+		log.Println(err)
+		return err
 	}
 
 	payload, err := marshaler.MarshalMsg(nil)

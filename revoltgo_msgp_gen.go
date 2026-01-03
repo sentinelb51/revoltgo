@@ -19545,3 +19545,226 @@ func (z WebpushSubscription) Msgsize() (s int) {
 	s = 1 + 9 + msgp.StringPrefixSize + len(z.Endpoint) + 7 + msgp.StringPrefixSize + len(z.P256DH) + 5 + msgp.StringPrefixSize + len(z.Auth)
 	return
 }
+
+// MarshalMsg implements msgp.Marshaler
+func (z WebsocketChannelTyping) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "type"
+	o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, string(z.Type))
+	// string "channel"
+	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
+	o = msgp.AppendString(o, z.Channel)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *WebsocketChannelTyping) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			{
+				var zb0002 string
+				zb0002, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Type")
+					return
+				}
+				z.Type = WebsocketMessageType(zb0002)
+			}
+		case "channel":
+			z.Channel, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Channel")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z WebsocketChannelTyping) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 8 + msgp.StringPrefixSize + len(z.Channel)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z WebsocketMessageAuthenticate) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "type"
+	o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, string(z.Type))
+	// string "token"
+	o = append(o, 0xa5, 0x74, 0x6f, 0x6b, 0x65, 0x6e)
+	o = msgp.AppendString(o, z.Token)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *WebsocketMessageAuthenticate) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			{
+				var zb0002 string
+				zb0002, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Type")
+					return
+				}
+				z.Type = WebsocketMessageType(zb0002)
+			}
+		case "token":
+			z.Token, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Token")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z WebsocketMessageAuthenticate) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.StringPrefixSize + len(z.Token)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z WebsocketMessagePing) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "type"
+	o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, string(z.Type))
+	// string "data"
+	o = append(o, 0xa4, 0x64, 0x61, 0x74, 0x61)
+	o = msgp.AppendInt64(o, z.Data)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *WebsocketMessagePing) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			{
+				var zb0002 string
+				zb0002, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Type")
+					return
+				}
+				z.Type = WebsocketMessageType(zb0002)
+			}
+		case "data":
+			z.Data, bts, err = msgp.ReadInt64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Data")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z WebsocketMessagePing) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 5 + msgp.Int64Size
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z WebsocketMessageType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *WebsocketMessageType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = WebsocketMessageType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z WebsocketMessageType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
+	return
+}

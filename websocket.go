@@ -19,32 +19,6 @@ func init() {
 	log.SetPrefix("[R-GO] ")
 }
 
-type WebsocketMessageType string
-
-const (
-	WebsocketKeepAlivePeriod = 60 * time.Second
-
-	WebsocketMessageTypeAuthenticate WebsocketMessageType = "Authenticate"
-	WebsocketMessageTypeHeartbeat    WebsocketMessageType = "Ping"
-	WebsocketMessageTypeBeginTyping  WebsocketMessageType = "BeginTyping"
-	WebsocketMessageTypeEndTyping    WebsocketMessageType = "EndTyping"
-)
-
-type WebsocketMessageAuthenticate struct {
-	Type  WebsocketMessageType `msg:"type" json:"type,omitempty"`
-	Token string               `msg:"token" json:"token,omitempty"`
-}
-
-type WebsocketMessagePing struct {
-	Type WebsocketMessageType `msg:"type" json:"type,omitempty"`
-	Data int64                `msg:"data" json:"data,omitempty"`
-}
-
-type WebsocketChannelTyping struct {
-	Type    WebsocketMessageType `msg:"type" json:"type,omitempty"`
-	Channel string               `msg:"channel" json:"channel,omitempty"`
-}
-
 type Websocket struct {
 	url     string
 	session *Session
