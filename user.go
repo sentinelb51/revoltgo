@@ -174,3 +174,21 @@ type UserSettings struct {
 	Updated int
 	Data    msgp.Raw
 }
+
+type UserVoiceState struct {
+	ID            string    `msg:"_id" json:"_id,omitempty"`
+	JoinedAt      Timestamp `msg:"joined_at" json:"joined_at,omitempty"`
+	IsReceiving   bool      `msg:"is_receiving" json:"is_receiving,omitempty"`
+	IsPublishing  bool      `msg:"is_publishing" json:"is_publishing,omitempty"`
+	Screensharing bool      `msg:"screensharing" json:"screensharing,omitempty"`
+	Camera        bool      `msg:"camera" json:"camera,omitempty"`
+}
+
+type PartialUserVoiceState struct {
+	ID            *string   `msg:"_id" json:"_id,omitempty"`
+	JoinedAt      Timestamp `msg:"joined_at" json:"joined_at,omitempty"`
+	IsReceiving   *bool     `msg:"is_receiving" json:"is_receiving,omitempty"`
+	IsPublishing  *bool     `msg:"is_publishing" json:"is_publishing,omitempty"`
+	Screensharing *bool     `msg:"screensharing" json:"screensharing,omitempty"`
+	Camera        *bool     `msg:"camera" json:"camera,omitempty"`
+}

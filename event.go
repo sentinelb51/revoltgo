@@ -9,7 +9,7 @@ import (
 
 const jsonSkipAheadKeyType = len(`{"type":"`)
 
-// eventTypeFromJSON extracts the event type from the JSON data.
+// eventTypeFromJSON uses heuristics to quickly extract the event type from JSON data
 func eventTypeFromJSON(data []byte) (string, error) {
 	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
 	if closingTagIndex < 0 {
@@ -20,6 +20,7 @@ func eventTypeFromJSON(data []byte) (string, error) {
 	return string(result), nil
 }
 
+// eventTypeFromMSGP uses heuristics to quickly extract the event type from MessagePack data.
 func eventTypeFromMSGP(data []byte) (string, error) {
 
 	start := 6 // skip map header and "type" key
@@ -89,4 +90,10 @@ var eventConstructors = map[string]func() any{
 	"ServerRoleUpdate":   func() any { return new(EventServerRoleUpdate) },
 	"WebhookUpdate":      func() any { return new(EventWebhookUpdate) },
 	"MessageUpdate":      func() any { return new(EventMessageUpdate) },
+
+	"VoiceChannelJoin":     func() any { return new(EventVoiceChannelJoin) },
+	"VoiceChannelLeave":    func() any { return new(EventVoiceChannelLeave) },
+	"VoiceChannelMove":     func() any { return new(EventVoiceChannelMove) },
+	"UserVoiceStateUpdate": func() any { return new(EventUserVoiceStateUpdate) },
+	"UserMoveVoiceChannel": func() any { return new(EventUserMoveVoiceChannel) },
 }

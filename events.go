@@ -303,3 +303,36 @@ type EventWebhookDelete struct {
 	Event `msg:",flatten"`
 	ID    string `msg:"id" json:"id,omitempty"`
 }
+
+type EventVoiceChannelJoin struct {
+	Event `msg:",flatten"`
+	ID    string         `msg:"id" json:"id,omitempty"`
+	State UserVoiceState `msg:"state" json:"state,omitempty"`
+}
+
+type EventVoiceChannelLeave struct {
+	Event `msg:",flatten"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  string `msg:"user" json:"user"`
+}
+
+type EventVoiceChannelMove struct {
+	Event `msg:",flatten"`
+	User  string         `msg:"user" json:"user,omitempty"`
+	From  string         `msg:"from" json:"from,omitempty"`
+	To    string         `msg:"to" json:"to,omitempty"`
+	State UserVoiceState `msg:"state" json:"state,omitempty"`
+}
+
+type EventUserVoiceStateUpdate struct {
+	Event     `msg:",flatten"`
+	ID        string                `msg:"id" json:"id,omitempty"`
+	ChannelID string                `msg:"channel_id" json:"channel_id,omitempty"`
+	Data      PartialUserVoiceState `msg:"data" json:"data,omitempty"`
+}
+
+type EventUserMoveVoiceChannel struct {
+	Event `msg:",flatten"`
+	Node  string `msg:"node" json:"node,omitempty"`
+	Token string `msg:"token" json:"token,omitempty"`
+}
