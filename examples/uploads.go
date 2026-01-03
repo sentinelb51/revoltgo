@@ -2,45 +2,31 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/joho/godotenv"
 	"github.com/sentinelb51/revoltgo"
 )
 
 func main() {
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
+	session := revoltgo.New("token here")
 
-	token := os.Getenv("BOT_TOKEN")
-	if token == "" {
-		log.Fatal("BOT_TOKEN is not set in .env")
-	}
-
-	session := revoltgo.New(token)
-
-	session.AddHandler(func(session *revoltgo.Session, r *revoltgo.EventReady) {
+	revoltgo.AddHandler(session, func(session *revoltgo.Session, e *revoltgo.EventReady) {
 		fmt.Println("Ready to upload the RevoltGo logo when you type !upload")
 	})
 
-	session.AddHandler(func(session *revoltgo.Session, m *revoltgo.EventMessage) {
+	revoltgo.AddHandler(session, func(session *revoltgo.Session, event *revoltgo.EventMessage) {
 
-		if m.Content != "!upload" {
+		if event.Content != "!upload" {
 			return
 		}
 
 		// Read the logo.png file
 		file, err := os.Open("logo.png")
 		if err != nil {
-			fmt.Printf("Failed to read the logo.png file: %s\n", err)
-			fmt.Println("Don't tell me you deleted my beautiful logo...")
-			return
+			panic(err)
 		}
 
 		// Create a file object with a name and the file reader
@@ -66,7 +52,7 @@ func main() {
 		}
 
 		// Finally, send the message. Enjoy the logo.
-		_, err = session.ChannelMessageSend(m.Channel, send)
+		_, err = session.ChannelMessageSend(event.Channel, send)
 		if err != nil {
 			fmt.Printf("Failed to send message: %s\n", err)
 		}
@@ -74,7 +60,7 @@ func main() {
 		fmt.Println("Logo uploaded!")
 	})
 
-	err = session.Open()
+	err := session.Open()
 	if err != nil {
 		panic(err)
 	}
@@ -83,6 +69,4 @@ func main() {
 
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
-
-	err = session.Close()
 }

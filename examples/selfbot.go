@@ -27,9 +27,9 @@ func main() {
 		fmt.Printf("Ready to process commands from %d user(s) across %d server(s)\n", len(e.Users), len(e.Servers))
 	})
 
-	// Add a function to handle messages, offload it to the handleMessage function
+	// Add a function to handle messages, offload it to the handleSelfbotMessage function
 	revoltgo.AddHandler(session, func(session *revoltgo.Session, event *revoltgo.EventMessage) {
-		handleMessage(session, event)
+		handleSelfbotMessage(session, event)
 	})
 
 	// Open the session.
@@ -45,7 +45,7 @@ func main() {
 	<-sc
 }
 
-func handleMessage(session *revoltgo.Session, m *revoltgo.EventMessage) {
+func handleSelfbotMessage(session *revoltgo.Session, m *revoltgo.EventMessage) {
 
 	// It's important for self-bots to only respond to your own messages
 	if m.Author != session.State.Self().ID {
