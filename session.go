@@ -375,7 +375,7 @@ func (s *Session) EmojiDelete(eID string) error {
 
 // Channel fetches a channel using an API call
 func (s *Session) Channel(cID string) (channel *Channel, err error) {
-	endpoint := EndpointChannels(cID)
+	endpoint := EndpointChannel(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channel)
 	return
 }
@@ -383,70 +383,70 @@ func (s *Session) Channel(cID string) (channel *Channel, err error) {
 // User fetches a user by their ID
 // To fetch self, supply "@me" as the ID
 func (s *Session) User(uID string) (user *User, err error) {
-	endpoint := EndpointUsers(uID)
+	endpoint := EndpointUser(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &user)
 	s.State.addUser(user)
 	return
 }
 
 func (s *Session) UserBlock(uID string) (user *User, err error) {
-	endpoint := EndpointUsersBlock(uID)
+	endpoint := EndpointUserBlock(uID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, user)
 	return
 }
 
 func (s *Session) UserUnblock(uID string) (user *User, err error) {
-	endpoint := EndpointUsersBlock(uID)
+	endpoint := EndpointUserBlock(uID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, user)
 	return
 }
 
 func (s *Session) UserProfile(uID string) (profile *UserProfile, err error) {
-	endpoint := EndpointUsersProfile(uID)
+	endpoint := EndpointUserProfile(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &profile)
 	return
 }
 
 func (s *Session) UserDefaultAvatar(uID string) (binary []byte, err error) {
-	endpoint := EndpointUsersDefaultAvatar(uID)
+	endpoint := EndpointUserDefaultAvatar(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &binary)
 	return
 }
 
 func (s *Session) SetUsername(data UsernameData) (user *User, err error) {
-	err = s.HTTP.Request(http.MethodPatch, URLUsersUsername, data, &user)
+	err = s.HTTP.Request(http.MethodPatch, URLUserMeUsername, data, &user)
 	return
 }
 
 func (s *Session) UserFlags(uID string) (flags int, err error) {
-	endpoint := EndpointUsersFlags(uID)
+	endpoint := EndpointUserFlags(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &flags)
 	return
 }
 
 func (s *Session) UserEdit(uID string, data UserEditData) (user *User, err error) {
-	endpoint := EndpointUsers(uID)
+	endpoint := EndpointUser(uID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &user)
 	return
 }
 
 // Server fetches a server by its ID
 func (s *Session) Server(id string) (server *Server, err error) {
-	endpoint := EndpointServers(id)
+	endpoint := EndpointServer(id)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &server)
 	s.State.addServer(server)
 	return
 }
 
 func (s *Session) ServerEdit(id string, data ServerEditData) (server *Server, err error) {
-	endpoint := EndpointServers(id)
+	endpoint := EndpointServer(id)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &server)
 	return
 }
 
 // ServerCreate creates a server based on the data provided
 func (s *Session) ServerCreate(data ServerCreateData) (server *Server, err error) {
-	endpoint := EndpointServers("create")
+	endpoint := EndpointServer("create")
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &server)
 	return
 }
@@ -458,18 +458,18 @@ func (s *Session) ChannelBeginTyping(cID string) (err error) {
 }
 
 func (s *Session) ChannelSearch(cID string, query ChannelSearchParams) (messages []*Message, err error) {
-	endpoint := EndpointChannelsSearch(cID)
+	endpoint := EndpointChannelSearch(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, query, &messages)
 	return
 }
 
 func (s *Session) ChannelMessagePin(cID, mID string) (err error) {
-	endpoint := EndpointChannelsMessagesPin(cID, mID)
+	endpoint := EndpointChannelMessagesPin(cID, mID)
 	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
 }
 
 func (s *Session) ChannelMessageUnpin(cID, mID string) (err error) {
-	endpoint := EndpointChannelsMessagesPin(cID, mID)
+	endpoint := EndpointChannelMessagesPin(cID, mID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
@@ -480,56 +480,56 @@ func (s *Session) ChannelEndTyping(cID string) (err error) {
 }
 
 func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
-	endpoint := EndpointChannelsWebhooks(cID)
+	endpoint := EndpointChannelWebhooks(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhooks)
 	s.State.addWebhooks(webhooks)
 	return
 }
 
 func (s *Session) ChannelWebhookCreate(cID string, data WebhookCreateData) (webhook *Webhook, err error) {
-	endpoint := EndpointChannelsWebhooks(cID)
+	endpoint := EndpointChannelWebhooks(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &webhook)
 	return
 }
 
 // Webhook fetches a webhook using its ID
 func (s *Session) Webhook(wID string) (webhook *Webhook, err error) {
-	endpoint := EndpointWebhooks(wID)
+	endpoint := EndpointWebhook(wID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhook)
 	return
 }
 
 // WebhookToken fetches a webhook using its ID and token
 func (s *Session) WebhookToken(wID, wToken string) (webhook *Webhook, err error) {
-	endpoint := EndpointWebhooksToken(wID, wToken)
+	endpoint := EndpointWebhookToken(wID, wToken)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhook)
 	return
 }
 
 func (s *Session) WebhookTokenExecute(wID, wToken string, data WebhookExecuteData) (message *Message, err error) {
-	endpoint := EndpointWebhooksToken(wID, wToken)
+	endpoint := EndpointWebhookToken(wID, wToken)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &message)
 	return
 }
 
 func (s *Session) WebhookDelete(wID string) (err error) {
-	endpoint := EndpointWebhooks(wID)
+	endpoint := EndpointWebhook(wID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 func (s *Session) WebhookTokenDelete(wID, wToken string) (err error) {
-	endpoint := EndpointWebhooksToken(wID, wToken)
+	endpoint := EndpointWebhookToken(wID, wToken)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 func (s *Session) WebhookEdit(wID string, data WebhookEditData) (webhook *Webhook, err error) {
-	endpoint := EndpointWebhooks(wID)
+	endpoint := EndpointWebhook(wID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
 	return
 }
 
 func (s *Session) WebhookTokenEdit(wID, wToken string, data WebhookEditData) (webhook *Webhook, err error) {
-	endpoint := EndpointWebhooksToken(wID, wToken)
+	endpoint := EndpointWebhookToken(wID, wToken)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &webhook)
 	return
 }
@@ -544,37 +544,37 @@ func (s *Session) WebhookTokenExecuteGitHub(wID, wToken, githubEventName string,
 // GroupCreate creates a group based on the data provided
 // "Users" field is a list of user IDs that will be in the group
 func (s *Session) GroupCreate(data GroupCreateData) (group *Group, err error) {
-	endpoint := EndpointChannels("create")
+	endpoint := EndpointChannel("create")
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &group)
 	return
 }
 
 func (s *Session) GroupMemberAdd(cID, mID string) (err error) {
-	endpoint := EndpointChannelsRecipients(cID, mID)
+	endpoint := EndpointChannelRecipients(cID, mID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) GroupMemberDelete(cID, mID string) (err error) {
-	endpoint := EndpointChannelsRecipients(cID, mID)
+	endpoint := EndpointChannelRecipients(cID, mID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) GroupMembers(cID string) (users []*User, err error) {
-	endpoint := EndpointChannels(cID)
+	endpoint := EndpointChannelMembers(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &users)
 	return
 }
 
 func (s *Session) ChannelInviteCreate(cID string) (invite *InviteCreate, err error) {
-	endpoint := EndpointChannelsInvites(cID)
+	endpoint := EndpointChannelInvites(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &invite)
 	return
 }
 
 func (s *Session) ChannelDelete(cID string) (err error) {
-	endpoint := EndpointChannels(cID)
+	endpoint := EndpointChannel(cID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
@@ -586,25 +586,25 @@ func (s *Session) MessageAck(channelID, messageID string) (err error) {
 }
 
 func (s *Session) ServerBans(sID string) (bans []*ServerBans, err error) {
-	endpoint := EndpointServersBans(sID)
+	endpoint := EndpointServerBans(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bans)
 	return
 }
 
 func (s *Session) ServerAck(serverID string) (err error) {
-	endpoint := EndpointServersAck(serverID)
+	endpoint := EndpointServerAck(serverID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) ServerInvites(sID string) (invites []*Invite, err error) {
-	endpoint := EndpointServersInvites(sID)
+	endpoint := EndpointServerInvites(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &invites)
 	return
 }
 
 func (s *Session) ServersRole(sID, rID string) (role *ServerRole, err error) {
-	endpoint := EndpointServersRole(sID, rID)
+	endpoint := EndpointServerRole(sID, rID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &role)
 	return
 }
@@ -628,31 +628,31 @@ func (s *Session) InviteDelete(iID string) (err error) {
 }
 
 func (s *Session) ServerRoleDelete(sID, rID string) (err error) {
-	endpoint := EndpointServersRole(sID, rID)
+	endpoint := EndpointServerRole(sID, rID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) ServerRoleEdit(sID, rID string, data ServerRoleEditData) (role *ServerRole, err error) {
-	endpoint := EndpointServersRole(sID, rID)
+	endpoint := EndpointServerRole(sID, rID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &role)
 	return
 }
 
 func (s *Session) ServerEmojis(sID string) (emojis []*Emoji, err error) {
-	endpoint := EndpointServersEmojis(sID)
+	endpoint := EndpointServerEmojis(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &emojis)
 	return
 }
 
 func (s *Session) ServersRoleRanksEdit(sID string, ranks []string) (err error) {
-	endpoint := EndpointServersRolesRanks(sID)
+	endpoint := EndpointServerRolesRanks(sID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, ranks, nil)
 	return
 }
 
 func (s *Session) ServersRoleCreate(sID string, data ServerRoleCreateData) (role *ServerRole, err error) {
-	endpoint := EndpointServersRoles(sID)
+	endpoint := EndpointServerRoles(sID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &role)
 	return
 }
@@ -665,7 +665,7 @@ func (s *Session) PermissionsSet(sID, rID string, data PermissionOverwrite) (err
 
 // ChannelPermissionsSet sets permissions for the specified role in this channel.
 func (s *Session) ChannelPermissionsSet(cID, rID string, data PermissionOverwrite) (err error) {
-	endpoint := EndpointChannelsPermissions(cID, rID)
+	endpoint := EndpointChannelPermission(cID, rID)
 	return s.HTTP.Request(http.MethodPut, endpoint, data, nil)
 }
 
@@ -682,78 +682,78 @@ func (s *Session) PermissionsSetDefault(sID string, data PermissionsSetDefaultDa
 }
 
 func (s *Session) ChannelEdit(cID string, data ChannelEditData) (channel *Channel, err error) {
-	endpoint := EndpointChannels(cID)
+	endpoint := EndpointChannel(cID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &channel)
 	return
 }
 
 func (s *Session) ServerMemberUnban(sID, mID string) (err error) {
-	endpoint := EndpointServersBan(sID, mID)
+	endpoint := EndpointServerBan(sID, mID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) ServerMemberBan(sID, mID string) (err error) {
-	endpoint := EndpointServersBan(sID, mID)
+	endpoint := EndpointServerBan(sID, mID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) ServerMemberDelete(sID, mID string) (err error) {
-	endpoint := EndpointServersMember(sID, mID)
+	endpoint := EndpointServerMember(sID, mID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
 func (s *Session) ServerMemberEdit(sID, mID string, data ServerMemberEditData) (member *ServerMember, err error) {
-	endpoint := EndpointServersMember(sID, mID)
+	endpoint := EndpointServerMember(sID, mID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &member)
 	return
 }
 
 func (s *Session) ServerMember(sID, mID string) (member *ServerMember, err error) {
-	endpoint := EndpointServersMember(sID, mID)
+	endpoint := EndpointServerMember(sID, mID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &member)
 	s.State.addServerMember(member)
 	return
 }
 
 func (s *Session) ServerMembers(sID string) (members *ServerMembers, err error) {
-	endpoint := EndpointServersMembers(sID)
+	endpoint := EndpointServerMembers(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &members)
 	s.State.addServerMembersAndUsers(members)
 	return
 }
 
 func (s *Session) ChannelMessage(cID, mID string) (message *Message, err error) {
-	endpoint := EndpointChannelsMessage(cID, mID)
+	endpoint := EndpointChannelMessage(cID, mID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &message)
 	return
 }
 
 // ChannelMessageReactionCreate adds a reaction (emoji ID) to a message
 func (s *Session) ChannelMessageReactionCreate(cID, mID, eID string) (err error) {
-	endpoint := EndpointChannelsMessageReaction(cID, mID, eID)
+	endpoint := EndpointChannelMessageReaction(cID, mID, eID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
 	return
 }
 
 // ChannelMessageReactionDelete deletes a singular reaction on a message
 func (s *Session) ChannelMessageReactionDelete(cID, mID, eID string) (err error) {
-	endpoint := EndpointChannelsMessageReaction(cID, mID, eID)
+	endpoint := EndpointChannelMessageReaction(cID, mID, eID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 	return
 }
 
 // ChannelMessageReactionClear clears all reactions on a message
 func (s *Session) ChannelMessageReactionClear(cID, mID string) (err error) {
-	endpoint := EndpointChannelsMessageReactions(cID, mID)
+	endpoint := EndpointChannelMessageReactions(cID, mID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 // ChannelsJoinCall asks the voice server for a token to join the call.
 func (s *Session) ChannelsJoinCall(cID string, data ChannelJoinCallData) (call ChannelJoinCall, err error) {
-	endpoint := EndpointChannelsJoinCall(cID)
+	endpoint := EndpointChannelJoinCall(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &call)
 	return
 }
@@ -762,23 +762,23 @@ func (s *Session) ChannelsJoinCall(cID string, data ChannelJoinCallData) (call C
 // Only works within DMs and groups; returns NoEffect in servers.
 // Returns NotFound if the user is not in the DM/group channel.
 func (s *Session) ChannelsEndRing(cID, uID string) error {
-	endpoint := EndpointChannelsEndRing(cID, uID)
+	endpoint := EndpointChannelEndRing(cID, uID)
 	return s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
 }
 
 func (s *Session) ServerChannelCreate(sID string, data ServerChannelCreateData) (channel *Channel, err error) {
-	endpoint := EndpointServersChannels(sID)
+	endpoint := EndpointServerChannels(sID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &channel)
 	return
 }
 
 func (s *Session) ServerDelete(sID string) error {
-	endpoint := EndpointServers(sID)
+	endpoint := EndpointServer(sID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages []*Message, err error) {
-	endpoint := EndpointChannelsMessages(cID)
+	endpoint := EndpointChannelMessages(cID)
 
 	if len(params) > 0 {
 		endpoint += params[0].Encode()
@@ -789,24 +789,24 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 }
 
 func (s *Session) ChannelMessageEdit(cID, mID string, data MessageEditData) (message *Message, err error) {
-	endpoint := EndpointChannelsMessage(cID, mID)
+	endpoint := EndpointChannelMessage(cID, mID)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &message)
 	return
 }
 
 func (s *Session) ChannelMessageSend(cID string, data MessageSend) (message *Message, err error) {
-	endpoint := EndpointChannelsMessages(cID)
+	endpoint := EndpointChannelMessages(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &message)
 	return
 }
 
 func (s *Session) ChannelMessageDelete(cID, mID string) error {
-	endpoint := EndpointChannelsMessage(cID, mID)
+	endpoint := EndpointChannelMessage(cID, mID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 func (s *Session) ChannelMessageDeleteBulk(cID string, messages ChannelMessageBulkDeleteData) error {
-	endpoint := EndpointChannelsMessage(cID, "bulk")
+	endpoint := EndpointChannelMessage(cID, "bulk")
 	return s.HTTP.Request(http.MethodDelete, endpoint, messages, nil)
 }
 
@@ -925,14 +925,14 @@ func (s *Session) Logout() error {
 }
 
 func (s *Session) UserMutual(uID string) (mutual []*MutualFriendsAndServersResponse, err error) {
-	endpoint := EndpointUsersMutual(uID)
+	endpoint := EndpointUserMutual(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &mutual)
 	return
 }
 
 // DirectMessages returns a list of direct message channels.
 func (s *Session) DirectMessages() (channels []*Channel, err error) {
-	endpoint := EndpointUsers("dms")
+	endpoint := EndpointUser("dms")
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channels)
 	return
 }
@@ -940,74 +940,74 @@ func (s *Session) DirectMessages() (channels []*Channel, err error) {
 // DirectMessageCreate opens a direct message channel with a user
 // Will return an error "MissingPermission" "SendMessage" if you are not friends or blocked
 func (s *Session) DirectMessageCreate(uID string) (channel *Channel, err error) {
-	endpoint := EndpointUsersDM(uID)
+	endpoint := EndpointUserDM(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channel)
 	return
 }
 
 // Relationships returns a list of relationships for the current user
-func (s *Session) Relationships() (relationships []*UserRelations, err error) {
-	endpoint := URLUsersRelationships
+func (s *Session) Relationships() (relationships []*UserRelationship, err error) {
+	endpoint := URLUserRelationships
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &relationships)
 	return
 }
 
 // FriendAdd sends or accepts a friend Request.
-func (s *Session) FriendAdd(username string) (user *User, err error) {
-	endpoint := EndpointUsersFriend(username)
+func (s *Session) FriendAdd(uID string) (user *User, err error) {
+	endpoint := EndpointUserFriend(uID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, &user)
 	return
 }
 
 // FriendDelete removes a friend or declines a friend Request.
-func (s *Session) FriendDelete(username string) (user *User, err error) {
-	endpoint := EndpointUsersFriend(username)
+func (s *Session) FriendDelete(uID string) (user *User, err error) {
+	endpoint := EndpointUserFriend(uID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, &user)
 	return
 }
 
 // Bot fetches details of a bot you own by its ID
 func (s *Session) Bot(bID string) (bot *FetchedBot, err error) {
-	endpoint := EndpointBots(bID)
+	endpoint := EndpointBot(bID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bot)
 	return
 }
 
 // Bots returns a list of bots for the current user
 func (s *Session) Bots() (bots *FetchedBots, err error) {
-	endpoint := EndpointBots("@me")
+	endpoint := EndpointBot("@me")
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bots)
 	return
 }
 
 // BotCreate creates a bot based on the data provided
 func (s *Session) BotCreate(data BotCreateData) (bot *Bot, err error) {
-	endpoint := EndpointBots("create")
+	endpoint := EndpointBot("create")
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, &bot)
 	return
 }
 
 func (s *Session) BotEdit(id string, data BotEditData) (bot *Bot, err error) {
-	endpoint := EndpointBots(id)
+	endpoint := EndpointBot(id)
 	err = s.HTTP.Request(http.MethodPatch, endpoint, data, &bot)
 	return
 }
 
 func (s *Session) BotDelete(bID string) error {
-	endpoint := EndpointBots(bID)
+	endpoint := EndpointBot(bID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
 // BotPublic fetches a public bot by its ID
 func (s *Session) BotPublic(bID string) (bot *PublicBot, err error) {
-	endpoint := EndpointBotsInvite(bID)
+	endpoint := EndpointBotInvite(bID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bot)
 	return
 }
 
 // BotInvite invites a bot by its ID to a server or group
 func (s *Session) BotInvite(bID string, data BotInviteData) (err error) {
-	endpoint := EndpointBotsInvite(bID)
+	endpoint := EndpointBotInvite(bID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, data, nil)
 	return
 }

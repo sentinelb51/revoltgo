@@ -13947,7 +13947,7 @@ func (z *PartialUser) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Relations = nil
 			} else {
 				if z.Relations == nil {
-					z.Relations = new([]UserRelations)
+					z.Relations = new([]UserRelationship)
 				}
 				var zb0002 uint32
 				zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
@@ -13958,7 +13958,7 @@ func (z *PartialUser) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				if cap(*z.Relations) >= int(zb0002) {
 					*z.Relations = (*z.Relations)[:zb0002]
 				} else {
-					*z.Relations = make([]UserRelations, zb0002)
+					*z.Relations = make([]UserRelationship, zb0002)
 				}
 				for za0001 := range *z.Relations {
 					var zb0003 uint32
@@ -17526,7 +17526,7 @@ func (z *User) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Relations) >= int(zb0002) {
 				z.Relations = (z.Relations)[:zb0002]
 			} else {
-				z.Relations = make([]UserRelations, zb0002)
+				z.Relations = make([]UserRelationship, zb0002)
 			}
 			for za0001 := range z.Relations {
 				var zb0003 uint32
@@ -18185,7 +18185,7 @@ func (z *UserProfile) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z UserRelations) MarshalMsg(b []byte) (o []byte, err error) {
+func (z UserRelationship) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 2
 	// string "_id"
@@ -18198,7 +18198,7 @@ func (z UserRelations) MarshalMsg(b []byte) (o []byte, err error) {
 }
 
 // UnmarshalMsg implements msgp.Unmarshaler
-func (z *UserRelations) UnmarshalMsg(bts []byte) (o []byte, err error) {
+func (z *UserRelationship) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	var field []byte
 	_ = field
 	var zb0001 uint32
@@ -18244,7 +18244,7 @@ func (z *UserRelations) UnmarshalMsg(bts []byte) (o []byte, err error) {
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z UserRelations) Msgsize() (s int) {
+func (z UserRelationship) Msgsize() (s int) {
 	s = 1 + 4 + msgp.StringPrefixSize + len(z.ID) + 7 + msgp.StringPrefixSize + len(string(z.Status))
 	return
 }

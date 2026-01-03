@@ -30,7 +30,7 @@ type User struct {
 	Privileged    bool                 `msg:"privileged" json:"privileged,omitempty"`
 	Badges        uint32               `msg:"badges" json:"badges,omitempty"`
 	Online        bool                 `msg:"online" json:"online,omitempty"`
-	Relations     []UserRelations      `msg:"relations" json:"relations,omitempty"`
+	Relations     []UserRelationship   `msg:"relations" json:"relations,omitempty"`
 	Relationship  UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
 	DisplayName   *string              `msg:"display_name" json:"display_name,omitempty"`
 	Avatar        *Attachment          `msg:"avatar" json:"avatar,omitempty"`
@@ -122,7 +122,7 @@ type PartialUser struct {
 	Privileged    *bool                 `msg:"privileged" json:"privileged,omitempty"`
 	Badges        *uint32               `msg:"badges" json:"badges,omitempty"`
 	Online        *bool                 `msg:"online" json:"online,omitempty"`
-	Relations     *[]UserRelations      `msg:"relations" json:"relations,omitempty"`
+	Relations     *[]UserRelationship   `msg:"relations" json:"relations,omitempty"`
 	Relationship  *UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
 	DisplayName   *string               `msg:"display_name" json:"display_name,omitempty"`
 	Avatar        *Attachment           `msg:"avatar" json:"avatar,omitempty"`
@@ -140,7 +140,7 @@ type UserProfile struct {
 	Background *Attachment `msg:"background" json:"background,omitempty"`
 }
 
-type UserRelations struct {
+type UserRelationship struct {
 	ID     string               `msg:"_id" json:"_id,omitempty"`
 	Status UserRelationshipType `msg:"status" json:"status,omitempty"`
 }

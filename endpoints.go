@@ -62,59 +62,60 @@ func SetCDNURL(newURL string) error {
 }
 
 const (
-	URLUsers              = "/users/%s"
-	URLUsersUsername      = "/users/@me/username"
-	URLUsersMutual        = URLUsers + "/mutual"
-	URLUsersDM            = URLUsers + "/dm"
-	URLUsersFlags         = URLUsers + "/flags"
-	URLUsersFriend        = URLUsers + "/friend"
-	URLUsersBlock         = URLUsers + "/block"
-	URLUsersProfile       = URLUsers + "/profile"
-	URLUsersRelationships = URLUsers + "/relationships"
-	URLUsersDefaultAvatar = URLUsers + "/default_avatar"
+	URLUser              = "/users/%s"
+	URLUserMeUsername    = "/users/@me/username"
+	URLUserMutual        = URLUser + "/mutual"
+	URLUserDM            = URLUser + "/dm"
+	URLUserFlags         = URLUser + "/flags"
+	URLUserFriend        = URLUser + "/friend"
+	URLUserBlock         = URLUser + "/block"
+	URLUserProfile       = URLUser + "/profile"
+	URLUserRelationships = URLUser + "/relationships"
+	URLUserDefaultAvatar = URLUser + "/default_avatar"
 
-	URLServers            = "/servers/%s"
-	URLServersAck         = URLServers + "/ack"
-	URLServersChannels    = URLServers + "/channels"
-	URLServersMembers     = URLServers + "/members"
-	URLServersMember      = URLServersMembers + "/%s"
-	URLServersBans        = URLServers + "/bans"
-	URLServersBan         = URLServersBans + "/%s"
-	URLServersRoles       = URLServers + "/roles"
-	URLServersRole        = URLServers + "/roles/%s"
-	URLServersPermissions = URLServers + "/permissions/%s"
-	URLServersInvites     = URLServers + "/invites"
-	URLServersEmojis      = URLServers + "/emojis"
-	URLServersRolesRanks  = URLServers + "/roles/ranks"
+	URLServer            = "/servers/%s"
+	URLServerAck         = URLServer + "/ack"
+	URLServerChannels    = URLServer + "/channels"
+	URLServerMembers     = URLServer + "/members"
+	URLServerRoles       = URLServer + "/roles"
+	URLServerRole        = URLServer + "/roles/%s"
+	URLServerPermissions = URLServer + "/permissions/%s"
+	URLServerInvites     = URLServer + "/invites"
+	URLServerEmojis      = URLServer + "/emojis"
+	URLServerRolesRanks  = URLServer + "/roles/ranks"
+	URLServerBans        = URLServer + "/bans"
+	URLServerBan         = URLServerBans + "/%s"
+	URLServerMember      = URLServerMembers + "/%s"
 
-	URLChannels                 = "/channels/%s"
-	URLChannelsAckMessage       = URLChannels + "/ack/%s"
-	URLChannelsJoinCall         = URLChannels + "/join_call"
-	URLChannelsEndRing          = URLChannels + "/end_ring/%s"
-	URLChannelsMessages         = URLChannels + "/messages"
-	URLChannelsMessage          = URLChannelsMessages + "/%s"
-	URLChannelsMessageReactions = URLChannelsMessage + "/reactions"
-	URLChannelsMessageReaction  = URLChannelsMessageReactions + "/%s"
-	URLChannelsInvites          = URLChannels + "/invites"
-	URLChannelsPermissions      = URLChannels + "/permissions/%s"
-	URLChannelsRecipients       = URLChannels + "/recipients/%s"
-	URLChannelsSearch           = URLChannels + "/search"
-	URLChannelsMessagesPin      = URLChannelsMessages + "/%s/pin"
-	URLChannelsWebhooks         = URLChannels + "/webhooks"
+	URLChannel                 = "/channels/%s"
+	URLChannelAckMessage       = URLChannel + "/ack/%s"
+	URLChannelJoinCall         = URLChannel + "/join_call"
+	URLChannelEndRing          = URLChannel + "/end_ring/%s"
+	URLChannelInvites          = URLChannel + "/invites"
+	URLChannelPermission       = URLChannel + "/permissions/%s"
+	URLChannelRecipient        = URLChannel + "/recipients/%s"
+	URLChannelSearch           = URLChannel + "/search"
+	URLChannelWebhooks         = URLChannel + "/webhooks"
+	URLChannelMessages         = URLChannel + "/messages"
+	URLChannelMessage          = URLChannelMessages + "/%s"
+	URLChannelMembers          = URLChannel + "/members"
+	URLChannelMessageReactions = URLChannelMessage + "/reactions"
+	URLChannelMessageReaction  = URLChannelMessageReactions + "/%s"
+	URLChannelMessagePin       = URLChannelMessages + "/%s/pin"
 
-	URLWebhooks            = "/webhooks/%s"
-	URLWebhooksToken       = URLWebhooks + "/%s"
-	URLWebhooksTokenGitHub = URLWebhooksToken + "/github"
+	URLWebhooks           = "/webhooks/%s"
+	URLWebhookToken       = URLWebhooks + "/%s"
+	URLWebhookTokenGitHub = URLWebhookToken + "/github"
 
 	URLInvites = "/invites/%s"
 
-	URLBots       = "/bots/%s"
-	URLBotsInvite = URLBots + "/invite"
+	URLBots      = "/bots/%s"
+	URLBotInvite = URLBots + "/invite"
 
-	URLAuth         = "/auth"
-	URLAuthMFA      = URLAuth + "/mfa/%s"
-	URLAuthAccount  = URLAuth + "/account/%s"
-	URLAuthSessions = URLAuth + "/session/%s"
+	URLAuth        = "/auth"
+	URLAuthMFA     = URLAuth + "/mfa/%s"
+	URLAuthAccount = URLAuth + "/account/%s"
+	URLAuthSession = URLAuth + "/session/%s"
 
 	URLCustom      = "/custom"
 	URLCustomEmoji = URLCustom + "/emoji/%s"
@@ -135,7 +136,7 @@ func EndpointOnboard(action string) string {
 }
 
 func EndpointAuthSession(action string) string {
-	return fmt.Sprintf(URLAuthSessions, action)
+	return fmt.Sprintf(URLAuthSession, action)
 }
 
 func EndpointAuthAccountVerify(code string) string {
@@ -150,170 +151,179 @@ func EndpointAuthAccountChange(detail string) string {
 	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("change/%s", detail))
 }
 
-func EndpointUsers(uID string) string {
-	return fmt.Sprintf(URLUsers, uID)
+func EndpointUser(uID string) string {
+	return fmt.Sprintf(URLUser, uID)
 }
 
-func EndpointUsersBlock(uID string) string {
-	return fmt.Sprintf(URLUsersBlock, uID)
+func EndpointUserBlock(uID string) string {
+	return fmt.Sprintf(URLUserBlock, uID)
 }
 
-func EndpointUsersMutual(uID string) string {
-	return fmt.Sprintf(URLUsersMutual, uID)
+func EndpointUserMutual(uID string) string {
+	return fmt.Sprintf(URLUserMutual, uID)
 }
 
-func EndpointUsersDM(uID string) string {
-	return fmt.Sprintf(URLUsersDM, uID)
+func EndpointUserDM(uID string) string {
+	return fmt.Sprintf(URLUserDM, uID)
 }
 
-func EndpointUsersDefaultAvatar(uID string) string {
-	return fmt.Sprintf(URLUsersDefaultAvatar, uID)
+func EndpointUserDefaultAvatar(uID string) string {
+	return fmt.Sprintf(URLUserDefaultAvatar, uID)
 }
 
-func EndpointUsersFlags(uID string) string {
-	return fmt.Sprintf(URLUsersFlags, uID)
+func EndpointUserFlags(uID string) string {
+	return fmt.Sprintf(URLUserFlags, uID)
 }
 
-func EndpointUsersFriend(uID string) string {
-	return fmt.Sprintf(URLUsersFriend, uID)
+func EndpointUserFriend(uID string) string {
+
+	if uID == "" {
+		return fmt.Sprintf(URLUser, "friend")
+	}
+
+	return fmt.Sprintf(URLUserFriend, uID)
 }
 
-func EndpointUsersProfile(uID string) string {
-	return fmt.Sprintf(URLUsersProfile, uID)
+func EndpointUserProfile(uID string) string {
+	return fmt.Sprintf(URLUserProfile, uID)
 }
 
-func EndpointServers(sID string) string {
-	return fmt.Sprintf(URLServers, sID)
+func EndpointServer(sID string) string {
+	return fmt.Sprintf(URLServer, sID)
 }
 
-func EndpointServersAck(sID string) string {
-	return fmt.Sprintf(URLServersAck, sID)
+func EndpointServerAck(sID string) string {
+	return fmt.Sprintf(URLServerAck, sID)
 }
 
-func EndpointServersChannels(sID string) string {
-	return fmt.Sprintf(URLServersChannels, sID)
+func EndpointServerChannels(sID string) string {
+	return fmt.Sprintf(URLServerChannels, sID)
 }
 
-func EndpointChannelsPermissions(cID, rID string) string {
-	return fmt.Sprintf(URLChannelsPermissions, cID, rID)
+func EndpointChannelPermission(cID, rID string) string {
+	return fmt.Sprintf(URLChannelPermission, cID, rID)
 }
 
-func EndpointServersMembers(sID string) string {
-	return fmt.Sprintf(URLServersMembers, sID)
+func EndpointServerMembers(sID string) string {
+	return fmt.Sprintf(URLServerMembers, sID)
 }
 
-func EndpointServersMember(sID, mID string) string {
-	return fmt.Sprintf(URLServersMember, sID, mID)
+func EndpointServerMember(sID, mID string) string {
+	return fmt.Sprintf(URLServerMember, sID, mID)
 }
 
-func EndpointServersBans(sID string) string {
-	return fmt.Sprintf(URLServersBans, sID)
+func EndpointServerBans(sID string) string {
+	return fmt.Sprintf(URLServerBans, sID)
 }
 
-func EndpointServersBan(sID, uID string) string {
-	return fmt.Sprintf(URLServersBan, sID, uID)
+func EndpointServerBan(sID, uID string) string {
+	return fmt.Sprintf(URLServerBan, sID, uID)
 }
 
 func EndpointInvite(sID string) string {
 	return fmt.Sprintf(URLInvites, sID)
 }
 
-func EndpointServersInvites(sID string) string {
-	return fmt.Sprintf(URLServersInvites, sID)
+func EndpointServerInvites(sID string) string {
+	return fmt.Sprintf(URLServerInvites, sID)
 }
 
-func EndpointServersRoles(sID string) string {
-	return fmt.Sprintf(URLServersRoles, sID)
+func EndpointServerRoles(sID string) string {
+	return fmt.Sprintf(URLServerRoles, sID)
 }
 
-func EndpointServersRolesRanks(sID string) string {
-	return fmt.Sprintf(URLServersRolesRanks, sID)
+func EndpointServerRolesRanks(sID string) string {
+	return fmt.Sprintf(URLServerRolesRanks, sID)
 }
 
-func EndpointServersEmojis(sID string) string {
-	return fmt.Sprintf(URLServersEmojis, sID)
+func EndpointServerEmojis(sID string) string {
+	return fmt.Sprintf(URLServerEmojis, sID)
 }
 
-func EndpointServersRole(sID, rID string) string {
-	return fmt.Sprintf(URLServersRole, sID, rID)
+func EndpointServerRole(sID, rID string) string {
+	return fmt.Sprintf(URLServerRole, sID, rID)
 }
 
-func EndpointChannels(cID string) string {
-	return fmt.Sprintf(URLChannels, cID)
+func EndpointChannel(cID string) string {
+	return fmt.Sprintf(URLChannel, cID)
 }
 
-func EndpointChannelsJoinCall(cID string) string {
-	return fmt.Sprintf(URLChannelsJoinCall, cID)
+func EndpointChannelMembers(cID string) string {
+	return fmt.Sprintf(URLChannelMembers, cID)
 }
 
-func EndpointChannelsEndRing(cID, uID string) string {
-	return fmt.Sprintf(URLChannelsEndRing, cID, uID)
+func EndpointChannelJoinCall(cID string) string {
+	return fmt.Sprintf(URLChannelJoinCall, cID)
+}
+
+func EndpointChannelEndRing(cID, uID string) string {
+	return fmt.Sprintf(URLChannelEndRing, cID, uID)
 }
 
 func EndpointChannelAckMessage(cID, mID string) string {
-	return fmt.Sprintf(URLChannelsAckMessage, cID, mID)
+	return fmt.Sprintf(URLChannelAckMessage, cID, mID)
 }
 
-func EndpointChannelsRecipients(cID, mID string) string {
-	return fmt.Sprintf(URLChannelsRecipients, cID, mID)
+func EndpointChannelRecipients(cID, mID string) string {
+	return fmt.Sprintf(URLChannelRecipient, cID, mID)
 }
 
 func EndpointServerPermissions(sID, rID string) string {
-	return fmt.Sprintf(URLServersPermissions, sID, rID)
+	return fmt.Sprintf(URLServerPermissions, sID, rID)
 }
 
-func EndpointChannelsMessages(cID string) string {
-	return fmt.Sprintf(URLChannelsMessages, cID)
+func EndpointChannelMessages(cID string) string {
+	return fmt.Sprintf(URLChannelMessages, cID)
 }
 
-func EndpointChannelsMessageReaction(cID, mID, rID string) string {
-	return fmt.Sprintf(URLChannelsMessageReaction, cID, mID, rID)
+func EndpointChannelMessageReaction(cID, mID, rID string) string {
+	return fmt.Sprintf(URLChannelMessageReaction, cID, mID, rID)
 }
 
-func EndpointChannelsMessageReactions(cID, mID string) string {
-	return fmt.Sprintf(URLChannelsMessageReactions, cID, mID)
+func EndpointChannelMessageReactions(cID, mID string) string {
+	return fmt.Sprintf(URLChannelMessageReactions, cID, mID)
 }
 
-func EndpointChannelsMessage(cID, mID string) string {
-	return fmt.Sprintf(URLChannelsMessage, cID, mID)
+func EndpointChannelMessage(cID, mID string) string {
+	return fmt.Sprintf(URLChannelMessage, cID, mID)
 }
 
-func EndpointChannelsMessagesPin(cID, mID string) string {
-	return fmt.Sprintf(URLChannelsMessagesPin, cID, mID)
+func EndpointChannelMessagesPin(cID, mID string) string {
+	return fmt.Sprintf(URLChannelMessagePin, cID, mID)
 }
 
-func EndpointChannelsSearch(cID string) string {
-	return fmt.Sprintf(URLChannelsSearch, cID)
+func EndpointChannelSearch(cID string) string {
+	return fmt.Sprintf(URLChannelSearch, cID)
 }
 
-func EndpointChannelsInvites(cID string) string {
-	return fmt.Sprintf(URLChannelsInvites, cID)
+func EndpointChannelInvites(cID string) string {
+	return fmt.Sprintf(URLChannelInvites, cID)
 }
 
-func EndpointChannelsWebhooks(cID string) string {
-	return fmt.Sprintf(URLChannelsWebhooks, cID)
+func EndpointChannelWebhooks(cID string) string {
+	return fmt.Sprintf(URLChannelWebhooks, cID)
 }
 
-func EndpointWebhooks(wID string) string {
+func EndpointWebhook(wID string) string {
 	return fmt.Sprintf(URLWebhooks, wID)
 }
 
-func EndpointWebhooksToken(wID, token string) string {
-	return fmt.Sprintf(URLWebhooksToken, wID, token)
+func EndpointWebhookToken(wID, token string) string {
+	return fmt.Sprintf(URLWebhookToken, wID, token)
 }
 
-func EndpointWebhooksGitHub(wID, token string) string {
-	return fmt.Sprintf(URLWebhooksTokenGitHub, wID, token)
+func EndpointWebhookGitHub(wID, token string) string {
+	return fmt.Sprintf(URLWebhookTokenGitHub, wID, token)
 }
 
 /* Bot endpoints */
 
-func EndpointBots(bID string) string {
+func EndpointBot(bID string) string {
 	return fmt.Sprintf(URLBots, bID)
 }
 
-func EndpointBotsInvite(bID string) string {
-	return fmt.Sprintf(URLBotsInvite, bID)
+func EndpointBotInvite(bID string) string {
+	return fmt.Sprintf(URLBotInvite, bID)
 }
 
 /* Custom endpoints */
