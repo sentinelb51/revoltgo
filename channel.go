@@ -129,3 +129,19 @@ type ChannelJoinCall struct {
 type ChannelVoiceInformation struct {
 	MaxUsers *int `msg:"max_users" json:"max_users,omitempty"`
 }
+
+type ChannelVoiceState struct {
+	ID           string            `msg:"id" json:"id,omitempty"`
+	Participants []*UserVoiceState `msg:"participants" json:"participants,omitempty"`
+}
+
+type ChannelUnreadCompositeID struct {
+	Channel string `msg:"channel" json:"channel"`
+	User    string `msg:"user" json:"user"`
+}
+
+type ChannelUnread struct {
+	ID            ChannelUnreadCompositeID `msg:"_id" json:"_id"`
+	LastMessageID *string                  `msg:"last_id" json:"last_id,omitempty"`
+	MentionIDs    []string                 `msg:"mentions" json:"mentions,omitempty"`
+}

@@ -64,11 +64,14 @@ type EventPong struct {
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
-	Users    []*User         `msg:"users" json:"users,omitempty"`
-	Servers  []*Server       `msg:"servers" json:"servers,omitempty"`
-	Channels []*Channel      `msg:"channels" json:"channels,omitempty"`
-	Members  []*ServerMember `msg:"members" json:"members,omitempty"`
-	Emojis   []*Emoji        `msg:"emojis" json:"emojis,omitempty"`
+	Users          []*User              `msg:"users" json:"users,omitempty"`
+	Servers        []*Server            `msg:"servers" json:"servers,omitempty"`
+	Channels       []*Channel           `msg:"channels" json:"channels,omitempty"`
+	Members        []*ServerMember      `msg:"members" json:"members,omitempty"`
+	Emojis         []*Emoji             `msg:"emojis" json:"emojis,omitempty"`
+	VoiceStates    []*ChannelVoiceState `msg:"voice_states" json:"voice_states,omitempty"`
+	UserSettings   map[string]any       `msg:"user_settings" json:"user_settings,omitempty"`
+	ChannelUnreads []ChannelUnread      `msg:"channel_unreads" json:"channel_unreads,omitempty"`
 }
 
 type AuthType string
