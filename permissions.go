@@ -9,57 +9,60 @@ import (
 
 // PermissionOverwrite is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L52.
-// todo: why the fuck are there 2: Override and OverrideField: see https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L8
 type PermissionOverwrite struct {
 	Allow int64 `msg:"a" json:"a,omitempty"`
 	Deny  int64 `msg:"d" json:"d,omitempty"`
 }
 
 const (
-	UserPermissionAccess = 1 << iota
-	UserPermissionViewProfile
-	UserPermissionSendMessage
-	UserPermissionInvite
+	UserPermissionAccess      = 1 << 0
+	UserPermissionViewProfile = 1 << 1
+	UserPermissionSendMessage = 1 << 2
+	UserPermissionInvite      = 1 << 3
 )
 
 const (
-	PermissionManageChannel       = 2 << 0
-	PermissionManageServer        = 2 << 1
-	PermissionManagePermissions   = 2 << 2
-	PermissionManageRole          = 2 << 3
-	PermissionManageCustomisation = 2 << 4
-	PermissionKickMembers         = 2 << 6
-	PermissionBanMembers          = 2 << 7
-	PermissionTimeoutMembers      = 2 << 8
-	PermissionAssignRoles         = 2 << 9
-	PermissionChangeNickname      = 2 << 10
-	PermissionManageNicknames     = 2 << 11
-	PermissionChangeAvatar        = 2 << 12
-	PermissionRemoveAvatars       = 2 << 13
-	PermissionViewChannel         = 2 << 20
-	PermissionReadMessageHistory  = 2 << 21
-	PermissionSendMessage         = 2 << 22
-	PermissionManageMessages      = 2 << 23
-	PermissionManageWebhooks      = 2 << 24
-	PermissionInviteOthers        = 2 << 25
-	PermissionSendEmbeds          = 2 << 26
-	PermissionUploadFiles         = 2 << 27
-	PermissionMasquerade          = 2 << 28
-	PermissionReact               = 2 << 29
-	PermissionConnect             = 2 << 30
-	PermissionSpeak               = 2 << 31
-	PermissionVideo               = 2 << 32
-	PermissionMuteMembers         = 2 << 33
-	PermissionDeafenMembers       = 2 << 34
-	PermissionMoveMembers         = 2 << 35
+	PermissionManageChannel       = 1 << 0
+	PermissionManageServer        = 1 << 1
+	PermissionManagePermissions   = 1 << 2
+	PermissionManageRole          = 1 << 3
+	PermissionManageCustomisation = 1 << 4
+	PermissionKickMembers         = 1 << 6
+	PermissionBanMembers          = 1 << 7
+	PermissionTimeoutMembers      = 1 << 8
+	PermissionAssignRoles         = 1 << 9
+	PermissionChangeNickname      = 1 << 10
+	PermissionManageNicknames     = 1 << 11
+	PermissionChangeAvatar        = 1 << 12
+	PermissionRemoveAvatars       = 1 << 13
+	PermissionViewChannel         = 1 << 20
+	PermissionReadMessageHistory  = 1 << 21
+	PermissionSendMessage         = 1 << 22
+	PermissionManageMessages      = 1 << 23
+	PermissionManageWebhooks      = 1 << 24
+	PermissionInviteOthers        = 1 << 25
+	PermissionSendEmbeds          = 1 << 26
+	PermissionUploadFiles         = 1 << 27
+	PermissionMasquerade          = 1 << 28
+	PermissionReact               = 1 << 29
+	PermissionConnect             = 1 << 30
+	PermissionSpeak               = 1 << 31
+	PermissionVideo               = 1 << 32
+	PermissionMuteMembers         = 1 << 33
+	PermissionDeafenMembers       = 1 << 34
+	PermissionMoveMembers         = 1 << 35
+	PermissionListen              = 1 << 36
+	PermissionMentionEveryone     = 1 << 37
+	PermissionMentionRoles        = 1 << 38
 	PermissionGrantAllSafe        = 0x000F_FFFF_FFFF_FFFF
 )
 
 const (
 	PermissionPresetTimeout  = PermissionViewChannel + PermissionReadMessageHistory
 	PermissionPresetViewOnly = PermissionViewChannel + PermissionReadMessageHistory
-	PermissionPresetDefault  = PermissionPresetViewOnly + PermissionSendMessage + PermissionInviteOthers + PermissionSendEmbeds + PermissionUploadFiles + PermissionConnect + PermissionSpeak
+	PermissionPresetDefault  = PermissionPresetViewOnly + PermissionSendMessage + PermissionInviteOthers + PermissionSendEmbeds + PermissionUploadFiles + PermissionConnect + PermissionSpeak + PermissionVideo + PermissionListen
 	PermissionPresetDM       = PermissionPresetDefault + PermissionReact + PermissionManageChannel
+	PermissionPresetServer   = PermissionPresetDefault + PermissionReact + PermissionChangeNickname + PermissionChangeAvatar
 )
 
 // ServerPermissions is a utility function to calculate permissions for a user in a Server
