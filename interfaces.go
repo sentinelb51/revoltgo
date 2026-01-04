@@ -6,6 +6,12 @@ import (
 
 // Updatable represents entities that can be partially updated and have fields cleared.
 // This interface unifies the update pattern across User, Server, Channel, ServerRole, ServerMember, and Webhook.
+//
+// Note: The update() and clear() methods are intentionally unexported as they are internal
+// implementation details. External code should use the generic helper functions (UpdateEntity,
+// ClearEntityFields, ApplyPartialUpdate) instead of implementing this interface directly.
+// This design ensures consistency and prevents external implementations from breaking
+// the internal update contract.
 type Updatable[T any] interface {
 	update(data T)
 	clear(fields []string)

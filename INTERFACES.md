@@ -132,6 +132,8 @@ func (m *MockStateStore) User(id string) *User {
 ### Purpose
 The `Updatable[T]` interface unifies the update pattern across different entity types, enabling generic code for entity updates.
 
+**Important**: This interface uses unexported methods (`update` and `clear`) intentionally. External code should use the provided helper functions rather than implementing this interface directly. This ensures consistency and protects the internal update contract.
+
 ### Definition
 ```go
 type Updatable[T any] interface {
@@ -141,7 +143,7 @@ type Updatable[T any] interface {
 ```
 
 ### Implementing Types
-The following types implement `Updatable`:
+The following types implement `Updatable` (you cannot add your own implementations):
 - `User` (with `PartialUser`)
 - `Server` (with `PartialServer`)
 - `Channel` (with `PartialChannel`)
