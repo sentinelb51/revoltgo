@@ -15,6 +15,29 @@ func Ptr[T any](v T) *T {
 	return &v
 }
 
+// WebhookFromURL extracts the webhook ID and token from a full webhook URL, for example:
+// https://stoat.chat/api/webhooks/08UE096D31N8ZM7PJFAHFSST8R/5uC1w7KjCixSD49XFOQ2qEkLo3ukvWDbK6_EEfZ-1gqRYRiVaXI8mYrSDjRv0T1y
+func WebhookFromURL(uri string) (wID, wToken string, err error) {
+	u, err := url.Parse(uri)
+	if err != nil {
+		err = fmt.Errorf("cannot parse url: %w", err)
+		return
+	}
+
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) != 4 {
+		err = fmt.Errorf("too few parts")
+		return
+	}
+
+	if parts[0] != "api" || parts[1] != "webhooks" {
+		err = fmt.Errorf("missing api or webhooks segment")
+		return
+	}
+
+	return parts[2], parts[3], nil
+}
+
 func StrTrimAfter(s string, substr string) string {
 	index := strings.Index(s, substr)
 	if index == -1 {
