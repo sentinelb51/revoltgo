@@ -14,7 +14,7 @@ const (
 // Webhook is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/channel_webhooks/model.rs#L8
 type Webhook struct {
-	ID          string      `msg:"_id" json:"_id,omitempty"` // Rust: rename = "_id"
+	ID          string      `msg:"_id" json:"_id,omitempty"`
 	Name        string      `msg:"name" json:"name,omitempty"`
 	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
 	CreatorID   string      `msg:"creator_id" json:"creator_id,omitempty"`
