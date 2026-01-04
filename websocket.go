@@ -313,7 +313,7 @@ func (ws *Websocket) handle(raw []byte) {
 
 	_, err = unmarshaler.UnmarshalMsg(raw)
 	if err != nil {
-		log.Println("Failed to unmarshal event:", err)
+		log.Printf("Failed to unmarshal event %T: %s\n", event, err)
 		return
 	}
 
