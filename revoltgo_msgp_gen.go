@@ -5365,7 +5365,15 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 		o = msgp.AppendString(o, z.Webhook.Name)
 		// string "avatar"
 		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		o = msgp.AppendString(o, z.Webhook.Avatar)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Webhook.Avatar.MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Webhook", "Avatar")
+				return
+			}
+		}
 	}
 	// string "system"
 	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
@@ -5631,10 +5639,21 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							return
 						}
 					case "avatar":
-						z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Webhook", "Avatar")
-							return
+						if msgp.IsNil(bts) {
+							bts, err = msgp.ReadNilBytes(bts)
+							if err != nil {
+								return
+							}
+							z.Webhook.Avatar = nil
+						} else {
+							if z.Webhook.Avatar == nil {
+								z.Webhook.Avatar = new(Attachment)
+							}
+							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Webhook", "Avatar")
+								return
+							}
 						}
 					default:
 						bts, err = msgp.Skip(bts)
@@ -5908,7 +5927,12 @@ func (z *EventMessage) Msgsize() (s int) {
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7 + msgp.StringPrefixSize + len(z.Webhook.Avatar)
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7
+		if z.Webhook.Avatar == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Webhook.Avatar.Msgsize()
+		}
 	}
 	s += 7
 	if z.System == nil {
@@ -10803,7 +10827,15 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 		o = msgp.AppendString(o, z.Webhook.Name)
 		// string "avatar"
 		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		o = msgp.AppendString(o, z.Webhook.Avatar)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Webhook.Avatar.MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Webhook", "Avatar")
+				return
+			}
+		}
 	}
 	// string "system"
 	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
@@ -11063,10 +11095,21 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							return
 						}
 					case "avatar":
-						z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Webhook", "Avatar")
-							return
+						if msgp.IsNil(bts) {
+							bts, err = msgp.ReadNilBytes(bts)
+							if err != nil {
+								return
+							}
+							z.Webhook.Avatar = nil
+						} else {
+							if z.Webhook.Avatar == nil {
+								z.Webhook.Avatar = new(Attachment)
+							}
+							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Webhook", "Avatar")
+								return
+							}
 						}
 					default:
 						bts, err = msgp.Skip(bts)
@@ -11340,7 +11383,12 @@ func (z *Message) Msgsize() (s int) {
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7 + msgp.StringPrefixSize + len(z.Webhook.Avatar)
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7
+		if z.Webhook.Avatar == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Webhook.Avatar.Msgsize()
+		}
 	}
 	s += 7
 	if z.System == nil {
@@ -12767,7 +12815,7 @@ func (z MessageSystemType) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z MessageWebhook) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *MessageWebhook) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 2
 	// string "name"
@@ -12775,7 +12823,15 @@ func (z MessageWebhook) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendString(o, z.Name)
 	// string "avatar"
 	o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-	o = msgp.AppendString(o, z.Avatar)
+	if z.Avatar == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Avatar.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Avatar")
+			return
+		}
+	}
 	return
 }
 
@@ -12804,10 +12860,21 @@ func (z *MessageWebhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "avatar":
-			z.Avatar, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Avatar")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Avatar = nil
+			} else {
+				if z.Avatar == nil {
+					z.Avatar = new(Attachment)
+				}
+				bts, err = z.Avatar.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Avatar")
+					return
+				}
 			}
 		default:
 			bts, err = msgp.Skip(bts)
@@ -12822,8 +12889,13 @@ func (z *MessageWebhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z MessageWebhook) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 7 + msgp.StringPrefixSize + len(z.Avatar)
+func (z *MessageWebhook) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 7
+	if z.Avatar == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Avatar.Msgsize()
+	}
 	return
 }
 
@@ -20155,7 +20227,15 @@ func (z *WebhookExecuteData) MarshalMsg(b []byte) (o []byte, err error) {
 		o = msgp.AppendString(o, z.Webhook.Name)
 		// string "avatar"
 		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		o = msgp.AppendString(o, z.Webhook.Avatar)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Webhook.Avatar.MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Webhook", "Avatar")
+				return
+			}
+		}
 	}
 	// string "system"
 	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
@@ -20415,10 +20495,21 @@ func (z *WebhookExecuteData) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							return
 						}
 					case "avatar":
-						z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Webhook", "Avatar")
-							return
+						if msgp.IsNil(bts) {
+							bts, err = msgp.ReadNilBytes(bts)
+							if err != nil {
+								return
+							}
+							z.Webhook.Avatar = nil
+						} else {
+							if z.Webhook.Avatar == nil {
+								z.Webhook.Avatar = new(Attachment)
+							}
+							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Webhook", "Avatar")
+								return
+							}
 						}
 					default:
 						bts, err = msgp.Skip(bts)
@@ -20692,7 +20783,12 @@ func (z *WebhookExecuteData) Msgsize() (s int) {
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7 + msgp.StringPrefixSize + len(z.Webhook.Avatar)
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Webhook.Name) + 7
+		if z.Webhook.Avatar == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Webhook.Avatar.Msgsize()
+		}
 	}
 	s += 7
 	if z.System == nil {

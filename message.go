@@ -66,8 +66,8 @@ type Message struct {
 }
 
 type MessageWebhook struct {
-	Name   string `msg:"name" json:"name,omitempty"`
-	Avatar string `msg:"avatar" json:"avatar,omitempty"`
+	Name   string      `msg:"name" json:"name,omitempty"`
+	Avatar *Attachment `msg:"avatar" json:"avatar,omitempty"`
 }
 
 type MessageInteractions struct {
