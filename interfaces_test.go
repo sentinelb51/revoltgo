@@ -11,10 +11,10 @@ import (
 // MockHTTPRequester is a mock implementation of HTTPRequester for testing.
 // This demonstrates the value of the interface - we can easily create test doubles.
 type MockHTTPRequester struct {
-	RequestFunc   func(method, destination string, data, result any) error
-	RequestCalls  []MockRequestCall
-	TimeoutValue  time.Duration
-	Headers       map[string]string
+	RequestFunc  func(method, destination string, data, result any) error
+	RequestCalls []MockRequestCall
+	TimeoutValue time.Duration
+	Headers      map[string]string
 }
 
 type MockRequestCall struct {
@@ -76,10 +76,10 @@ func (m *MockHTTPRequester) ResolveURL(destination string) (string, error) {
 // TestHTTPRequesterInterface demonstrates that HTTPClient implements the interface.
 func TestHTTPRequesterInterface(t *testing.T) {
 	session := revoltgo.New("test-token")
-	
+
 	// Verify that HTTPClient implements HTTPRequester
 	var _ revoltgo.HTTPRequester = session.HTTP
-	
+
 	// Test that we can use the interface methods
 	err := session.HTTP.SetTimeout(30 * time.Second)
 	if err != nil {
@@ -90,22 +90,22 @@ func TestHTTPRequesterInterface(t *testing.T) {
 // TestMockHTTPRequester demonstrates using a mock for testing.
 func TestMockHTTPRequester(t *testing.T) {
 	mock := NewMockHTTPRequester()
-	
+
 	// Verify the mock implements the interface
 	var _ revoltgo.HTTPRequester = mock
-	
+
 	// Test basic operations
 	mock.SetHeader("X-Custom", "value")
 	if mock.Header("X-Custom") != "value" {
 		t.Error("Header not set correctly")
 	}
-	
+
 	// Test request tracking
 	_ = mock.Request("GET", "/test", nil, nil)
 	if len(mock.RequestCalls) != 1 {
 		t.Errorf("Expected 1 request call, got %d", len(mock.RequestCalls))
 	}
-	
+
 	if mock.RequestCalls[0].Method != "GET" {
 		t.Errorf("Expected GET method, got %s", mock.RequestCalls[0].Method)
 	}
@@ -118,20 +118,20 @@ func TestUpdatableInterface(t *testing.T) {
 		ID:       "user123",
 		Username: "testuser",
 	}
-	
+
 	// Create partial update data
 	newUsername := "updateduser"
 	partialUser := revoltgo.PartialUser{
 		Username: &newUsername,
 	}
-	
+
 	// Use the generic update helper
 	revoltgo.UpdateEntity(user, partialUser)
-	
+
 	if user.Username != "updateduser" {
 		t.Errorf("Expected username to be 'updateduser', got '%s'", user.Username)
 	}
-	
+
 	// Test clearing fields
 	revoltgo.ClearEntityFields(user, []string{"DisplayName"})
 	if user.DisplayName != nil {
@@ -142,10 +142,10 @@ func TestUpdatableInterface(t *testing.T) {
 // TestStateStoreInterface demonstrates that State implements StateStore.
 func TestStateStoreInterface(t *testing.T) {
 	session := revoltgo.New("test-token")
-	
+
 	// Verify that State implements StateStore
 	var _ revoltgo.StateStore = session.State
-	
+
 	// Test that we can use interface methods
 	if !session.State.TrackUsers() {
 		t.Error("Expected TrackUsers to return true")
