@@ -4,7 +4,6 @@ go 1.24
 
 require (
 	github.com/goccy/go-json v0.10.5
-	github.com/joho/godotenv v1.5.1
 	github.com/lxzan/gws v1.8.9
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/tinylib/msgp v1.6.3
