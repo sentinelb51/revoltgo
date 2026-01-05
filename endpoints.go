@@ -334,6 +334,10 @@ func EndpointCustomEmoji(eID string) string {
 
 /* Miscellaneous endpoints */
 
+func EndpointPolicy(action string) string {
+	return fmt.Sprintf(URLPolicy, action)
+}
+
 func EndpointSync(setting string) string {
 	return fmt.Sprintf(URLSync, setting)
 }
