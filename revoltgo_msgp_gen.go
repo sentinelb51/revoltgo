@@ -3,6 +3,8 @@
 package revoltgo
 
 import (
+	"time"
+
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -5368,11 +5370,7 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.Webhook.Avatar == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Webhook.Avatar.MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Webhook", "Avatar")
-				return
-			}
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
 		}
 	}
 	// string "system"
@@ -5418,10 +5416,10 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
-	o, err = z.Edited.MarshalMsg(o)
-	if err != nil {
-		err = msgp.WrapError(err, "Edited")
-		return
+	if z.Edited == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendTime(o, *z.Edited)
 	}
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -5647,9 +5645,9 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Webhook.Avatar = nil
 						} else {
 							if z.Webhook.Avatar == nil {
-								z.Webhook.Avatar = new(Attachment)
+								z.Webhook.Avatar = new(string)
 							}
-							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							*z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
 							if err != nil {
 								err = msgp.WrapError(err, "Webhook", "Avatar")
 								return
@@ -5775,10 +5773,21 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "edited":
-			bts, err = z.Edited.UnmarshalMsg(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Edited")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				*z.Edited, bts, err = msgp.ReadTimeBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Edited")
+					return
+				}
 			}
 		case "interactions":
 			if msgp.IsNil(bts) {
@@ -5931,7 +5940,7 @@ func (z *EventMessage) Msgsize() (s int) {
 		if z.Webhook.Avatar == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.Webhook.Avatar.Msgsize()
+			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
 	}
 	s += 7
@@ -5956,7 +5965,13 @@ func (z *EventMessage) Msgsize() (s int) {
 			s += z.Attachments[za0007].Msgsize()
 		}
 	}
-	s += 7 + z.Edited.Msgsize() + 13
+	s += 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.TimeSize
+	}
+	s += 13
 	if z.Interactions == nil {
 		s += msgp.NilSize
 	} else {
@@ -10830,11 +10845,7 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.Webhook.Avatar == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Webhook.Avatar.MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Webhook", "Avatar")
-				return
-			}
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
 		}
 	}
 	// string "system"
@@ -10880,10 +10891,10 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
-	o, err = z.Edited.MarshalMsg(o)
-	if err != nil {
-		err = msgp.WrapError(err, "Edited")
-		return
+	if z.Edited == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendTime(o, *z.Edited)
 	}
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -11103,9 +11114,9 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Webhook.Avatar = nil
 						} else {
 							if z.Webhook.Avatar == nil {
-								z.Webhook.Avatar = new(Attachment)
+								z.Webhook.Avatar = new(string)
 							}
-							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							*z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
 							if err != nil {
 								err = msgp.WrapError(err, "Webhook", "Avatar")
 								return
@@ -11231,10 +11242,21 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "edited":
-			bts, err = z.Edited.UnmarshalMsg(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Edited")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				*z.Edited, bts, err = msgp.ReadTimeBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Edited")
+					return
+				}
 			}
 		case "interactions":
 			if msgp.IsNil(bts) {
@@ -11387,7 +11409,7 @@ func (z *Message) Msgsize() (s int) {
 		if z.Webhook.Avatar == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.Webhook.Avatar.Msgsize()
+			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
 	}
 	s += 7
@@ -11412,7 +11434,13 @@ func (z *Message) Msgsize() (s int) {
 			s += z.Attachments[za0007].Msgsize()
 		}
 	}
-	s += 7 + z.Edited.Msgsize() + 13
+	s += 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.TimeSize
+	}
+	s += 13
 	if z.Interactions == nil {
 		s += msgp.NilSize
 	} else {
@@ -12826,11 +12854,7 @@ func (z *MessageWebhook) MarshalMsg(b []byte) (o []byte, err error) {
 	if z.Avatar == nil {
 		o = msgp.AppendNil(o)
 	} else {
-		o, err = z.Avatar.MarshalMsg(o)
-		if err != nil {
-			err = msgp.WrapError(err, "Avatar")
-			return
-		}
+		o = msgp.AppendString(o, *z.Avatar)
 	}
 	return
 }
@@ -12868,9 +12892,9 @@ func (z *MessageWebhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(string)
 				}
-				bts, err = z.Avatar.UnmarshalMsg(bts)
+				*z.Avatar, bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Avatar")
 					return
@@ -12894,7 +12918,7 @@ func (z *MessageWebhook) Msgsize() (s int) {
 	if z.Avatar == nil {
 		s += msgp.NilSize
 	} else {
-		s += z.Avatar.Msgsize()
+		s += msgp.StringPrefixSize + len(*z.Avatar)
 	}
 	return
 }
@@ -20230,11 +20254,7 @@ func (z *WebhookExecuteData) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.Webhook.Avatar == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Webhook.Avatar.MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Webhook", "Avatar")
-				return
-			}
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
 		}
 	}
 	// string "system"
@@ -20280,10 +20300,10 @@ func (z *WebhookExecuteData) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
-	o, err = z.Edited.MarshalMsg(o)
-	if err != nil {
-		err = msgp.WrapError(err, "Edited")
-		return
+	if z.Edited == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendTime(o, *z.Edited)
 	}
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -20503,9 +20523,9 @@ func (z *WebhookExecuteData) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Webhook.Avatar = nil
 						} else {
 							if z.Webhook.Avatar == nil {
-								z.Webhook.Avatar = new(Attachment)
+								z.Webhook.Avatar = new(string)
 							}
-							bts, err = z.Webhook.Avatar.UnmarshalMsg(bts)
+							*z.Webhook.Avatar, bts, err = msgp.ReadStringBytes(bts)
 							if err != nil {
 								err = msgp.WrapError(err, "Webhook", "Avatar")
 								return
@@ -20631,10 +20651,21 @@ func (z *WebhookExecuteData) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "edited":
-			bts, err = z.Edited.UnmarshalMsg(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Edited")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				*z.Edited, bts, err = msgp.ReadTimeBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Edited")
+					return
+				}
 			}
 		case "interactions":
 			if msgp.IsNil(bts) {
@@ -20787,7 +20818,7 @@ func (z *WebhookExecuteData) Msgsize() (s int) {
 		if z.Webhook.Avatar == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.Webhook.Avatar.Msgsize()
+			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
 	}
 	s += 7
@@ -20812,7 +20843,13 @@ func (z *WebhookExecuteData) Msgsize() (s int) {
 			s += z.Attachments[za0007].Msgsize()
 		}
 	}
-	s += 7 + z.Edited.Msgsize() + 13
+	s += 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.TimeSize
+	}
+	s += 13
 	if z.Interactions == nil {
 		s += msgp.NilSize
 	} else {

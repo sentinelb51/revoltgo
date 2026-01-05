@@ -1,5 +1,7 @@
 package revoltgo
 
+import "time"
+
 //go:generate msgp -tests=false -io=false
 
 type (
@@ -20,6 +22,9 @@ const (
 	MessageSystemChannelDescriptionChanged MessageSystemType = "channel_description_changed"
 	MessageSystemChannelIconChanged        MessageSystemType = "channel_icon_changed"
 	MessageSystemChannelOwnershipChanged   MessageSystemType = "channel_ownership_changed"
+	MessageSystemMessagePinned             MessageSystemType = "message_pinned"
+	MessageSystemMessageUnpinned           MessageSystemType = "message_unpinned"
+	MessageSystemCallStarted               MessageSystemType = "call_started"
 )
 
 const (
@@ -60,14 +65,24 @@ type Message struct {
 	System       *MessageSystem       `msg:"system" json:"system,omitempty"`
 	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
 	Attachments  []*Attachment        `msg:"attachments" json:"attachments,omitempty"`
-	Edited       Timestamp            `msg:"edited" json:"edited,omitempty"`
+	Edited       *time.Time           `msg:"edited" json:"edited,omitempty"`
 	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
 	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
 }
 
+// MessageWebhook is derived from:
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channel_webhooks.rs#L36
 type MessageWebhook struct {
-	Name   string      `msg:"name" json:"name,omitempty"`
-	Avatar *Attachment `msg:"avatar" json:"avatar,omitempty"`
+	Name   string  `msg:"name" json:"name,omitempty"`
+	Avatar *string `msg:"avatar" json:"avatar,omitempty"`
+}
+
+func (ms MessageWebhook) AvatarURL(size string) string {
+	if ms.Avatar == nil {
+		return ""
+	}
+
+	return EndpointAutumnFile("avatars", *ms.Avatar, size)
 }
 
 type MessageInteractions struct {
