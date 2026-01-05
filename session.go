@@ -1087,3 +1087,8 @@ func (s *Session) AuthMFAGenerateTOTPSecret() (secret AuthMFATOTPSecretResponse,
 	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &secret)
 	return
 }
+
+func (s *Session) PolicyAck() (err error) {
+	endpoint := EndpointPolicy("acknowledge")
+	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
+}
