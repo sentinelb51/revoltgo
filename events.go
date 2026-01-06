@@ -135,10 +135,11 @@ type EventServerMemberUpdate struct {
 }
 
 type EventUserUpdate struct {
-	Event `msg:",flatten"`
-	ID    string      `msg:"id" json:"id,omitempty"`
-	Data  PartialUser `msg:"data" json:"data,omitempty"`
-	Clear []string    `msg:"clear" json:"clear,omitempty"`
+	Event   `msg:",flatten"`
+	ID      string      `msg:"id" json:"id,omitempty"`
+	Data    PartialUser `msg:"data" json:"data,omitempty"`
+	Clear   []string    `msg:"clear" json:"clear,omitempty"`
+	EventID *string     `msg:"event_id" json:"event_id,omitempty"`
 }
 
 type EventWebhookUpdate struct {
@@ -337,6 +338,7 @@ type EventUserVoiceStateUpdate struct {
 type EventUserMoveVoiceChannel struct {
 	Event `msg:",flatten"`
 	Node  string `msg:"node" json:"node,omitempty"`
+	From  string `msg:"from" json:"from,omitempty"`
 	Token string `msg:"token" json:"token,omitempty"`
 }
 
@@ -344,4 +346,9 @@ type EventServerRoleRanksUpdate struct {
 	Event `msg:",flatten"`
 	ID    string   `msg:"id" json:"id,omitempty"`
 	Ranks []string `msg:"ranks" json:"ranks,omitempty"`
+}
+
+type EventReportCreate struct {
+	Event `msg:",flatten"`
+	// todo: implement fields
 }

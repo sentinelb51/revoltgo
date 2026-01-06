@@ -102,4 +102,6 @@ var eventConstructors = map[string]func() any{
 	"VoiceChannelMove":     func() any { return new(EventVoiceChannelMove) },
 	"UserVoiceStateUpdate": func() any { return new(EventUserVoiceStateUpdate) },
 	"UserMoveVoiceChannel": func() any { return new(EventUserMoveVoiceChannel) },
+
+	"ReportCreate": func() any { return new(EventReportCreate) },
 }

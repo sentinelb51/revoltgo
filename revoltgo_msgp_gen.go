@@ -7092,6 +7092,51 @@ func (z *EventReady) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z EventReportCreate) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 0
+	_ = z
+	o = append(o, 0x80)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *EventReportCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z EventReportCreate) Msgsize() (s int) {
+	s = 1
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *EventServerCreate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 5
@@ -8009,15 +8054,18 @@ func (z *EventServerUpdate) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z EventUserMoveVoiceChannel) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *EventUserMoveVoiceChannel) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 3
+	// map header, size 4
 	// string "type"
-	o = append(o, 0x83, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0x84, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "node"
 	o = append(o, 0xa4, 0x6e, 0x6f, 0x64, 0x65)
 	o = msgp.AppendString(o, z.Node)
+	// string "from"
+	o = append(o, 0xa4, 0x66, 0x72, 0x6f, 0x6d)
+	o = msgp.AppendString(o, z.From)
 	// string "token"
 	o = append(o, 0xa5, 0x74, 0x6f, 0x6b, 0x65, 0x6e)
 	o = msgp.AppendString(o, z.Token)
@@ -8054,6 +8102,12 @@ func (z *EventUserMoveVoiceChannel) UnmarshalMsg(bts []byte) (o []byte, err erro
 				err = msgp.WrapError(err, "Node")
 				return
 			}
+		case "from":
+			z.From, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "From")
+				return
+			}
 		case "token":
 			z.Token, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
@@ -8073,8 +8127,8 @@ func (z *EventUserMoveVoiceChannel) UnmarshalMsg(bts []byte) (o []byte, err erro
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z EventUserMoveVoiceChannel) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 5 + msgp.StringPrefixSize + len(z.Node) + 6 + msgp.StringPrefixSize + len(z.Token)
+func (z *EventUserMoveVoiceChannel) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 5 + msgp.StringPrefixSize + len(z.Node) + 5 + msgp.StringPrefixSize + len(z.From) + 6 + msgp.StringPrefixSize + len(z.Token)
 	return
 }
 
@@ -8403,9 +8457,9 @@ func (z *EventUserSettingsUpdate) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *EventUserUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 4
+	// map header, size 6
 	// string "type"
-	o = append(o, 0x84, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0x86, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "id"
 	o = append(o, 0xa2, 0x69, 0x64)
@@ -8423,6 +8477,16 @@ func (z *EventUserUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	for za0001 := range z.Clear {
 		o = msgp.AppendString(o, z.Clear[za0001])
 	}
+	// string "event_id"
+	o = append(o, 0xa8, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64)
+	if z.EventID == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendString(o, *z.EventID)
+	}
+	// string "idiot"
+	o = append(o, 0xa5, 0x69, 0x64, 0x69, 0x6f, 0x74)
+	o = msgp.AppendBool(o, z.Idiot)
 	return
 }
 
@@ -8481,6 +8545,29 @@ func (z *EventUserUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					return
 				}
 			}
+		case "event_id":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.EventID = nil
+			} else {
+				if z.EventID == nil {
+					z.EventID = new(string)
+				}
+				*z.EventID, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "EventID")
+					return
+				}
+			}
+		case "idiot":
+			z.Idiot, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Idiot")
+				return
+			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -8499,6 +8586,13 @@ func (z *EventUserUpdate) Msgsize() (s int) {
 	for za0001 := range z.Clear {
 		s += msgp.StringPrefixSize + len(z.Clear[za0001])
 	}
+	s += 9
+	if z.EventID == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.StringPrefixSize + len(*z.EventID)
+	}
+	s += 6 + msgp.BoolSize
 	return
 }
 
