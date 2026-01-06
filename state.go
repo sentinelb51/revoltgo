@@ -1,7 +1,6 @@
 package revoltgo
 
 import (
-	"fmt"
 	"log"
 	"slices"
 	"sync"
@@ -431,12 +430,6 @@ func (s *State) updateServerRoleRanks(event *EventServerRoleRanksUpdate) {
 		return
 	}
 
-	// print before and after
-	fmt.Printf("Before role ranks update for server %s:\n", event.ID)
-	for _, role := range server.Roles {
-		fmt.Printf("Role: %s, Rank: %d\n", role.Name, role.Rank)
-	}
-
 	for index, rID := range event.Ranks {
 		role, exists := server.Roles[rID]
 		if !exists {
@@ -445,11 +438,6 @@ func (s *State) updateServerRoleRanks(event *EventServerRoleRanksUpdate) {
 		}
 
 		role.Rank = int64(index)
-	}
-
-	fmt.Printf("After role ranks update for server %s:\n", event.ID)
-	for _, role := range server.Roles {
-		fmt.Printf("Role: %s, Rank: %d\n", role.Name, role.Rank)
 	}
 }
 
