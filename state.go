@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"log"
+	"slices"
 	"sync"
 	"time"
 
@@ -10,8 +11,11 @@ import (
 
 const initialMembersSize = 50
 
-// stateMembers maps a Server.ID to "members"; "members" maps a User.ID to ServerMember
-type stateMembers map[string]map[string]*ServerMember
+// stateServerMembers is an alias to make the code more readable
+type stateServerMembers map[string]*ServerMember
+
+// stateMembers maps a Server.ID to its members. stateServerMembers is map[uID]*ServerMember
+type stateMembers map[string]stateServerMembers
 
 // add adds a singular member to a server's members
 func (sm stateMembers) add(member *ServerMember) {
@@ -20,7 +24,7 @@ func (sm stateMembers) add(member *ServerMember) {
 
 	// If the server's members are not allocated, allocate them
 	if members == nil {
-		members = make(map[string]*ServerMember, initialMembersSize)
+		members = make(stateServerMembers, initialMembersSize)
 		sm[member.ID.Server] = members
 	}
 
@@ -42,7 +46,7 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 
 		// If the server's members are not allocated, allocate them
 		if members == nil {
-			members = make(map[string]*ServerMember, len(serverMembers))
+			members = make(stateServerMembers, len(serverMembers))
 			sm[serverID] = members
 		}
 
@@ -384,9 +388,30 @@ func (s *State) populate(ready *EventReady) {
 	}
 }
 
+// platformWipe removes a user from users, channels (dms and groups), and servers member lists.
 func (s *State) platformWipe(event *EventUserPlatformWipe) {
 	s.mu.Lock()
+
+	// Remove from users
 	delete(s.users, event.UserID)
+
+	// Remove direct messages or participant information
+	for _, channel := range s.channels {
+		switch channel.ChannelType {
+		case ChannelTypeDM:
+			delete(s.channels, channel.ID)
+		case ChannelTypeGroup:
+			if slices.Contains(channel.Recipients, event.UserID) {
+				delete(s.channels, channel.ID)
+			}
+		}
+	}
+
+	// Remove server memberships
+	for _, members := range s.members {
+		delete(members, event.UserID)
+	}
+
 	s.mu.Unlock()
 }
 
@@ -482,7 +507,7 @@ func (s *State) updateServerMember(event *EventServerMemberUpdate) {
 
 	members := s.members[event.ID.User]
 	if members == nil {
-		members = make(map[string]*ServerMember, initialMembersSize)
+		members = make(stateServerMembers, initialMembersSize)
 		s.members[event.ID.Server] = members
 	}
 
