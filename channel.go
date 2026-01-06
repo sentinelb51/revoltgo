@@ -48,7 +48,6 @@ func (c *Channel) update(data PartialChannel) {
 	}
 
 	if data.Description != nil {
-		// Description in Main is *string, so we copy the pointer (or value)
 		c.Description = data.Description
 	}
 
