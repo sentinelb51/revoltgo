@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"fmt"
 	"log"
 	"slices"
 	"sync"
@@ -415,6 +416,43 @@ func (s *State) platformWipe(event *EventUserPlatformWipe) {
 	s.mu.Unlock()
 }
 
+func (s *State) updateServerRoleRanks(event *EventServerRoleRanksUpdate) {
+
+	if !s.trackServers {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	server := s.servers[event.ID]
+	if server == nil {
+		log.Printf("role ranks update for unknown server %s\n", event.ID)
+		return
+	}
+
+	// print before and after
+	fmt.Printf("Before role ranks update for server %s:\n", event.ID)
+	for _, role := range server.Roles {
+		fmt.Printf("Role: %s, Rank: %d\n", role.Name, role.Rank)
+	}
+
+	for index, rID := range event.Ranks {
+		role, exists := server.Roles[rID]
+		if !exists {
+			log.Printf("role ranks update for unknown role %s in server %s\n", rID, event.ID)
+			continue
+		}
+
+		role.Rank = int64(index)
+	}
+
+	fmt.Printf("After role ranks update for server %s:\n", event.ID)
+	for _, role := range server.Roles {
+		fmt.Printf("Role: %s, Rank: %d\n", role.Name, role.Rank)
+	}
+}
+
 func (s *State) updateServerRole(event *EventServerRoleUpdate) {
 
 	if !s.trackServers {
@@ -432,8 +470,9 @@ func (s *State) updateServerRole(event *EventServerRoleUpdate) {
 
 	role := server.Roles[event.RoleID]
 	if role == nil {
-		log.Printf("update for unknown role %s in server %s\n", event.RoleID, event.ID)
-		return
+		// Role was created
+		role = new(ServerRole)
+		server.Roles[event.RoleID] = role
 	}
 
 	role.update(event.Data)

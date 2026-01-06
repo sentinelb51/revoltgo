@@ -170,6 +170,10 @@ func (s *Session) addDefaultHandlers() {
 		AddHandler(s, func(s *Session, e *EventServerRoleDelete) {
 			s.State.deleteServerRole(e)
 		})
+
+		AddHandler(s, func(s *Session, e *EventServerRoleRanksUpdate) {
+			s.State.updateServerRoleRanks(e)
+		})
 	}
 
 	if s.State.TrackMembers() {
