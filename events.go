@@ -339,3 +339,9 @@ type EventUserMoveVoiceChannel struct {
 	Node  string `msg:"node" json:"node,omitempty"`
 	Token string `msg:"token" json:"token,omitempty"`
 }
+
+type EventServerRoleRanksUpdate struct {
+	Event `msg:",flatten"`
+	ID    string   `msg:"id" json:"id,omitempty"`
+	Ranks []string `msg:"ranks" json:"ranks,omitempty"`
+}

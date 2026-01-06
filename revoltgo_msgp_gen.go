@@ -7707,6 +7707,95 @@ func (z EventServerRoleDelete) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *EventServerRoleRanksUpdate) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 3
+	// string "type"
+	o = append(o, 0x83, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.Type)
+	// string "id"
+	o = append(o, 0xa2, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ID)
+	// string "ranks"
+	o = append(o, 0xa5, 0x72, 0x61, 0x6e, 0x6b, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Ranks)))
+	for za0001 := range z.Ranks {
+		o = msgp.AppendString(o, z.Ranks[za0001])
+	}
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *EventServerRoleRanksUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			z.Type, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Type")
+				return
+			}
+		case "id":
+			z.ID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ID")
+				return
+			}
+		case "ranks":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Ranks")
+				return
+			}
+			if cap(z.Ranks) >= int(zb0002) {
+				z.Ranks = (z.Ranks)[:zb0002]
+			} else {
+				z.Ranks = make([]string, zb0002)
+			}
+			for za0001 := range z.Ranks {
+				z.Ranks[za0001], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Ranks", za0001)
+					return
+				}
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *EventServerRoleRanksUpdate) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 6 + msgp.ArrayHeaderSize
+	for za0001 := range z.Ranks {
+		s += msgp.StringPrefixSize + len(z.Ranks[za0001])
+	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *EventServerRoleUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 5
