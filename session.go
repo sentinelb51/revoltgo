@@ -384,6 +384,7 @@ func (s *Session) EmojiDelete(eID string) error {
 func (s *Session) Channel(cID string) (channel *Channel, err error) {
 	endpoint := EndpointChannel(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channel)
+	s.State.addChannel(channel)
 	return
 }
 
