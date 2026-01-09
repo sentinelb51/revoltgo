@@ -83,7 +83,7 @@ func NewWithExpressLogin(data LoginData) (*Session, error) {
 
 	// Save token to file
 	log.Println("Saving authentication token for re-use")
-	err = os.WriteFile(ExpressLoginFile, []byte(mfa.Token), 0600)
+	err = os.WriteFile(ExpressLoginFile, []byte(mfa.Token), 0o600)
 	return session, err
 }
 
