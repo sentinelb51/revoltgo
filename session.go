@@ -96,8 +96,7 @@ type Session struct {
 
 	/* Private fields */
 
-	selfbot bool   // Whether the session is a user or bot
-	wsURL   string // Websocket URL obtained from root node
+	selfbot bool // Whether the session is a user or bot
 
 	/* Event handlers */
 

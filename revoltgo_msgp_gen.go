@@ -7094,9 +7094,10 @@ func (z *EventReady) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z EventReportCreate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 0
-	_ = z
-	o = append(o, 0x80)
+	// map header, size 1
+	// string "type"
+	o = append(o, 0x81, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.Type)
 	return
 }
 
@@ -7118,6 +7119,12 @@ func (z *EventReportCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
+		case "type":
+			z.Type, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Type")
+				return
+			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -7132,7 +7139,7 @@ func (z *EventReportCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z EventReportCreate) Msgsize() (s int) {
-	s = 1
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type)
 	return
 }
 
@@ -8457,9 +8464,9 @@ func (z *EventUserSettingsUpdate) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *EventUserUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 6
+	// map header, size 5
 	// string "type"
-	o = append(o, 0x86, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0x85, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "id"
 	o = append(o, 0xa2, 0x69, 0x64)
@@ -8484,9 +8491,6 @@ func (z *EventUserUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	} else {
 		o = msgp.AppendString(o, *z.EventID)
 	}
-	// string "idiot"
-	o = append(o, 0xa5, 0x69, 0x64, 0x69, 0x6f, 0x74)
-	o = msgp.AppendBool(o, z.Idiot)
 	return
 }
 
@@ -8562,12 +8566,6 @@ func (z *EventUserUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					return
 				}
 			}
-		case "idiot":
-			z.Idiot, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Idiot")
-				return
-			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -8592,7 +8590,6 @@ func (z *EventUserUpdate) Msgsize() (s int) {
 	} else {
 		s += msgp.StringPrefixSize + len(*z.EventID)
 	}
-	s += 6 + msgp.BoolSize
 	return
 }
 
