@@ -22,7 +22,7 @@ type ratelimitBucket struct {
 
 // Ratelimiter silently ensures that requests do not exceed the ratelimit set by Revolt
 type Ratelimiter struct {
-	sync.Mutex
+	mu        sync.Mutex
 	endpoints map[string]*ratelimitBucket
 
 	// Interval to clean-up stale ratelimit buckets.
@@ -48,8 +48,8 @@ func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
 	// The HTTP method is prepended to the endpoint as ratelimits may differ between methods
 	key := method + endpoint
 
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	bucket, exists := r.endpoints[key]
 	if !exists {
@@ -118,7 +118,7 @@ func (r *Ratelimiter) cleaner() {
 			continue
 		}
 
-		r.Lock()
+		r.mu.Lock()
 		for key, bucket := range r.endpoints {
 			if !time.Now().After(bucket.resetAfter) {
 				continue
@@ -126,6 +126,6 @@ func (r *Ratelimiter) cleaner() {
 
 			delete(r.endpoints, key)
 		}
-		r.Unlock()
+		r.mu.Unlock()
 	}
 }
