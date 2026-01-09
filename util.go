@@ -38,7 +38,7 @@ func WebhookFromURL(uri string) (wID, wToken string, err error) {
 	return parts[2], parts[3], nil
 }
 
-func StrTrimAfter(s string, substr string) string {
+func StrTrimAfter(s, substr string) string {
 	index := strings.Index(s, substr)
 	if index == -1 {
 		return s
@@ -49,7 +49,7 @@ func StrTrimAfter(s string, substr string) string {
 
 // mergeJSON deserializes the object into JSON, then merges the data into the object.
 // It will also remove any fields specified in the clear map.
-func mergeJSON[T any](object *T, data json.RawMessage, clear []string) {
+func mergeJSON[T any](object *T, data json.RawMessage, clearFields []string) {
 
 	decoded := make(map[string]any)
 	err := json.Unmarshal(data, &decoded)
@@ -78,10 +78,10 @@ func mergeJSON[T any](object *T, data json.RawMessage, clear []string) {
 		objectMap[key] = value
 	}
 
-	// Remove any fields specified in the clear slice
-	hasClear := len(clear) > 0
+	// Remove any fields specified in the clearFields slice
+	hasClear := len(clearFields) > 0
 	if hasClear {
-		for _, key := range clear {
+		for _, key := range clearFields {
 			delete(objectMap, toSnakeCase(key))
 		}
 	}
