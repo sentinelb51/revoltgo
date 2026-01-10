@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/tinylib/msgp/msgp"
 )
@@ -176,19 +177,19 @@ type UserSettings struct {
 }
 
 type UserVoiceState struct {
-	ID            string    `msg:"_id" json:"_id,omitempty"`
-	JoinedAt      Timestamp `msg:"joined_at" json:"joined_at,omitempty"`
-	IsReceiving   bool      `msg:"is_receiving" json:"is_receiving,omitempty"`
-	IsPublishing  bool      `msg:"is_publishing" json:"is_publishing,omitempty"`
-	Screensharing bool      `msg:"screensharing" json:"screensharing,omitempty"`
-	Camera        bool      `msg:"camera" json:"camera,omitempty"`
+	ID            string     `msg:"_id" json:"_id,omitempty"`
+	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitempty"`
+	IsReceiving   bool       `msg:"is_receiving" json:"is_receiving,omitempty"`
+	IsPublishing  bool       `msg:"is_publishing" json:"is_publishing,omitempty"`
+	Screensharing bool       `msg:"screensharing" json:"screensharing,omitempty"`
+	Camera        bool       `msg:"camera" json:"camera,omitempty"`
 }
 
 type PartialUserVoiceState struct {
-	ID            *string   `msg:"_id" json:"_id,omitempty"`
-	JoinedAt      Timestamp `msg:"joined_at" json:"joined_at,omitempty"`
-	IsReceiving   *bool     `msg:"is_receiving" json:"is_receiving,omitempty"`
-	IsPublishing  *bool     `msg:"is_publishing" json:"is_publishing,omitempty"`
-	Screensharing *bool     `msg:"screensharing" json:"screensharing,omitempty"`
-	Camera        *bool     `msg:"camera" json:"camera,omitempty"`
+	ID            *string    `msg:"_id" json:"_id,omitempty"`
+	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitempty"`
+	IsReceiving   *bool      `msg:"is_receiving" json:"is_receiving,omitempty"`
+	IsPublishing  *bool      `msg:"is_publishing" json:"is_publishing,omitempty"`
+	Screensharing *bool      `msg:"screensharing" json:"screensharing,omitempty"`
+	Camera        *bool      `msg:"camera" json:"camera,omitempty"`
 }

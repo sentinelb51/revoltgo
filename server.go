@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"time"
 )
 
 //go:generate msgp -tests=false -io=false
@@ -188,11 +189,11 @@ type ServerSystemMessages struct {
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/server_members.rs#L44
 type ServerMember struct {
 	ID       MemberCompositeID `msg:"_id" json:"_id,omitempty"`
-	JoinedAt Timestamp         `msg:"joined_at" json:"joined_at,omitempty"`
+	JoinedAt time.Time         `msg:"joined_at" json:"joined_at,omitempty"`
 
 	Nickname *string     `msg:"nickname" json:"nickname,omitempty"`
 	Avatar   *Attachment `msg:"avatar" json:"avatar,omitempty"`
-	Timeout  Timestamp   `msg:"timeout" json:"timeout,omitempty"`
+	Timeout  *time.Time  `msg:"timeout" json:"timeout,omitempty"`
 
 	Roles      []string `msg:"roles" json:"roles,omitempty"`
 	CanPublish bool     `msg:"can_publish" json:"can_publish,omitempty"`
@@ -244,7 +245,7 @@ type PartialServerMember struct {
 	Nickname   *string     `msg:"nickname" json:"nickname,omitempty"`
 	Avatar     *Attachment `msg:"avatar" json:"avatar,omitempty"`
 	Roles      *[]string   `msg:"roles" json:"roles,omitempty"`
-	Timeout    Timestamp   `msg:"timeout" json:"timeout,omitempty"`
+	Timeout    *time.Time  `msg:"timeout" json:"timeout,omitempty"`
 	CanPublish *bool       `msg:"can_publish" json:"can_publish,omitempty"`
 	CanReceive *bool       `msg:"can_receive" json:"can_receive,omitempty"`
 }

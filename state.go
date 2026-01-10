@@ -493,7 +493,7 @@ func (s *State) createServerMember(data *EventServerMemberJoin) {
 
 	member := &ServerMember{
 		ID:       MemberCompositeID{User: data.User, Server: data.ID},
-		JoinedAt: Timestamp{Time: time.Now()},
+		JoinedAt: time.Now(),
 	}
 
 	s.members.add(member)
@@ -689,7 +689,7 @@ func (s *State) createServer(event *EventServerCreate) {
 		}
 
 		if id, err := ulid.Parse(event.Server.ID); err == nil {
-			member.JoinedAt = Timestamp{Time: ulid.Time(id.Time())}
+			member.JoinedAt = ulid.Time(id.Time())
 		}
 
 		s.members.add(member)

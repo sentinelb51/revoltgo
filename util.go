@@ -10,7 +10,7 @@ import (
 	"github.com/goccy/go-json"
 )
 
-// Ptr is a quality-of-life function to quickly return a pointer to any value
+// Ptr is a QoL function to quickly return a pointer to any value
 func Ptr[T any](v T) *T {
 	return &v
 }

@@ -91,7 +91,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (int64, error) {
 	}
 
 	// Apply timeout permissions if necessary
-	if !member.Timeout.IsZero() && time.Now().Before(member.Timeout.Time) {
+	if !member.Timeout.IsZero() && time.Now().Before(*member.Timeout) {
 		permissions &= PermissionPresetTimeout
 	}
 

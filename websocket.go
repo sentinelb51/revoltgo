@@ -66,7 +66,7 @@ func (ws *Websocket) printDebugData(data []byte) {
 		log.Printf("Failed to convert msgpack to JSON for debug: %s\n", err)
 		return
 	}
-	log.Printf("[WS/RX/JSON]: %s\n", buf.String())
+	log.Printf("[WS/RX]: %s\n", buf.String())
 }
 
 func (ws *Websocket) IsConnected() bool {

@@ -118,7 +118,7 @@ type MessageEmbed struct {
 type MessageEmbedSpecial struct {
 	Type      MessageEmbedSpecialType `msg:"type" json:"type,omitempty"`
 	ID        string                  `msg:"id" json:"id,omitempty"`
-	Timestamp Timestamp               `msg:"timestamp" json:"timestamp,omitempty"`
+	Timestamp *time.Time              `msg:"timestamp" json:"timestamp,omitempty"`
 
 	// Identifies the type of content for types: Lightspeed, Twitch, Spotify, and Bandcamp
 	ContentType string `msg:"content_type" json:"content_type,omitempty"` // todo: make enums
