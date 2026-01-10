@@ -174,18 +174,20 @@ Request sends a JSON Request with "method" to a destination URL
 This function automatically handles rate-limiting and response status codes
 */
 func (c *HTTPClient) Request(method, destination string, data, result any) error {
-	// Handle ratelimits before appending the API URL to reduce key size
-	rl := c.ratelimiter.get(method, destination)
 
 	destination, err := c.ResolveURL(destination)
 	if err != nil {
 		return err
 	}
 
-	if !rl.resetAfter.IsZero() {
-		if wait := rl.delay(); wait > 0 {
-			time.Sleep(wait)
+	rl := c.ratelimiter.get(method, destination)
+
+	if wait := rl.delay(); wait > 0 {
+		if c.Debug {
+			log.Printf("[HTTP/RATELIMIT] %s %s, waiting %s", method, destination, wait)
 		}
+
+		time.Sleep(wait)
 	}
 
 	reader, contentType, err := c.prepareRequestBody(data)
