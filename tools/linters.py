@@ -31,6 +31,19 @@ TOOLS = [
     ),
 ]
 
+def is_go_installed() -> bool:
+    try:
+        subprocess.run(
+            ["go", "version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
 def is_installed(tool: Tool) -> bool:
     try:
         subprocess.run(
@@ -55,7 +68,14 @@ def install_tool(tool: Tool) -> None:
         sys.exit(1)
 
 def main():
-    print("Checking dependencies...")
+
+    print("\nVerifying Go installation...")
+    if not is_go_installed():
+        print("Go is not installed.")
+        sys.exit(1)
+
+
+    print("\nChecking dependencies...")
     for tool in TOOLS:
         if not is_installed(tool):
             print(f"{tool.name} not found.")
