@@ -787,8 +787,10 @@ func (s *Session) ServerDelete(sID string) error {
 func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages []*Message, err error) {
 	endpoint := EndpointChannelMessages(cID)
 
+	// todo: maybe move this to EndpointChannelMessages to process?
+	// for now it's an easy monkeypatch to just add "?" before the params
 	if len(params) > 0 {
-		endpoint += params[0].Encode()
+		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
 	}
 
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)

@@ -471,7 +471,7 @@ const (
 
 // ChannelMessagesParams is for /channels/{target}/messages
 type ChannelMessagesParams struct {
-	// Maximum number of messages to fetch. For nearby messages, this is (limit + 1)
+	// Maximum number of messages to fetch. For nearby messages, this is (limit + 2)
 	Limit int `msg:"limit" json:"limit,omitempty"`
 
 	// Message ID before which messages should be fetched
