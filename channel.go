@@ -144,3 +144,9 @@ type ChannelUnread struct {
 	LastMessageID *string                  `msg:"last_id" json:"last_id,omitempty"`
 	MentionIDs    []string                 `msg:"mentions" json:"mentions,omitempty"`
 }
+
+type ChannelMessages struct {
+	Messages []*Message      `msg:"messages" json:"messages,omitempty"`
+	Users    []*User         `msg:"users" json:"users,omitempty"`
+	Members  []*ServerMember `msg:"members" json:"members,omitempty"`
+}

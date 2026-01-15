@@ -784,16 +784,32 @@ func (s *Session) ServerDelete(sID string) error {
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
-func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages []*Message, err error) {
-	endpoint := EndpointChannelMessages(cID)
+func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages ChannelMessages, err error) {
+
+	/*
+		This method is special. It has to deal with the following bullshit:
+		  - If NOT ChannelMessagesParams (thus IncludeUsers is false), API returns -> []*Message
+		  - If ChannelMessagesParams with IncludeUsers=true, API returns -> { []*Message, []*User []*Member }
+
+		This method will try to normalise it into ChannelMessages struct for simplicity
+	*/
 
 	// todo: maybe move this to EndpointChannelMessages to process?
 	// for now it's an easy monkeypatch to just add "?" before the params
+
+	endpoint := EndpointChannelMessages(cID)
+
 	if len(params) > 0 {
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
+		err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)
+		return
 	}
 
-	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)
+	var intermediary []*Message
+	if err = s.HTTP.Request(http.MethodGet, endpoint, nil, &intermediary); err == nil {
+		messages.Messages = intermediary
+	}
+
 	return
 }
 
