@@ -798,11 +798,14 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 	// for now it's an easy monkeypatch to just add "?" before the params
 
 	endpoint := EndpointChannelMessages(cID)
+	hasParams := len(params) > 0
 
-	if len(params) > 0 {
+	if hasParams {
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
-		err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)
-		return
+		if params[0].IncludeUsers {
+			err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)
+			return
+		}
 	}
 
 	var intermediary []*Message

@@ -2499,6 +2499,204 @@ func (z *ChannelMessageBulkDeleteData) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *ChannelMessages) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 3
+	// string "messages"
+	o = append(o, 0x83, 0xa8, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Messages)))
+	for za0001 := range z.Messages {
+		if z.Messages[za0001] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Messages[za0001].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Messages", za0001)
+				return
+			}
+		}
+	}
+	// string "users"
+	o = append(o, 0xa5, 0x75, 0x73, 0x65, 0x72, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Users)))
+	for za0002 := range z.Users {
+		if z.Users[za0002] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Users[za0002].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Users", za0002)
+				return
+			}
+		}
+	}
+	// string "members"
+	o = append(o, 0xa7, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Members)))
+	for za0003 := range z.Members {
+		if z.Members[za0003] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Members[za0003].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Members", za0003)
+				return
+			}
+		}
+	}
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *ChannelMessages) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "messages":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Messages")
+				return
+			}
+			if cap(z.Messages) >= int(zb0002) {
+				z.Messages = (z.Messages)[:zb0002]
+			} else {
+				z.Messages = make([]*Message, zb0002)
+			}
+			for za0001 := range z.Messages {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Messages[za0001] = nil
+				} else {
+					if z.Messages[za0001] == nil {
+						z.Messages[za0001] = new(Message)
+					}
+					bts, err = z.Messages[za0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Messages", za0001)
+						return
+					}
+				}
+			}
+		case "users":
+			var zb0003 uint32
+			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Users")
+				return
+			}
+			if cap(z.Users) >= int(zb0003) {
+				z.Users = (z.Users)[:zb0003]
+			} else {
+				z.Users = make([]*User, zb0003)
+			}
+			for za0002 := range z.Users {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Users[za0002] = nil
+				} else {
+					if z.Users[za0002] == nil {
+						z.Users[za0002] = new(User)
+					}
+					bts, err = z.Users[za0002].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Users", za0002)
+						return
+					}
+				}
+			}
+		case "members":
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Members")
+				return
+			}
+			if cap(z.Members) >= int(zb0004) {
+				z.Members = (z.Members)[:zb0004]
+			} else {
+				z.Members = make([]*ServerMember, zb0004)
+			}
+			for za0003 := range z.Members {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Members[za0003] = nil
+				} else {
+					if z.Members[za0003] == nil {
+						z.Members[za0003] = new(ServerMember)
+					}
+					bts, err = z.Members[za0003].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Members", za0003)
+						return
+					}
+				}
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *ChannelMessages) Msgsize() (s int) {
+	s = 1 + 9 + msgp.ArrayHeaderSize
+	for za0001 := range z.Messages {
+		if z.Messages[za0001] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Messages[za0001].Msgsize()
+		}
+	}
+	s += 6 + msgp.ArrayHeaderSize
+	for za0002 := range z.Users {
+		if z.Users[za0002] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Users[za0002].Msgsize()
+		}
+	}
+	s += 8 + msgp.ArrayHeaderSize
+	for za0003 := range z.Members {
+		if z.Members[za0003] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Members[za0003].Msgsize()
+		}
+	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *ChannelMessagesParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 6
