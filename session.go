@@ -440,6 +440,8 @@ func (s *Session) UserEdit(uID string, data UserEditData) (user *User, err error
 // Server fetches a server by its ID
 func (s *Session) Server(id string) (server *Server, err error) {
 	endpoint := EndpointServer(id)
+	// todo: yep... this exists. Turns channels into object array of channels
+	// endpoint = fmt.Sprintf("%s?include_channels=true", endpoint)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &server)
 	s.State.addServer(server)
 	return
