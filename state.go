@@ -32,6 +32,7 @@ func (sm stateMembers) add(member *ServerMember) {
 }
 
 // addMany adds multiple members to multiple servers
+// Note that this does not lock the state; the caller must handle this
 func (sm stateMembers) addMany(members []*ServerMember) {
 	// Group members based on their server ID
 	groups := make(map[string][]*ServerMember)
@@ -282,24 +283,33 @@ func (s *State) addServerMember(member *ServerMember) {
 	s.members.add(member)
 }
 
-func (s *State) addServerMembersAndUsers(data *ServerMembers) {
+func (s *State) addServerMembersAndUsers(users []*User, members []*ServerMember) {
 
-	if !s.trackBulkAPICalls || data == nil {
+	if !s.trackBulkAPICalls {
+		return
+	}
+
+	var (
+		shouldProcessUsers   = len(users) != 0 && s.trackUsers
+		shouldProcessMembers = len(members) != 0 && s.trackMembers
+	)
+
+	if !shouldProcessUsers && !shouldProcessMembers {
 		return
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, user := range data.Users {
-		s.users[user.ID] = user
+	if shouldProcessUsers {
+		for _, user := range users {
+			s.users[user.ID] = user
+		}
 	}
 
-	if len(data.Members) == 0 {
-		return
+	if shouldProcessMembers {
+		s.members.addMany(members)
 	}
-
-	s.members.addMany(data.Members)
 }
 
 func (s *State) addEmoji(emoji *Emoji) {
