@@ -727,10 +727,10 @@ func (s *Session) ServerMember(sID, mID string) (member *ServerMember, err error
 	return
 }
 
-func (s *Session) ServerMembers(sID string) (members *ServerMembers, err error) {
+func (s *Session) ServerMembers(sID string) (data *ServerMembers, err error) {
 	endpoint := EndpointServerMembers(sID)
-	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &members)
-	s.State.addServerMembersAndUsers(members)
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
+	s.State.addServerMembersAndUsers(data.Users, data.Members)
 	return
 }
 
@@ -786,7 +786,7 @@ func (s *Session) ServerDelete(sID string) error {
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
-func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (messages ChannelMessages, err error) {
+func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (data ChannelMessages, err error) {
 
 	/*
 		This method is special. It has to deal with the following bullshit:
@@ -805,14 +805,15 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 	if hasParams {
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
 		if params[0].IncludeUsers {
-			err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages)
+			err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
+			s.State.addServerMembersAndUsers(data.Users, data.Members)
 			return
 		}
 	}
 
-	var intermediary []*Message
-	if err = s.HTTP.Request(http.MethodGet, endpoint, nil, &intermediary); err == nil {
-		messages.Messages = intermediary
+	var messages []*Message
+	if err = s.HTTP.Request(http.MethodGet, endpoint, nil, &messages); err == nil {
+		data.Messages = messages
 	}
 
 	return
