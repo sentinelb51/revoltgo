@@ -114,7 +114,28 @@ func (s *Session) addDefaultHandlers() {
 
 	// The Websocket's first response if authentication was unsuccessful
 	AddHandler(s, func(s *Session, e *EventError) {
-		log.Printf("Authentication error: %s\n", e.Error)
+
+		// todo: future logic should maybe invalidate ExpressLoginFile file if present
+
+		switch e.Data.Type {
+		case EventErrorAlreadyAuthenticated:
+			log.Println("Attempted authentication when already authenticated")
+		case EventErrorInvalidSession:
+			log.Println("Invalid session token; it is either malformed or revoked")
+		case EventErrorOnboardingNotFinished:
+			log.Println("Onboarding not finished; please complete onboarding in the official client")
+		case EventErrorLabelMe:
+			log.Println("Unlabeled error; please report this to the Revolt's developers")
+		case EventErrorInternalError:
+			log.Println("Internal server error; please try again later")
+		}
+
+		_ = s.WS.WriteClose()
+	})
+
+	AddHandler(s, func(s *Session, e *EventLogout) {
+		log.Println("Logout event received; closing session")
+		_ = s.WS.WriteClose()
 	})
 
 	AddHandler(s, func(s *Session, e *EventBulk) {

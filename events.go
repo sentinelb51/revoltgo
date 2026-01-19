@@ -34,20 +34,26 @@ type WebsocketChannelTyping struct {
 	Channel string               `msg:"channel" json:"channel,omitempty"`
 }
 
-type EventErrorType string
+// EventErrorDataType is derived from
+// https://developers.revolt.chat/developers/events/protocol.html#error
+type EventErrorDataType string
 
 const (
-	EventErrorTypeLabelMe               EventErrorType = "LabelMe"
-	EventErrorTypeInternalError         EventErrorType = "InternalError"
-	EventErrorTypeInvalidSession        EventErrorType = "InvalidSession"
-	EventErrorTypeOnboardingNotFinished EventErrorType = "OnboardingNotFinished"
-	EventErrorTypeAlreadyAuthenticated  EventErrorType = "AlreadyAuthenticated"
+	EventErrorLabelMe               EventErrorDataType = "LabelMe"
+	EventErrorInternalError         EventErrorDataType = "InternalError"
+	EventErrorInvalidSession        EventErrorDataType = "InvalidSession"
+	EventErrorOnboardingNotFinished EventErrorDataType = "OnboardingNotFinished"
+	EventErrorAlreadyAuthenticated  EventErrorDataType = "AlreadyAuthenticated"
 )
+
+type EventErrorData struct {
+	Type     EventErrorDataType `msg:"type" json:"type,omitempty"`
+	Location string             `msg:"location" json:"location,omitempty"`
+}
 
 type EventError struct {
 	Event
-	// https://developers.revolt.chat/developers/events/protocol.html#error
-	Error EventErrorType `msg:"error" json:"error,omitempty"`
+	Data EventErrorData `msg:"data" json:"data,omitempty"`
 }
 
 type EventBulk struct {
@@ -93,6 +99,10 @@ type EventAuth struct {
 
 // EventAuthenticated is sent after the client has authenticated.
 type EventAuthenticated struct {
+	Event `msg:",flatten"`
+}
+
+type EventLogout struct {
 	Event `msg:",flatten"`
 }
 

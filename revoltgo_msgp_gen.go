@@ -5395,9 +5395,15 @@ func (z *EventError) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "type"
 	o = append(o, 0x81, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Event.Type)
-	// string "error"
-	o = append(o, 0xa5, 0x65, 0x72, 0x72, 0x6f, 0x72)
-	o = msgp.AppendString(o, string(z.Error))
+	// string "data"
+	o = append(o, 0xa4, 0x64, 0x61, 0x74, 0x61)
+	// map header, size 2
+	// string "type"
+	o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, string(z.Data.Type))
+	// string "location"
+	o = append(o, 0xa8, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e)
+	o = msgp.AppendString(o, z.Data.Location)
 	return
 }
 
@@ -5448,15 +5454,44 @@ func (z *EventError) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 				}
 			}
-		case "error":
-			{
-				var zb0003 string
-				zb0003, bts, err = msgp.ReadStringBytes(bts)
+		case "data":
+			var zb0003 uint32
+			zb0003, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Data")
+				return
+			}
+			for zb0003 > 0 {
+				zb0003--
+				field, bts, err = msgp.ReadMapKeyZC(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Error")
+					err = msgp.WrapError(err, "Data")
 					return
 				}
-				z.Error = EventErrorType(zb0003)
+				switch msgp.UnsafeString(field) {
+				case "type":
+					{
+						var zb0004 string
+						zb0004, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Data", "Type")
+							return
+						}
+						z.Data.Type = EventErrorDataType(zb0004)
+					}
+				case "location":
+					z.Data.Location, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Data", "Location")
+						return
+					}
+				default:
+					bts, err = msgp.Skip(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Data")
+						return
+					}
+				}
 			}
 		default:
 			bts, err = msgp.Skip(bts)
@@ -5472,19 +5507,84 @@ func (z *EventError) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *EventError) Msgsize() (s int) {
-	s = 1 + 6 + 1 + 5 + msgp.StringPrefixSize + len(z.Event.Type) + 6 + msgp.StringPrefixSize + len(string(z.Error))
+	s = 1 + 6 + 1 + 5 + msgp.StringPrefixSize + len(z.Event.Type) + 5 + 1 + 5 + msgp.StringPrefixSize + len(string(z.Data.Type)) + 9 + msgp.StringPrefixSize + len(z.Data.Location)
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z EventErrorType) MarshalMsg(b []byte) (o []byte, err error) {
+func (z EventErrorData) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "type"
+	o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, string(z.Type))
+	// string "location"
+	o = append(o, 0xa8, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e)
+	o = msgp.AppendString(o, z.Location)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *EventErrorData) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			{
+				var zb0002 string
+				zb0002, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Type")
+					return
+				}
+				z.Type = EventErrorDataType(zb0002)
+			}
+		case "location":
+			z.Location, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Location")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z EventErrorData) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 9 + msgp.StringPrefixSize + len(z.Location)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z EventErrorDataType) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	o = msgp.AppendString(o, string(z))
 	return
 }
 
 // UnmarshalMsg implements msgp.Unmarshaler
-func (z *EventErrorType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+func (z *EventErrorDataType) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	{
 		var zb0001 string
 		zb0001, bts, err = msgp.ReadStringBytes(bts)
@@ -5492,15 +5592,67 @@ func (z *EventErrorType) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			err = msgp.WrapError(err)
 			return
 		}
-		(*z) = EventErrorType(zb0001)
+		(*z) = EventErrorDataType(zb0001)
 	}
 	o = bts
 	return
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z EventErrorType) Msgsize() (s int) {
+func (z EventErrorDataType) Msgsize() (s int) {
 	s = msgp.StringPrefixSize + len(string(z))
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z EventLogout) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 1
+	// string "type"
+	o = append(o, 0x81, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.Type)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *EventLogout) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "type":
+			z.Type, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Type")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z EventLogout) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type)
 	return
 }
 

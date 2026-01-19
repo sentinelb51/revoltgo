@@ -56,6 +56,7 @@ var eventConstructors = map[string]func() any{
 	"Ready":         func() any { return new(EventReady) },
 	"Auth":          func() any { return new(EventAuth) },
 	"Authenticated": func() any { return new(EventAuthenticated) },
+	"Logout":        func() any { return new(EventLogout) },
 
 	"Message":               func() any { return new(EventMessage) },
 	"MessageAppend":         func() any { return new(EventMessageAppend) },

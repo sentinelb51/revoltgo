@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"log"
 	"runtime"
 	"sync"
@@ -197,13 +198,23 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 	ws.conn = nil
 	ws.mu.Unlock()
 
-	if err != nil && err.Error() != "" {
-		log.Printf("Connection closed unexpectedly: %v\n", err)
-	} else {
-		log.Println("Connection closed.")
+	if err == nil {
+		log.Println("Connection closed gracefully")
+		return
 	}
 
-	// Trigger reconnect if session is still active
+	/*
+		C:\Users\User\go\pkg\mod\github.com\lxzan\gws@v1.8.9\internal\error.go
+		gws.CloseNormalClosure is 1000
+	*/
+
+	var closeErr *gws.CloseError
+	if errors.As(err, &closeErr) {
+		log.Printf("Connection closed with code %d: %s\n", closeErr.Code, err)
+	} else {
+		log.Printf("Connection closed with error: %s\n", err)
+	}
+
 	if ws.ShouldReconnect && ws.ctx.Err() == nil {
 		go ws.reconnectLoop()
 	}
