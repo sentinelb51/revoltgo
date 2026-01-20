@@ -63,14 +63,12 @@ type State struct {
 	self *User        // The current user, also present in users
 
 	/* Caches */
-	users    map[string]*User
-	servers  map[string]*Server
-	channels map[string]*Channel
-	emojis   map[string]*Emoji
+	users    map[string]*User    // Includes all users you have a relation with.
+	servers  map[string]*Server  // Includes all servers you are in.
+	channels map[string]*Channel // Includes all channels you have access to.
+	members  stateMembers        // Includes all members you have a relation with. (Maps Server.ID to Members)
+	emojis   map[string]*Emoji   // Includes all emojis you have access to.
 	webhooks map[string]*Webhook
-
-	// members maps Server.ID to members
-	members stateMembers
 
 	/* tracking options */
 

@@ -324,10 +324,22 @@ func (s *Session) Open() (err error) {
 
 	log.Printf("API version detected: %s\n", query.Revolt)
 
+	// See: https://developers.stoat.chat/developers/events/establishing#query-parameters
+	// todo: make into a struct with Encode() method?
 	parameters := url.Values{}
 	parameters.Set("token", s.Token)
 	parameters.Set("format", "msgpack")
 	parameters.Set("version", "1")
+
+	// See: https://developers.stoat.chat/developers/events/establishing#ready-fields
+	// todo: Session, State should work with none/some of these being enabled
+	parameters.Add("ready", "users")
+	parameters.Add("ready", "servers")
+	parameters.Add("ready", "channels")
+	parameters.Add("ready", "members")
+	parameters.Add("ready", "emojis")
+	parameters.Add("ready", "channel_unreads")
+	parameters.Add("ready", "policy_changes")
 
 	wsURL, err := url.Parse(query.WS)
 	if err != nil {
