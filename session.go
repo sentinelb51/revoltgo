@@ -342,6 +342,14 @@ func (s *Session) Open() (err error) {
 	return
 }
 
+// Close closes the Websocket connection.
+func (s *Session) Close() error {
+	if s.WS != nil {
+		return s.WS.WriteClose()
+	}
+	return nil
+}
+
 // WriteSocketJSON writes data to the websocket in JSON
 func (s *Session) WriteSocketJSON(data any) error {
 	payload, err := json.Marshal(data)
