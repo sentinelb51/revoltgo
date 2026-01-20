@@ -6907,9 +6907,9 @@ func (z *EventPong) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *EventReady) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 9
+	// map header, size 10
 	// string "Event"
-	o = append(o, 0x89, 0xa5, 0x45, 0x76, 0x65, 0x6e, 0x74)
+	o = append(o, 0x8a, 0xa5, 0x45, 0x76, 0x65, 0x6e, 0x74)
 	// map header, size 1
 	// string "type"
 	o = append(o, 0x81, 0xa4, 0x74, 0x79, 0x70, 0x65)
@@ -7029,6 +7029,16 @@ func (z *EventReady) MarshalMsg(b []byte) (o []byte, err error) {
 		o, err = z.ChannelUnreads[za0010].MarshalMsg(o)
 		if err != nil {
 			err = msgp.WrapError(err, "ChannelUnreads", za0010)
+			return
+		}
+	}
+	// string "policy_changes"
+	o = append(o, 0xae, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.PolicyChanges)))
+	for za0011 := range z.PolicyChanges {
+		o, err = z.PolicyChanges[za0011].MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "PolicyChanges", za0011)
 			return
 		}
 	}
@@ -7362,6 +7372,25 @@ func (z *EventReady) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					return
 				}
 			}
+		case "policy_changes":
+			var zb0013 uint32
+			zb0013, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "PolicyChanges")
+				return
+			}
+			if cap(z.PolicyChanges) >= int(zb0013) {
+				z.PolicyChanges = (z.PolicyChanges)[:zb0013]
+			} else {
+				z.PolicyChanges = make([]EventReadyPolicyChange, zb0013)
+			}
+			for za0011 := range z.PolicyChanges {
+				bts, err = z.PolicyChanges[za0011].UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "PolicyChanges", za0011)
+					return
+				}
+			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -7442,6 +7471,89 @@ func (z *EventReady) Msgsize() (s int) {
 	for za0010 := range z.ChannelUnreads {
 		s += z.ChannelUnreads[za0010].Msgsize()
 	}
+	s += 15 + msgp.ArrayHeaderSize
+	for za0011 := range z.PolicyChanges {
+		s += z.PolicyChanges[za0011].Msgsize()
+	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *EventReadyPolicyChange) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 4
+	// string "created_time"
+	o = append(o, 0x84, 0xac, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x74, 0x69, 0x6d, 0x65)
+	o = msgp.AppendString(o, z.CreatedTime)
+	// string "effective_time"
+	o = append(o, 0xae, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65)
+	o = msgp.AppendString(o, z.EffectiveTime)
+	// string "description"
+	o = append(o, 0xab, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e)
+	o = msgp.AppendString(o, z.Description)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.URL)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *EventReadyPolicyChange) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "created_time":
+			z.CreatedTime, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "CreatedTime")
+				return
+			}
+		case "effective_time":
+			z.EffectiveTime, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "EffectiveTime")
+				return
+			}
+		case "description":
+			z.Description, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Description")
+				return
+			}
+		case "url":
+			z.URL, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "URL")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *EventReadyPolicyChange) Msgsize() (s int) {
+	s = 1 + 13 + msgp.StringPrefixSize + len(z.CreatedTime) + 15 + msgp.StringPrefixSize + len(z.EffectiveTime) + 12 + msgp.StringPrefixSize + len(z.Description) + 4 + msgp.StringPrefixSize + len(z.URL)
 	return
 }
 
@@ -16507,85 +16619,6 @@ func (z PermissionsSetDefaultData) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z *PolicyChange) MarshalMsg(b []byte) (o []byte, err error) {
-	o = msgp.Require(b, z.Msgsize())
-	// map header, size 4
-	// string "created_time"
-	o = append(o, 0x84, 0xac, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x74, 0x69, 0x6d, 0x65)
-	o = msgp.AppendString(o, z.CreatedTime)
-	// string "effective_time"
-	o = append(o, 0xae, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65)
-	o = msgp.AppendString(o, z.EffectiveTime)
-	// string "description"
-	o = append(o, 0xab, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e)
-	o = msgp.AppendString(o, z.Description)
-	// string "url"
-	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
-	o = msgp.AppendString(o, z.URL)
-	return
-}
-
-// UnmarshalMsg implements msgp.Unmarshaler
-func (z *PolicyChange) UnmarshalMsg(bts []byte) (o []byte, err error) {
-	var field []byte
-	_ = field
-	var zb0001 uint32
-	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
-	if err != nil {
-		err = msgp.WrapError(err)
-		return
-	}
-	for zb0001 > 0 {
-		zb0001--
-		field, bts, err = msgp.ReadMapKeyZC(bts)
-		if err != nil {
-			err = msgp.WrapError(err)
-			return
-		}
-		switch msgp.UnsafeString(field) {
-		case "created_time":
-			z.CreatedTime, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "CreatedTime")
-				return
-			}
-		case "effective_time":
-			z.EffectiveTime, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "EffectiveTime")
-				return
-			}
-		case "description":
-			z.Description, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Description")
-				return
-			}
-		case "url":
-			z.URL, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "URL")
-				return
-			}
-		default:
-			bts, err = msgp.Skip(bts)
-			if err != nil {
-				err = msgp.WrapError(err)
-				return
-			}
-		}
-	}
-	o = bts
-	return
-}
-
-// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z *PolicyChange) Msgsize() (s int) {
-	s = 1 + 13 + msgp.StringPrefixSize + len(z.CreatedTime) + 15 + msgp.StringPrefixSize + len(z.EffectiveTime) + 12 + msgp.StringPrefixSize + len(z.Description) + 4 + msgp.StringPrefixSize + len(z.URL)
-	return
-}
-
-// MarshalMsg implements msgp.Marshaler
 func (z *PublicBot) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 4
@@ -19142,130 +19175,6 @@ func (z *SyncSettingsFetchData) Msgsize() (s int) {
 	s = 1 + 5 + msgp.ArrayHeaderSize
 	for za0001 := range z.Keys {
 		s += msgp.StringPrefixSize + len(z.Keys[za0001])
-	}
-	return
-}
-
-// MarshalMsg implements msgp.Marshaler
-func (z *SyncUnread) MarshalMsg(b []byte) (o []byte, err error) {
-	o = msgp.Require(b, z.Msgsize())
-	// map header, size 3
-	// string "_id"
-	o = append(o, 0x83, 0xa3, 0x5f, 0x69, 0x64)
-	// map header, size 2
-	// string "channel"
-	o = append(o, 0x82, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
-	o = msgp.AppendString(o, z.ID.Channel)
-	// string "user"
-	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
-	o = msgp.AppendString(o, z.ID.User)
-	// string "last_id"
-	o = append(o, 0xa7, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.LastID)
-	// string "mentions"
-	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
-	for za0001 := range z.Mentions {
-		o = msgp.AppendString(o, z.Mentions[za0001])
-	}
-	return
-}
-
-// UnmarshalMsg implements msgp.Unmarshaler
-func (z *SyncUnread) UnmarshalMsg(bts []byte) (o []byte, err error) {
-	var field []byte
-	_ = field
-	var zb0001 uint32
-	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
-	if err != nil {
-		err = msgp.WrapError(err)
-		return
-	}
-	for zb0001 > 0 {
-		zb0001--
-		field, bts, err = msgp.ReadMapKeyZC(bts)
-		if err != nil {
-			err = msgp.WrapError(err)
-			return
-		}
-		switch msgp.UnsafeString(field) {
-		case "_id":
-			var zb0002 uint32
-			zb0002, bts, err = msgp.ReadMapHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "ID")
-				return
-			}
-			for zb0002 > 0 {
-				zb0002--
-				field, bts, err = msgp.ReadMapKeyZC(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "ID")
-					return
-				}
-				switch msgp.UnsafeString(field) {
-				case "channel":
-					z.ID.Channel, bts, err = msgp.ReadStringBytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "ID", "Channel")
-						return
-					}
-				case "user":
-					z.ID.User, bts, err = msgp.ReadStringBytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "ID", "User")
-						return
-					}
-				default:
-					bts, err = msgp.Skip(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "ID")
-						return
-					}
-				}
-			}
-		case "last_id":
-			z.LastID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "LastID")
-				return
-			}
-		case "mentions":
-			var zb0003 uint32
-			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Mentions")
-				return
-			}
-			if cap(z.Mentions) >= int(zb0003) {
-				z.Mentions = (z.Mentions)[:zb0003]
-			} else {
-				z.Mentions = make([]string, zb0003)
-			}
-			for za0001 := range z.Mentions {
-				z.Mentions[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Mentions", za0001)
-					return
-				}
-			}
-		default:
-			bts, err = msgp.Skip(bts)
-			if err != nil {
-				err = msgp.WrapError(err)
-				return
-			}
-		}
-	}
-	o = bts
-	return
-}
-
-// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z *SyncUnread) Msgsize() (s int) {
-	s = 1 + 4 + 1 + 8 + msgp.StringPrefixSize + len(z.ID.Channel) + 5 + msgp.StringPrefixSize + len(z.ID.User) + 8 + msgp.StringPrefixSize + len(z.LastID) + 9 + msgp.ArrayHeaderSize
-	for za0001 := range z.Mentions {
-		s += msgp.StringPrefixSize + len(z.Mentions[za0001])
 	}
 	return
 }

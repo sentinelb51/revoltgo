@@ -111,6 +111,11 @@ type PartialChannel struct {
 	Voice              *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`
 }
 
+type CompositeChannelID struct {
+	Channel string `msg:"channel" json:"channel,omitempty"`
+	User    string `msg:"user" json:"user,omitempty"`
+}
+
 type ChannelFetchedMessages struct {
 	Messages []*Message      `msg:"messages" json:"messages,omitempty"`
 	Users    []*User         `msg:"users" json:"users,omitempty"`

@@ -1064,7 +1064,7 @@ func (s *Session) BotInvite(bID string, data BotInviteData) (err error) {
 	return
 }
 
-func (s *Session) SyncUnreads() (data []SyncUnread, err error) {
+func (s *Session) SyncUnreads() (data []ChannelUnread, err error) {
 	endpoint := EndpointSync("unreads")
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
 	return

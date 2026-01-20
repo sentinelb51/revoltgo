@@ -338,12 +338,13 @@ func EndpointPolicy(action string) string {
 	return fmt.Sprintf(URLPolicy, action)
 }
 
-func EndpointSync(setting string) string {
-	return fmt.Sprintf(URLSync, setting)
+func EndpointSync(id string) string {
+	return fmt.Sprintf(URLSync, id)
 }
 
-func EndpointSyncSettings(sID string) string {
-	return fmt.Sprintf(URLSync, fmt.Sprintf("settings/%s", sID))
+// EndpointSyncSettings supports either "set" or "fetch" as action.
+func EndpointSyncSettings(action string) string {
+	return fmt.Sprintf(URLSync, fmt.Sprintf("settings/%s", action))
 }
 
 func EndpointPush(action string) string {

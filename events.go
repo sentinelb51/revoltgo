@@ -66,18 +66,28 @@ type EventPong struct {
 	Data int64 `msg:"data" json:"data,omitempty"`
 }
 
+type EventReadyPolicyChange struct {
+	// might be a Timestamp?
+	CreatedTime string `msg:"created_time" json:"created_time,omitempty"`
+	// might be a Timestamp?
+	EffectiveTime string `msg:"effective_time" json:"effective_time,omitempty"`
+	Description   string `msg:"description" json:"description,omitempty"`
+	URL           string `msg:"url" json:"url,omitempty"`
+}
+
 // EventReady provides information about objects relative to the user.
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
-	Users          []*User              `msg:"users" json:"users,omitempty"`
-	Servers        []*Server            `msg:"servers" json:"servers,omitempty"`
-	Channels       []*Channel           `msg:"channels" json:"channels,omitempty"`
-	Members        []*ServerMember      `msg:"members" json:"members,omitempty"`
-	Emojis         []*Emoji             `msg:"emojis" json:"emojis,omitempty"`
-	VoiceStates    []*ChannelVoiceState `msg:"voice_states" json:"voice_states,omitempty"`
-	UserSettings   map[string]any       `msg:"user_settings" json:"user_settings,omitempty"`
-	ChannelUnreads []ChannelUnread      `msg:"channel_unreads" json:"channel_unreads,omitempty"`
+	Users          []*User                  `msg:"users" json:"users,omitempty"`
+	Servers        []*Server                `msg:"servers" json:"servers,omitempty"`
+	Channels       []*Channel               `msg:"channels" json:"channels,omitempty"`
+	Members        []*ServerMember          `msg:"members" json:"members,omitempty"`
+	Emojis         []*Emoji                 `msg:"emojis" json:"emojis,omitempty"`
+	VoiceStates    []*ChannelVoiceState     `msg:"voice_states" json:"voice_states,omitempty"`
+	UserSettings   map[string]any           `msg:"user_settings" json:"user_settings,omitempty"`
+	ChannelUnreads []ChannelUnread          `msg:"channel_unreads" json:"channel_unreads,omitempty"`
+	PolicyChanges  []EventReadyPolicyChange `msg:"policy_changes" json:"policy_changes,omitempty"`
 }
 
 type AuthType string

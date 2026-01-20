@@ -3,7 +3,7 @@
   <component name="Go" enabled="true" />
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <excludePattern pattern="revoltgo_msgp_gen.go" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/selfbot" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
