@@ -31,6 +31,14 @@ var (
 	parsedCDNBase = mustParseURL(cdnURL)
 )
 
+func BaseURL() string {
+	return apiURL
+}
+
+func CDNURL() string {
+	return cdnURL
+}
+
 // SetBaseURL sets the base URL for the API.
 // Call before opening any sessions; this is not mutex-protected.
 func SetBaseURL(newURL string) error {
