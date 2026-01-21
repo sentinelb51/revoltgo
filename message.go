@@ -155,5 +155,5 @@ type MessageMasquerade struct {
 
 type MessageReplies struct {
 	ID      string `msg:"id" json:"id,omitempty"`
-	Mention bool   `msg:"mention" json:"mention,omitempty"`
+	Mention bool   `msg:"mention" json:"mention"`
 }
