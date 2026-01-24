@@ -40,6 +40,14 @@ type User struct {
 	Bot           *Bot                 `msg:"bot" json:"bot,omitempty"`
 }
 
+func (u *User) AvatarURL(size string) string {
+	if u.Avatar == nil {
+		return EndpointUserDefaultAvatar(u.ID)
+	}
+
+	return u.Avatar.URL(size)
+}
+
 func (u *User) update(data PartialUser) {
 	if data.Username != nil {
 		u.Username = *data.Username
