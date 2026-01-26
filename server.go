@@ -214,7 +214,7 @@ func (m *ServerMember) update(data PartialServerMember) {
 		m.Roles = *data.Roles
 	}
 
-	if !data.Timeout.IsZero() {
+	if data.Timeout != nil {
 		m.Timeout = data.Timeout
 	}
 
