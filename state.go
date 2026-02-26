@@ -88,9 +88,18 @@ type State struct {
 	trackBulkAPICalls bool
 }
 
-/*
-	Getter functions
-*/
+/*Getter functions*/
+
+func (s *State) GetServers() []*Server {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]*Server, 0, len(s.servers))
+	for _, srv := range s.servers {
+		result = append(result, srv)
+	}
+	return result
+}
 
 func (s *State) Self() *User {
 	s.mu.RLock()
