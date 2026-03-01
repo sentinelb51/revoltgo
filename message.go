@@ -5,9 +5,10 @@ import "time"
 //go:generate msgp -tests=false -io=false
 
 type (
-	MessageSystemType       string
-	MessageEmbedSpecialType string
-	MessageFlagsType        uint32
+	MessageSystemType         string
+	MessageEmbedSpecialType   string
+	MessageEmbedImageSizeType string
+	MessageFlagsType          uint32
 )
 
 const (
@@ -27,6 +28,8 @@ const (
 	MessageSystemCallStarted               MessageSystemType = "call_started"
 )
 
+// Derived from:
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/embeds.rs#L158
 const (
 	MessageEmbedSpecialNone       MessageEmbedSpecialType = "None"
 	MessageEmbedSpecialGIF        MessageEmbedSpecialType = "GIF"
@@ -36,17 +39,14 @@ const (
 	MessageEmbedSpecialSpotify    MessageEmbedSpecialType = "Spotify"
 	MessageEmbedSpecialSoundcloud MessageEmbedSpecialType = "Soundcloud"
 	MessageEmbedSpecialBandcamp   MessageEmbedSpecialType = "Bandcamp"
+	MessageEmbedSpecialAppleMusic MessageEmbedSpecialType = "AppleMusic"
 	MessageEmbedSpecialStreamable MessageEmbedSpecialType = "Streamable"
 )
 
 const (
-	// MessageFlagsSuppressNotifications  will not send push / desktop notifications
-	MessageFlagsSuppressNotifications MessageFlagsType = 1
-	// MessageFlagsMentionsEveryone will mention all users who can see the channel
-	MessageFlagsMentionsEveryone MessageFlagsType = 2
-	// MessageFlagsMentionsOnline will mention all users who are online and can see the channel.
-	// This cannot be true if MentionsEveryone is true
-	MessageFlagsMentionsOnline MessageFlagsType = 3
+	MessageFlagsSuppressNotifications MessageFlagsType = 1 // Will not send push / desktop notifications
+	MessageFlagsMentionsEveryone      MessageFlagsType = 2 // will mention all users who can see the channel
+	MessageFlagsMentionsOnline        MessageFlagsType = 3 // will mention all users who are online and can see the channel. This cannot be true if MentionsEveryone is true
 )
 
 // Message contains information about a message.
@@ -101,6 +101,8 @@ type MessageEdited struct {
 	Date int `msg:"$date" json:"$date,omitempty"`
 }
 
+// MessageEmbed is derived from:
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/embeds.rs#L158
 type MessageEmbed struct {
 	Type        string               `msg:"type" json:"type,omitempty"`
 	URL         string               `msg:"url" json:"url,omitempty"`
@@ -113,22 +115,28 @@ type MessageEmbed struct {
 	SiteName    string               `msg:"site_name" json:"site_name,omitempty"`
 	IconURL     string               `msg:"icon_url" json:"icon_url,omitempty"`
 	Colour      string               `msg:"colour" json:"colour,omitempty"`
+	Media       *Attachment          `msg:"media" json:"media,omitempty"`
 }
 
 type MessageEmbedSpecial struct {
-	Type      MessageEmbedSpecialType `msg:"type" json:"type,omitempty"`
-	ID        string                  `msg:"id" json:"id,omitempty"`
-	Timestamp *time.Time              `msg:"timestamp" json:"timestamp,omitempty"`
-
-	// Identifies the type of content for types: Lightspeed, Twitch, Spotify, and Bandcamp
-	ContentType string `msg:"content_type" json:"content_type,omitempty"` // todo: make enums
+	Type        MessageEmbedSpecialType `msg:"type" json:"type,omitempty"`
+	ID          string                  `msg:"id" json:"id,omitempty"`
+	Timestamp   string                  `msg:"timestamp" json:"timestamp,omitempty"`
+	ContentType string                  `msg:"content_type" json:"content_type,omitempty"`
+	AlbumID     string                  `msg:"album_id" json:"album_id,omitempty"`
+	TrackID     string                  `msg:"track_id" json:"track_id,omitempty"`
 }
 
+const (
+	MessageEmbedImageSizeLarge   MessageEmbedImageSizeType = "Large"
+	MessageEmbedImageSizePreview MessageEmbedImageSizeType = "Preview"
+)
+
 type MessageEmbedImage struct {
-	Size   string `msg:"size" json:"size,omitempty"`
-	URL    string `msg:"url" json:"url,omitempty"`
-	Width  int    `msg:"width" json:"width,omitempty"`
-	Height int    `msg:"height" json:"height,omitempty"`
+	Size   MessageEmbedImageSizeType `msg:"size" json:"size,omitempty"`
+	URL    string                    `msg:"url" json:"url,omitempty"`
+	Width  int                       `msg:"width" json:"width,omitempty"`
+	Height int                       `msg:"height" json:"height,omitempty"`
 }
 
 type MessageEmbedVideo struct {
@@ -138,6 +146,7 @@ type MessageEmbedVideo struct {
 }
 
 // MessageSend is used for sending messages to channels
+// todo: move to http since this is a sendable request body
 type MessageSend struct {
 	Content      string               `msg:"content" json:"content,omitempty"`
 	Attachments  []string             `msg:"attachments" json:"attachments,omitempty"`

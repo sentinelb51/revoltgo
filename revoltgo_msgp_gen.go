@@ -12271,9 +12271,9 @@ func (z MessageEdited) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *MessageEmbed) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 11
+	// map header, size 12
 	// string "type"
-	o = append(o, 0x8b, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0x8c, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "url"
 	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
@@ -12334,6 +12334,17 @@ func (z *MessageEmbed) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "colour"
 	o = append(o, 0xa6, 0x63, 0x6f, 0x6c, 0x6f, 0x75, 0x72)
 	o = msgp.AppendString(o, z.Colour)
+	// string "media"
+	o = append(o, 0xa5, 0x6d, 0x65, 0x64, 0x69, 0x61)
+	if z.Media == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Media.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Media")
+			return
+		}
+	}
 	return
 }
 
@@ -12489,6 +12500,23 @@ func (z *MessageEmbed) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Colour")
 				return
 			}
+		case "media":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Media = nil
+			} else {
+				if z.Media == nil {
+					z.Media = new(Attachment)
+				}
+				bts, err = z.Media.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Media")
+					return
+				}
+			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -12521,7 +12549,12 @@ func (z *MessageEmbed) Msgsize() (s int) {
 	} else {
 		s += 1 + 4 + msgp.StringPrefixSize + len(z.Video.URL) + 6 + msgp.IntSize + 7 + msgp.IntSize
 	}
-	s += 10 + msgp.StringPrefixSize + len(z.SiteName) + 9 + msgp.StringPrefixSize + len(z.IconURL) + 7 + msgp.StringPrefixSize + len(z.Colour)
+	s += 10 + msgp.StringPrefixSize + len(z.SiteName) + 9 + msgp.StringPrefixSize + len(z.IconURL) + 7 + msgp.StringPrefixSize + len(z.Colour) + 6
+	if z.Media == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Media.Msgsize()
+	}
 	return
 }
 
@@ -12531,7 +12564,7 @@ func (z *MessageEmbedImage) MarshalMsg(b []byte) (o []byte, err error) {
 	// map header, size 4
 	// string "size"
 	o = append(o, 0x84, 0xa4, 0x73, 0x69, 0x7a, 0x65)
-	o = msgp.AppendString(o, z.Size)
+	o = msgp.AppendString(o, string(z.Size))
 	// string "url"
 	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
 	o = msgp.AppendString(o, z.URL)
@@ -12563,10 +12596,14 @@ func (z *MessageEmbedImage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "size":
-			z.Size, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Size")
-				return
+			{
+				var zb0002 string
+				zb0002, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Size")
+					return
+				}
+				z.Size = MessageEmbedImageSizeType(zb0002)
 			}
 		case "url":
 			z.URL, bts, err = msgp.ReadStringBytes(bts)
@@ -12600,30 +12637,60 @@ func (z *MessageEmbedImage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *MessageEmbedImage) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Size) + 4 + msgp.StringPrefixSize + len(z.URL) + 6 + msgp.IntSize + 7 + msgp.IntSize
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Size)) + 4 + msgp.StringPrefixSize + len(z.URL) + 6 + msgp.IntSize + 7 + msgp.IntSize
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z MessageEmbedImageSizeType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *MessageEmbedImageSizeType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = MessageEmbedImageSizeType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z MessageEmbedImageSizeType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
 func (z *MessageEmbedSpecial) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 4
+	// map header, size 6
 	// string "type"
-	o = append(o, 0x84, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0x86, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, string(z.Type))
 	// string "id"
 	o = append(o, 0xa2, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "timestamp"
 	o = append(o, 0xa9, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
-	if z.Timestamp == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		o = msgp.AppendInt64(o, timeToMs(*z.Timestamp))
-	}
+	o = msgp.AppendString(o, z.Timestamp)
 	// string "content_type"
 	o = append(o, 0xac, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.ContentType)
+	// string "album_id"
+	o = append(o, 0xa8, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.AlbumID)
+	// string "track_id"
+	o = append(o, 0xa8, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.TrackID)
 	return
 }
 
@@ -12662,30 +12729,27 @@ func (z *MessageEmbedSpecial) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "timestamp":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Timestamp = nil
-			} else {
-				if z.Timestamp == nil {
-					z.Timestamp = new(time.Time)
-				}
-				{
-					var zb0003 int64
-					zb0003, bts, err = msgp.ReadInt64Bytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Timestamp")
-						return
-					}
-					*z.Timestamp = msToTime(zb0003)
-				}
+			z.Timestamp, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Timestamp")
+				return
 			}
 		case "content_type":
 			z.ContentType, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ContentType")
+				return
+			}
+		case "album_id":
+			z.AlbumID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "AlbumID")
+				return
+			}
+		case "track_id":
+			z.TrackID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "TrackID")
 				return
 			}
 		default:
@@ -12702,13 +12766,7 @@ func (z *MessageEmbedSpecial) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *MessageEmbedSpecial) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 3 + msgp.StringPrefixSize + len(z.ID) + 10
-	if z.Timestamp == nil {
-		s += msgp.NilSize
-	} else {
-		s += msgp.Int64Size
-	}
-	s += 13 + msgp.StringPrefixSize + len(z.ContentType)
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 3 + msgp.StringPrefixSize + len(z.ID) + 10 + msgp.StringPrefixSize + len(z.Timestamp) + 13 + msgp.StringPrefixSize + len(z.ContentType) + 9 + msgp.StringPrefixSize + len(z.AlbumID) + 9 + msgp.StringPrefixSize + len(z.TrackID)
 	return
 }
 
