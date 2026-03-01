@@ -169,6 +169,19 @@ func (s *State) Server(id string) *Server {
 	return s.servers[id]
 }
 
+// Servers returns a slice of all servers in state. For general use, Server(id) is more common
+func (s *State) Servers() []*Server {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	servers := make([]*Server, 0, len(s.servers))
+	for _, server := range s.servers {
+		servers = append(servers, server)
+	}
+
+	return servers
+}
+
 func (s *State) Role(sID, rID string) *ServerRole {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
