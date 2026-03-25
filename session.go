@@ -89,17 +89,13 @@ func NewWithExpressLogin(data LoginData) (*Session, error) {
 
 // Session represents a connection to the Revolt API.
 type Session struct {
-	Token string      // Authorisation token
-	WS    *Websocket  // Websocket handler for bidirectional events
-	HTTP  *HTTPClient // HTTP handler for the REST API
-	State *State      // State is a central store for all data received from the API
+	Token           string      // Authorisation token
+	WS              *Websocket  // Websocket handler for bidirectional events
+	HTTP            *HTTPClient // HTTP handler for the REST API
+	State           *State      // State is a central store for all data received from the API
+	CheckForUpdates bool        // Whether to check for updates in the default EventReady handler
 
-	/* Private fields */
-
-	selfbot bool // Whether the session is a user or bot
-
-	/* Event handlers */
-
+	selfbot  bool // Whether the session is a user or bot
 	handlers map[string][]func(*Session, any)
 }
 
@@ -147,7 +143,10 @@ func (s *Session) addDefaultHandlers() {
 	AddHandler(s, func(s *Session, e *EventReady) {
 		s.State.populate(e)
 		s.selfbot = s.State.self != nil && s.State.self.Bot == nil
-		go HasUpdate()
+
+		if s.CheckForUpdates {
+			go HasUpdate()
+		}
 	})
 
 	// If state is disabled, none of these handlers are required

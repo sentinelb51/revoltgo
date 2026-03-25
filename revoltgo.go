@@ -22,7 +22,7 @@ const (
 	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
 )
 
-var COMMIT = "23abc181da6c510a1320c6952d1929d5b6cf2e5c"
+var COMMIT = "09178bdcb8cb811d27702547b98847d79924de61"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
