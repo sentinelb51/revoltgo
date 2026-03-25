@@ -16781,6 +16781,698 @@ func (z *PublicBot) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *RootData) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 6
+	// string "ws"
+	o = append(o, 0x86, 0xa2, 0x77, 0x73)
+	o = msgp.AppendString(o, z.WS)
+	// string "app"
+	o = append(o, 0xa3, 0x61, 0x70, 0x70)
+	o = msgp.AppendString(o, z.App)
+	// string "vapid"
+	o = append(o, 0xa5, 0x76, 0x61, 0x70, 0x69, 0x64)
+	o = msgp.AppendString(o, z.VapID)
+	// string "revolt"
+	o = append(o, 0xa6, 0x72, 0x65, 0x76, 0x6f, 0x6c, 0x74)
+	o = msgp.AppendString(o, z.Revolt)
+	// string "build"
+	o = append(o, 0xa5, 0x62, 0x75, 0x69, 0x6c, 0x64)
+	o, err = z.Build.MarshalMsg(o)
+	if err != nil {
+		err = msgp.WrapError(err, "Build")
+		return
+	}
+	// string "features"
+	o = append(o, 0xa8, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73)
+	o, err = z.Features.MarshalMsg(o)
+	if err != nil {
+		err = msgp.WrapError(err, "Features")
+		return
+	}
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootData) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "ws":
+			z.WS, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "WS")
+				return
+			}
+		case "app":
+			z.App, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "App")
+				return
+			}
+		case "vapid":
+			z.VapID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "VapID")
+				return
+			}
+		case "revolt":
+			z.Revolt, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Revolt")
+				return
+			}
+		case "build":
+			bts, err = z.Build.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Build")
+				return
+			}
+		case "features":
+			bts, err = z.Features.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Features")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *RootData) Msgsize() (s int) {
+	s = 1 + 3 + msgp.StringPrefixSize + len(z.WS) + 4 + msgp.StringPrefixSize + len(z.App) + 6 + msgp.StringPrefixSize + len(z.VapID) + 7 + msgp.StringPrefixSize + len(z.Revolt) + 6 + z.Build.Msgsize() + 9 + z.Features.Msgsize()
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *RootDataBuild) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 5
+	// string "commit_sha"
+	o = append(o, 0x85, 0xaa, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x5f, 0x73, 0x68, 0x61)
+	o = msgp.AppendString(o, z.CommitSha)
+	// string "commit_timestamp"
+	o = append(o, 0xb0, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
+	o = msgp.AppendString(o, z.CommitTimestamp)
+	// string "semver"
+	o = append(o, 0xa6, 0x73, 0x65, 0x6d, 0x76, 0x65, 0x72)
+	o = msgp.AppendString(o, z.SemVer)
+	// string "origin_url"
+	o = append(o, 0xaa, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x5f, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.OriginURL)
+	// string "timestamp"
+	o = append(o, 0xa9, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
+	o = msgp.AppendString(o, z.Timestamp)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataBuild) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "commit_sha":
+			z.CommitSha, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "CommitSha")
+				return
+			}
+		case "commit_timestamp":
+			z.CommitTimestamp, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "CommitTimestamp")
+				return
+			}
+		case "semver":
+			z.SemVer, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "SemVer")
+				return
+			}
+		case "origin_url":
+			z.OriginURL, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "OriginURL")
+				return
+			}
+		case "timestamp":
+			z.Timestamp, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Timestamp")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *RootDataBuild) Msgsize() (s int) {
+	s = 1 + 11 + msgp.StringPrefixSize + len(z.CommitSha) + 17 + msgp.StringPrefixSize + len(z.CommitTimestamp) + 7 + msgp.StringPrefixSize + len(z.SemVer) + 11 + msgp.StringPrefixSize + len(z.OriginURL) + 10 + msgp.StringPrefixSize + len(z.Timestamp)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *RootDataFeatures) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 6
+	// string "captcha"
+	o = append(o, 0x86, 0xa7, 0x63, 0x61, 0x70, 0x74, 0x63, 0x68, 0x61)
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Captcha.Enabled)
+	// string "key"
+	o = append(o, 0xa3, 0x6b, 0x65, 0x79)
+	o = msgp.AppendString(o, z.Captcha.Key)
+	// string "email"
+	o = append(o, 0xa5, 0x65, 0x6d, 0x61, 0x69, 0x6c)
+	o = msgp.AppendBool(o, z.Email)
+	// string "invite_only"
+	o = append(o, 0xab, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x5f, 0x6f, 0x6e, 0x6c, 0x79)
+	o = msgp.AppendBool(o, z.InviteOnly)
+	// string "autumn"
+	o = append(o, 0xa6, 0x61, 0x75, 0x74, 0x75, 0x6d, 0x6e)
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Autumn.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.Autumn.URL)
+	// string "january"
+	o = append(o, 0xa7, 0x6a, 0x61, 0x6e, 0x75, 0x61, 0x72, 0x79)
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.January.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.January.URL)
+	// string "voso"
+	o = append(o, 0xa4, 0x76, 0x6f, 0x73, 0x6f)
+	// map header, size 3
+	// string "enabled"
+	o = append(o, 0x83, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Voso.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.Voso.URL)
+	// string "ws"
+	o = append(o, 0xa2, 0x77, 0x73)
+	o = msgp.AppendString(o, z.Voso.WS)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataFeatures) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "captcha":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Captcha")
+				return
+			}
+			for zb0002 > 0 {
+				zb0002--
+				field, bts, err = msgp.ReadMapKeyZC(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Captcha")
+					return
+				}
+				switch msgp.UnsafeString(field) {
+				case "enabled":
+					z.Captcha.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Captcha", "Enabled")
+						return
+					}
+				case "key":
+					z.Captcha.Key, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Captcha", "Key")
+						return
+					}
+				default:
+					bts, err = msgp.Skip(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Captcha")
+						return
+					}
+				}
+			}
+		case "email":
+			z.Email, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Email")
+				return
+			}
+		case "invite_only":
+			z.InviteOnly, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "InviteOnly")
+				return
+			}
+		case "autumn":
+			var zb0003 uint32
+			zb0003, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Autumn")
+				return
+			}
+			for zb0003 > 0 {
+				zb0003--
+				field, bts, err = msgp.ReadMapKeyZC(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Autumn")
+					return
+				}
+				switch msgp.UnsafeString(field) {
+				case "enabled":
+					z.Autumn.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Autumn", "Enabled")
+						return
+					}
+				case "url":
+					z.Autumn.URL, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Autumn", "URL")
+						return
+					}
+				default:
+					bts, err = msgp.Skip(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Autumn")
+						return
+					}
+				}
+			}
+		case "january":
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "January")
+				return
+			}
+			for zb0004 > 0 {
+				zb0004--
+				field, bts, err = msgp.ReadMapKeyZC(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "January")
+					return
+				}
+				switch msgp.UnsafeString(field) {
+				case "enabled":
+					z.January.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "January", "Enabled")
+						return
+					}
+				case "url":
+					z.January.URL, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "January", "URL")
+						return
+					}
+				default:
+					bts, err = msgp.Skip(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "January")
+						return
+					}
+				}
+			}
+		case "voso":
+			var zb0005 uint32
+			zb0005, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Voso")
+				return
+			}
+			for zb0005 > 0 {
+				zb0005--
+				field, bts, err = msgp.ReadMapKeyZC(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Voso")
+					return
+				}
+				switch msgp.UnsafeString(field) {
+				case "enabled":
+					z.Voso.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Voso", "Enabled")
+						return
+					}
+				case "url":
+					z.Voso.URL, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Voso", "URL")
+						return
+					}
+				case "ws":
+					z.Voso.WS, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Voso", "WS")
+						return
+					}
+				default:
+					bts, err = msgp.Skip(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Voso")
+						return
+					}
+				}
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *RootDataFeatures) Msgsize() (s int) {
+	s = 1 + 8 + 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.Captcha.Key) + 6 + msgp.BoolSize + 12 + msgp.BoolSize + 7 + 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.Autumn.URL) + 8 + 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.January.URL) + 5 + 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.Voso.URL) + 3 + msgp.StringPrefixSize + len(z.Voso.WS)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z RootDataFeaturesAutumn) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.URL)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataFeaturesAutumn) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "enabled":
+			z.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Enabled")
+				return
+			}
+		case "url":
+			z.URL, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "URL")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z RootDataFeaturesAutumn) Msgsize() (s int) {
+	s = 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.URL)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z RootDataFeaturesCaptcha) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Enabled)
+	// string "key"
+	o = append(o, 0xa3, 0x6b, 0x65, 0x79)
+	o = msgp.AppendString(o, z.Key)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataFeaturesCaptcha) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "enabled":
+			z.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Enabled")
+				return
+			}
+		case "key":
+			z.Key, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Key")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z RootDataFeaturesCaptcha) Msgsize() (s int) {
+	s = 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.Key)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z RootDataFeaturesJanuary) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "enabled"
+	o = append(o, 0x82, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.URL)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataFeaturesJanuary) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "enabled":
+			z.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Enabled")
+				return
+			}
+		case "url":
+			z.URL, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "URL")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z RootDataFeaturesJanuary) Msgsize() (s int) {
+	s = 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.URL)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z RootDataFeaturesVoso) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 3
+	// string "enabled"
+	o = append(o, 0x83, 0xa7, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Enabled)
+	// string "url"
+	o = append(o, 0xa3, 0x75, 0x72, 0x6c)
+	o = msgp.AppendString(o, z.URL)
+	// string "ws"
+	o = append(o, 0xa2, 0x77, 0x73)
+	o = msgp.AppendString(o, z.WS)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *RootDataFeaturesVoso) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "enabled":
+			z.Enabled, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Enabled")
+				return
+			}
+		case "url":
+			z.URL, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "URL")
+				return
+			}
+		case "ws":
+			z.WS, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "WS")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z RootDataFeaturesVoso) Msgsize() (s int) {
+	s = 1 + 8 + msgp.BoolSize + 4 + msgp.StringPrefixSize + len(z.URL) + 3 + msgp.StringPrefixSize + len(z.WS)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *Server) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 15

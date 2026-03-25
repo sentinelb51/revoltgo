@@ -147,6 +147,7 @@ func (s *Session) addDefaultHandlers() {
 	AddHandler(s, func(s *Session, e *EventReady) {
 		s.State.populate(e)
 		s.selfbot = s.State.self != nil && s.State.self.Bot == nil
+		go HasUpdate()
 	})
 
 	// If state is disabled, none of these handlers are required
@@ -301,6 +302,28 @@ func AddHandler[T any](s *Session, handler func(*Session, T)) {
 
 func (s *Session) IsConnected() bool {
 	return s.WS != nil && s.WS.IsConnected()
+}
+
+func (s *Session) buildOpenQueryParams() url.Values {
+	// See: https://developers.stoat.chat/developers/events/establishing#query-parameters
+	// todo: make into a struct with Encode() method?
+	parameters := url.Values{}
+	parameters.Set("token", s.Token)
+	parameters.Set("format", "msgpack")
+	parameters.Set("version", "1")
+	parameters.Set("reconnect", "false") // undocumented: true omits EventReady
+
+	// See: https://developers.stoat.chat/developers/events/establishing#ready-fields
+	// todo: Session, State should work with none/some of these being enabled
+	parameters.Add("ready", "users")
+	parameters.Add("ready", "servers")
+	parameters.Add("ready", "channels")
+	parameters.Add("ready", "members")
+	parameters.Add("ready", "emojis")
+	parameters.Add("ready", "channel_unreads")
+	parameters.Add("ready", "policy_changes")
+
+	return parameters
 }
 
 // Open determines the Websocket URL and establishes a connection.

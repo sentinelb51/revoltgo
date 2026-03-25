@@ -1,58 +1,68 @@
 /*
-Package revoltgo is a Go wrapper for the Revolt API with low-level bindings
+Package revoltgo is a wrapper for the Revolt API with low-level bindings
 
 	Made by @sentinelb51
 	For support, join our revolt server on the GitHub README file
-
-Sometimes I will leave TO-DO comments for things I want to globally change later.
+	To compile correctly, always run beforehand:
+		/tools/msgp_codegen.py  (ensures all msgp code is generated: revoltgo_msgp_gen.go)
+		/tools/build_hash.py         (updates the COMMIT variable in this file)
 */
 package revoltgo
 
-const VERSION = "v3.0.0-beta.10"
+import (
+	"log"
+	"net/http"
+	"time"
 
-type RootData struct {
-	WS       string           `msg:"ws" json:"ws,omitempty"`
-	App      string           `msg:"app" json:"app,omitempty"`
-	VapID    string           `msg:"vapid" json:"vapid,omitempty"`
-	Revolt   string           `msg:"revolt" json:"revolt,omitempty"`
-	Build    RootDataBuild    `msg:"build" json:"build,omitempty"`
-	Features RootDataFeatures `msg:"features" json:"features,omitempty"`
+	"github.com/goccy/go-json"
+)
+
+const (
+	VERSION        = "v3.0.0-beta.11"
+	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
+)
+
+var COMMIT = "aa9d1330f7c964a7804193c2e495ba824e0832d8"
+
+type GithubRepos struct {
+	Sha     string            `json:"sha"`
+	Commits GithubReposCommit `json:"commit"`
 }
 
-type RootDataFeaturesCaptcha struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	Key     string `msg:"key" json:"key,omitempty"`
+type GithubReposCommit struct {
+	Author    GithubReposCommitUserData `json:"author"`
+	Committer GithubReposCommitUserData `json:"committer"`
+	Message   string                    `json:"message"`
 }
 
-type RootDataFeaturesAutumn struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
+type GithubReposCommitUserData struct {
+	Name string    `json:"name"`
+	Date time.Time `json:"date"`
 }
 
-type RootDataFeaturesJanuary struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-}
+func HasUpdate() bool {
+	response, err := http.Get(MainCommitsURL)
+	if err != nil {
+		log.Printf("Update check failed whilst fetching: %v", err)
+		return false
+	}
 
-type RootDataFeaturesVoso struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-	WS      string `msg:"ws" json:"ws,omitempty"`
-}
+	defer response.Body.Close()
 
-type RootDataFeatures struct {
-	Captcha    RootDataFeaturesCaptcha `msg:"captcha" json:"captcha,omitempty"`
-	Email      bool                    `msg:"email" json:"email,omitempty"`
-	InviteOnly bool                    `msg:"invite_only" json:"invite_only,omitempty"`
-	Autumn     RootDataFeaturesAutumn  `msg:"autumn" json:"autumn,omitempty"`
-	January    RootDataFeaturesJanuary `msg:"january" json:"january,omitempty"`
-	Voso       RootDataFeaturesVoso    `msg:"voso" json:"voso,omitempty"`
-}
+	var repo GithubRepos
+	err = json.NewDecoder(response.Body).Decode(&repo)
+	if err != nil {
+		log.Printf("Update check failed whilst decoding: %v", err)
+		return false
+	}
 
-type RootDataBuild struct {
-	CommitSha       string `msg:"commit_sha" json:"commit_sha,omitempty"`
-	CommitTimestamp string `msg:"commit_timestamp" json:"commit_timestamp,omitempty"`
-	SemVer          string `msg:"semver" json:"semver,omitempty"`
-	OriginURL       string `msg:"origin_url" json:"origin_url,omitempty"`
-	Timestamp       string `msg:"timestamp" json:"timestamp,omitempty"`
+	if repo.Sha != COMMIT {
+		days := time.Now().Sub(repo.Commits.Author.Date).Hours() / 24
+		log.Printf("A new nightly update is available (%.0f days ago)", days)
+		log.Printf("To update, run: go get -u github.com/sentinelb51/revoltgo")
+		return true
+	}
+
+	log.Printf("Update check complete; you are using the latest version of revoltgo")
+	return false
 }
