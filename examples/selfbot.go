@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	data := revoltgo.LoginData{
+	data := revoltgo.LoginParams{
 		Email:    "email here",
 		Password: "password here. consider using environment variables with godotenv",
 	}

@@ -315,7 +315,7 @@ type EventUserPlatformWipe struct {
 type EventUserSettingsUpdate struct {
 	Event `msg:",flatten"`
 	// Update is a tuple of (int, string); update time, and the data in JSON
-	Update map[string]SyncSettingsDataTuple `msg:"update" json:"update,omitempty"`
+	Update map[string]SyncSettingsParamsTuple `msg:"update" json:"update,omitempty"`
 }
 
 type EventWebhookCreate struct {
