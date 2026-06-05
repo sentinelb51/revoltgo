@@ -300,10 +300,12 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
-	handlers, found := ws.session.handlers[eventType]
-	if !found {
-		return
-	}
+	// Copy the slice header under the read lock, then release before invoking the
+	// handlers. Holding the lock during invocation would deadlock if a handler
+	// registers another handler (AddHandler takes the write lock).
+	ws.session.handlersMu.RLock()
+	handlers := ws.session.handlers[eventType]
+	ws.session.handlersMu.RUnlock()
 
 	if len(handlers) == 0 {
 		return

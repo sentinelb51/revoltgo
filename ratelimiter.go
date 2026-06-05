@@ -127,6 +127,7 @@ func (b *ratelimitBucket) delay() time.Duration {
 	defer b.Unlock()
 
 	if b.remaining > 0 {
+		b.remaining--
 		return 0
 	}
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
@@ -18,8 +19,9 @@ const ExpressLoginFile string = ".auth_token"
 
 func New(token string) *Session {
 	session := &Session{
-		Token: token,
-		State: newState(),
+		Token:    token,
+		State:    newState(),
+		handlers: make(map[string][]func(*Session, any)),
 	}
 
 	session.HTTP = newHTTPClient(session)
@@ -95,8 +97,10 @@ type Session struct {
 	State           *State      // State is a central store for all data received from the API
 	CheckForUpdates bool        // Whether to check for updates in the default EventReady handler
 
-	selfbot  bool // Whether the session is a user or bot
-	handlers map[string][]func(*Session, any)
+	selfbot bool // Whether the session is a user or bot
+
+	handlersMu sync.RWMutex
+	handlers   map[string][]func(*Session, any)
 }
 
 // Selfbot returns whether the session is a selfbot
@@ -135,8 +139,12 @@ func (s *Session) addDefaultHandlers() {
 	})
 
 	AddHandler(s, func(s *Session, e *EventBulk) {
+		// Process bulk sub-events synchronously to preserve their order; the
+		// server batches them expecting sequential application. We are already
+		// running inside a goroutine (the outer handle call), so this does not
+		// block the websocket ReadLoop.
 		for _, event := range e.V {
-			go s.WS.handle(event)
+			s.WS.handle(event)
 		}
 	})
 
@@ -255,10 +263,6 @@ func (s *Session) addDefaultHandlers() {
 // It infers the event name from the handler's argument type, removing the need for a type switch.
 func AddHandler[T any](s *Session, handler func(*Session, T)) {
 
-	if s.handlers == nil {
-		s.handlers = make(map[string][]func(*Session, any))
-	}
-
 	// Optimization: Get the type of T without allocating a zero value using *new(T)
 	t := reflect.TypeOf((*T)(nil)).Elem()
 
@@ -294,9 +298,11 @@ func AddHandler[T any](s *Session, handler func(*Session, T)) {
 		log.Fatalf("attempting to bind handler for unsupported event type: %s", t.Name())
 	}
 
+	s.handlersMu.Lock()
 	s.handlers[name] = append(s.handlers[name], func(s *Session, e any) {
 		handler(s, e.(T))
 	})
+	s.handlersMu.Unlock()
 }
 
 func (s *Session) IsConnected() bool {
@@ -314,13 +320,31 @@ func (s *Session) buildOpenQueryParams() url.Values {
 
 	// See: https://developers.stoat.chat/developers/events/establishing#ready-fields
 	// todo: Session, State should work with none/some of these being enabled
-	parameters.Add("ready", "users")
-	parameters.Add("ready", "servers")
-	parameters.Add("ready", "channels")
-	parameters.Add("ready", "members")
-	parameters.Add("ready", "emojis")
-	parameters.Add("ready", "channel_unreads")
-	parameters.Add("ready", "policy_changes")
+
+	if s.State != nil {
+		if s.State.trackUsers {
+			parameters.Add("ready", "users")
+		}
+
+		if s.State.trackServers {
+			parameters.Add("ready", "servers")
+		}
+
+		if s.State.trackChannels {
+			parameters.Add("ready", "channels")
+		}
+
+		if s.State.trackMembers {
+			parameters.Add("ready", "members")
+		}
+
+		if s.State.trackEmojis {
+			parameters.Add("ready", "emojis")
+		}
+
+		parameters.Add("ready", "channel_unreads")
+		parameters.Add("ready", "policy_changes")
+	}
 
 	return parameters
 }
@@ -519,12 +543,12 @@ func (s *Session) ChannelSearch(cID string, query ChannelSearchParams) (messages
 }
 
 func (s *Session) ChannelMessagePin(cID, mID string) (err error) {
-	endpoint := EndpointChannelMessagesPin(cID, mID)
+	endpoint := EndpointChannelMessagePin(cID, mID)
 	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
 }
 
 func (s *Session) ChannelMessageUnpin(cID, mID string) (err error) {
-	endpoint := EndpointChannelMessagesPin(cID, mID)
+	endpoint := EndpointChannelMessagePin(cID, mID)
 	return s.HTTP.Request(http.MethodDelete, endpoint, nil, nil)
 }
 
@@ -1030,13 +1054,15 @@ func (s *Session) Relationships() (relationships []*UserRelationship, err error)
 }
 
 // FriendAdd sends or accepts a friend Request.
+// todo: this might be completely wrong, check: https://developers.stoat.chat/api-reference#tag/relationships/POST/users/friend
+// todo: this POSTS to /user/friend with body "username" (Username and discriminator combo separated by #)
 func (s *Session) FriendAdd(uID string) (user *User, err error) {
 	endpoint := EndpointUserFriend(uID)
 	err = s.HTTP.Request(http.MethodPut, endpoint, nil, &user)
 	return
 }
 
-// FriendDelete removes a friend or declines a friend Request.
+// FriendDelete removes a friend or declines a friend request.
 func (s *Session) FriendDelete(uID string) (user *User, err error) {
 	endpoint := EndpointUserFriend(uID)
 	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, &user)
