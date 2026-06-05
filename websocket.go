@@ -255,7 +255,7 @@ func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 	_ = message.Close()
 
 	if ws.Debug {
-		ws.printDebugData(data)
+		ws.printDebugData(buffer)
 	}
 
 	// Dispatch in separate goroutine; don't block ReadLoop
