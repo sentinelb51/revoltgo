@@ -18,11 +18,13 @@ import (
 )
 
 const (
-	VERSION        = "v3.0.0-beta.11"
+	VERSION        = "v3.0.0-beta.13"
 	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
 )
 
-var COMMIT = "9efbbbc7757793145a054ef44dc6501c1fc8e980"
+/* Logic related to the update checker */
+
+var COMMIT = "eb3aac6eee71e08d755d78a79b1da646e29a37a9"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
@@ -65,4 +67,53 @@ func HasUpdate() bool {
 
 	log.Printf("Update check complete; you are using the latest version of revoltgo")
 	return false
+}
+
+/* Data structures for instance configuration, retrieved when you first contact apiURL */
+
+type InstanceConfig struct {
+	WS       string                 `msg:"ws" json:"ws,omitempty"`
+	App      string                 `msg:"app" json:"app,omitempty"`
+	VapID    string                 `msg:"vapid" json:"vapid,omitempty"`
+	Revolt   string                 `msg:"revolt" json:"revolt,omitempty"`
+	Build    InstanceConfigBuild    `msg:"build" json:"build,omitempty"`
+	Features InstanceConfigFeatures `msg:"features" json:"features,omitempty"`
+}
+
+type InstanceConfigFeaturesCaptcha struct {
+	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
+	Key     string `msg:"key" json:"key,omitempty"`
+}
+
+type InstanceConfigFeaturesAutumn struct {
+	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
+	URL     string `msg:"url" json:"url,omitempty"`
+}
+
+type InstanceConfigFeaturesJanuary struct {
+	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
+	URL     string `msg:"url" json:"url,omitempty"`
+}
+
+type InstanceConfigFeaturesVoso struct {
+	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
+	URL     string `msg:"url" json:"url,omitempty"`
+	WS      string `msg:"ws" json:"ws,omitempty"`
+}
+
+type InstanceConfigFeatures struct {
+	Captcha    InstanceConfigFeaturesCaptcha `msg:"captcha" json:"captcha,omitempty"`
+	Email      bool                          `msg:"email" json:"email,omitempty"`
+	InviteOnly bool                          `msg:"invite_only" json:"invite_only,omitempty"`
+	Autumn     InstanceConfigFeaturesAutumn  `msg:"autumn" json:"autumn,omitempty"`
+	January    InstanceConfigFeaturesJanuary `msg:"january" json:"january,omitempty"`
+	Voso       InstanceConfigFeaturesVoso    `msg:"voso" json:"voso,omitempty"`
+}
+
+type InstanceConfigBuild struct {
+	CommitSha       string `msg:"commit_sha" json:"commit_sha,omitempty"`
+	CommitTimestamp string `msg:"commit_timestamp" json:"commit_timestamp,omitempty"`
+	SemVer          string `msg:"semver" json:"semver,omitempty"`
+	OriginURL       string `msg:"origin_url" json:"origin_url,omitempty"`
+	Timestamp       string `msg:"timestamp" json:"timestamp,omitempty"`
 }

@@ -302,53 +302,6 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 
 /* HTTP data that can be sent to the REST API */
 
-type Root struct {
-	WS       string       `msg:"ws" json:"ws,omitempty"`
-	App      string       `msg:"app" json:"app,omitempty"`
-	VapID    string       `msg:"vapid" json:"vapid,omitempty"`
-	Revolt   string       `msg:"revolt" json:"revolt,omitempty"`
-	Build    RootBuild    `msg:"build" json:"build,omitempty"`
-	Features RootFeatures `msg:"features" json:"features,omitempty"`
-}
-
-type RootFeaturesCaptcha struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	Key     string `msg:"key" json:"key,omitempty"`
-}
-
-type RootFeaturesAutumn struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-}
-
-type RootFeaturesJanuary struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-}
-
-type RootFeaturesVoso struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-	WS      string `msg:"ws" json:"ws,omitempty"`
-}
-
-type RootFeatures struct {
-	Captcha    RootFeaturesCaptcha `msg:"captcha" json:"captcha,omitempty"`
-	Email      bool                `msg:"email" json:"email,omitempty"`
-	InviteOnly bool                `msg:"invite_only" json:"invite_only,omitempty"`
-	Autumn     RootFeaturesAutumn  `msg:"autumn" json:"autumn,omitempty"`
-	January    RootFeaturesJanuary `msg:"january" json:"january,omitempty"`
-	Voso       RootFeaturesVoso    `msg:"voso" json:"voso,omitempty"`
-}
-
-type RootBuild struct {
-	CommitSha       string `msg:"commit_sha" json:"commit_sha,omitempty"`
-	CommitTimestamp string `msg:"commit_timestamp" json:"commit_timestamp,omitempty"`
-	SemVer          string `msg:"semver" json:"semver,omitempty"`
-	OriginURL       string `msg:"origin_url" json:"origin_url,omitempty"`
-	Timestamp       string `msg:"timestamp" json:"timestamp,omitempty"`
-}
-
 type LoginParams struct {
 	Email        string `msg:"email" json:"email,omitempty"`
 	Password     string `msg:"password" json:"password,omitempty"`

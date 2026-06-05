@@ -338,15 +338,15 @@ func (s *Session) Open() (err error) {
 	}
 
 	// Determine the Websocket URL
-	var query Root
-	err = s.HTTP.Request(http.MethodGet, apiURL, nil, &query)
+	var config InstanceConfig
+	err = s.HTTP.Request(http.MethodGet, apiURL, nil, &config)
 	if err != nil {
 		return
 	}
 
-	log.Printf("API version detected: %s\n", query.Revolt)
+	log.Printf("API version detected: %s\n", config.Revolt)
 
-	wsURL, err := url.Parse(query.WS)
+	wsURL, err := url.Parse(config.WS)
 	if err != nil {
 		return
 	}
