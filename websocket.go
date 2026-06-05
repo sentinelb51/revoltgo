@@ -304,8 +304,8 @@ func (ws *Websocket) handle(raw []byte) {
 	// handlers. Holding the lock during invocation would deadlock if a handler
 	// registers another handler (AddHandler takes the write lock).
 	ws.session.handlersMu.RLock()
-	defaultHandler := ws.session.defaultHandlers[eventType]
-	handlers := ws.session.handlers[eventType]
+	defaultHandler := ws.session.defaultHandlers[string(eventType)]
+	handlers := ws.session.handlers[string(eventType)]
 	ws.session.handlersMu.RUnlock()
 
 	// No one is listening for this event; drop it before paying the decode cost.
@@ -313,9 +313,9 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
-	constructor, found := eventConstructors[eventType]
+	constructor, found := eventConstructors[string(eventType)]
 	if !found {
-		log.Println("Unknown event type:", eventType)
+		log.Println("Unknown event type:", string(eventType))
 		return
 	}
 

@@ -7,7 +7,10 @@ import (
 
 //go:generate msgp -tests=false -io=false
 
-const jsonSkipAheadKeyType = len(`{"type":"`)
+const (
+	jsonSkipAheadKeyType = len(`{"type":"`)
+	msgpTypeValueOffset  = len(`"type"`)
+)
 
 // eventTypeFromJSON uses heuristics to quickly extract the event type from JSON data
 func eventTypeFromJSON(data []byte) (string, error) {
@@ -21,24 +24,23 @@ func eventTypeFromJSON(data []byte) (string, error) {
 }
 
 // eventTypeFromMSGP uses heuristics to quickly extract the event type from MessagePack data.
-func eventTypeFromMSGP(data []byte) (string, error) {
+func eventTypeFromMSGP(data []byte) ([]byte, error) {
+	if len(data) <= msgpTypeValueOffset {
+		return nil, fmt.Errorf("data too short: %d bytes", len(data))
+	}
 
-	start := 6 // skip map header and "type" key
-	header := data[start]
-
+	header := data[msgpTypeValueOffset]
 	if header < 0xA0 || header > 0xBF {
-		return "", fmt.Errorf("expected fixstr, got byte 0x%X", header)
+		return nil, fmt.Errorf("expected fixstr, got byte 0x%X", header)
 	}
 
-	start++
-	size := int(header & 0x1F)
-	end := start + size
-
+	start := msgpTypeValueOffset + 1
+	end := start + int(header&0x1F)
 	if end > len(data) {
-		return "", fmt.Errorf("given size %d exceeds data length %d", size, len(data))
+		return nil, fmt.Errorf("size %d exceeds data length %d", end-start, len(data))
 	}
 
-	return string(data[start:end]), nil
+	return data[start:end], nil
 }
 
 type Event struct {
