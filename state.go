@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"iter"
 	"log"
 	"slices"
 	"sync"
@@ -179,6 +180,11 @@ func (s *State) Channel(id string) *Channel {
 	return s.channels[id]
 }
 
+// Members returns a snapshot slice of a server's members. The members are
+// copied into a fresh slice while locked, then the lock is released, so you are
+// free to do anything inside your loop afterwards, including calling other State
+// methods. The trade-off is one slice allocation per call. If your loop only
+// needs a quick, read-only pass, prefer MembersSeq to skip that allocation.
 func (s *State) Members(sID string) []*ServerMember {
 	s.membersMu.RLock()
 	defer s.membersMu.RUnlock()
@@ -203,6 +209,44 @@ func (s *State) Member(uID, sID string) *ServerMember {
 	}
 
 	return members[uID]
+}
+
+// MemberCount is a helper function to avoid costly len(s.Members(sID)) calls; avoid allocating a whole slice just to count
+func (s *State) MemberCount(sID string) int {
+	s.membersMu.RLock()
+	defer s.membersMu.RUnlock()
+	return len(s.members[sID])
+}
+
+// MembersSeq iterates over a server's members without allocating a slice, for
+// use with a for-range loop:
+//
+//	for member := range session.State.MembersSeq(serverID) {
+//		// ...
+//	}
+//
+// Unlike Members, no snapshot is taken: the read lock is held for the entire
+// loop. That makes it cheaper, but imposes two rules on the loop body:
+//
+//  1. Do NOT call any other State method (Member, Members, MemberCount, or
+//     anything that joins/leaves/updates a member) from inside the loop. The
+//     lock is already held, and trying to take it again can freeze your program.
+//  2. Keep the body quick. While it runs, incoming member updates from the
+//     gateway are blocked, since they cannot take the lock until you finish.
+//
+// If you need to do either of those, use Members instead and loop over its
+// returned slice. Returning early from the loop (break/return) is fine.
+func (s *State) MembersSeq(sID string) iter.Seq[*ServerMember] {
+	return func(yield func(*ServerMember) bool) {
+		s.membersMu.RLock()
+		defer s.membersMu.RUnlock()
+
+		for _, member := range s.members[sID] {
+			if !yield(member) {
+				return
+			}
+		}
+	}
 }
 
 func (s *State) Emoji(id string) *Emoji {
