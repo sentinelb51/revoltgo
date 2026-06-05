@@ -5,10 +5,13 @@ import (
 	"log"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/oklog/ulid/v2"
 )
+
+// todo: add more methods like ServerCount, ServerSeq, ChannelCount?
 
 // stateServerMembers is an alias to make the code more readable
 type stateServerMembers map[string]*ServerMember
@@ -58,7 +61,7 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 }
 
 type State struct {
-	self *User // The current user, also present in users
+	self atomic.Pointer[User] // The current user, also present in users
 
 	/* Caches */
 	users    map[string]*User    // All users you have a relation with.
@@ -66,7 +69,6 @@ type State struct {
 	channels map[string]*Channel // All channels you have access to.
 	members  stateMembers        // Maps Server.ID to Members
 	emojis   map[string]*Emoji   // All emojis you have access to.
-	webhooks map[string]*Webhook
 
 	/* Mutexes for caches */
 	usersMu    sync.RWMutex
@@ -74,7 +76,6 @@ type State struct {
 	channelsMu sync.RWMutex
 	membersMu  sync.RWMutex
 	emojisMu   sync.RWMutex
-	webhooksMu sync.RWMutex
 
 	/* tracking options */
 
@@ -83,14 +84,13 @@ type State struct {
 	trackChannels bool
 	trackMembers  bool
 	trackEmojis   bool
-	trackWebhooks bool
 
 	// trackAPICalls additionally updates the state from API calls
 	// This concept may future-proof against any de-syncs, but may use more CPU time
 	trackAPICalls bool
 
 	// trackBulkAPICalls will update the state from bulk API calls
-	// This option activates internal State.addServerMembersAndUsers and State.addWebhooks functions
+	// This option activates internal State.addServerMembersAndUsers methods
 	trackBulkAPICalls bool
 }
 
@@ -99,7 +99,12 @@ type State struct {
 */
 
 func (s *State) Self() *User {
-	return s.self
+	return s.self.Load()
+}
+
+// setSelf is meant to be used when we can't rely on the READY event and must fetch ourselves from the API
+func (s *State) setSelf(user *User) {
+	s.self.Store(user)
 }
 
 func (s *State) TrackUsers() bool {
@@ -120,10 +125,6 @@ func (s *State) TrackMembers() bool {
 
 func (s *State) TrackEmojis() bool {
 	return s.trackEmojis
-}
-
-func (s *State) TrackWebhooks() bool {
-	return s.trackWebhooks
 }
 
 func (s *State) TrackAPICalls() bool {
@@ -256,13 +257,6 @@ func (s *State) Emoji(id string) *Emoji {
 	return s.emojis[id]
 }
 
-func (s *State) Webhook(id string) *Webhook {
-	s.webhooksMu.RLock()
-	defer s.webhooksMu.RUnlock()
-
-	return s.webhooks[id]
-}
-
 /*
 	API call updates
 	Used when (State.trackAPICalls or State.trackBulkAPICalls) is enabled
@@ -358,22 +352,49 @@ func (s *State) addEmoji(emoji *Emoji) {
 	s.emojis[emoji.ID] = emoji
 }
 
-func (s *State) addWebhooks(webhook []*Webhook) {
+// StateConfig controls which entity caches the State maintains. Pass it to
+// Session.Open. The zero value tracks nothing; start from DefaultStateConfig and
+// disable selectively for the usual behaviour. Tracking is immutable once Open
+// has connected.
+type StateConfig struct {
+	TrackUsers    bool
+	TrackServers  bool
+	TrackChannels bool
+	TrackMembers  bool
+	TrackEmojis   bool
 
-	if !s.trackBulkAPICalls || webhook == nil {
-		return
-	}
+	// TrackAPICalls additionally updates the state from single API calls
+	TrackAPICalls bool
 
-	s.webhooksMu.Lock()
-	defer s.webhooksMu.Unlock()
+	// TrackBulkAPICalls additionally updates the state from bulk API calls
+	TrackBulkAPICalls bool
+}
 
-	for _, w := range webhook {
-		s.webhooks[w.ID] = w
+// DefaultStateConfig returns a StateConfig that tracks everything.
+func DefaultStateConfig() StateConfig {
+	return StateConfig{
+		TrackUsers:        true,
+		TrackServers:      true,
+		TrackChannels:     true,
+		TrackMembers:      true,
+		TrackEmojis:       true,
+		TrackAPICalls:     true,
+		TrackBulkAPICalls: true,
 	}
 }
 
+func (s *State) applyConfig(c StateConfig) {
+	s.trackUsers = c.TrackUsers
+	s.trackServers = c.TrackServers
+	s.trackChannels = c.TrackChannels
+	s.trackMembers = c.TrackMembers
+	s.trackEmojis = c.TrackEmojis
+	s.trackAPICalls = c.TrackAPICalls
+	s.trackBulkAPICalls = c.TrackBulkAPICalls
+}
+
 func newState() *State {
-	return &State{
+	s := &State{
 
 		// We pre-alloc incase someone uses the library in an HTTP-before-READY way
 		users:    make(map[string]*User),
@@ -381,27 +402,25 @@ func newState() *State {
 		channels: make(map[string]*Channel),
 		members:  make(stateMembers),
 		emojis:   make(map[string]*Emoji),
-		webhooks: make(map[string]*Webhook),
-
-		trackUsers:        true,
-		trackServers:      true,
-		trackChannels:     true,
-		trackMembers:      true,
-		trackEmojis:       true,
-		trackAPICalls:     true,
-		trackBulkAPICalls: true,
-		trackWebhooks:     false,
 	}
+
+	s.applyConfig(DefaultStateConfig())
+	return s
 }
 
 // populate populates the state with the data from the ready event.
 // It will overwrite any existing data in the state.
 func (s *State) populate(ready *EventReady) {
-	// The last user in the ready event is the current user
-	s.self = ready.Users[len(ready.Users)-1]
+
+	if len(ready.Users) > 0 {
+		// The last user in the ready event is the current user
+		self := ready.Users[len(ready.Users)-1]
+		s.self.Store(self)
+	}
 
 	/* Populate the caches */
 	if s.trackUsers {
+
 		s.usersMu.Lock()
 		s.users = make(map[string]*User, len(ready.Users))
 		for _, user := range ready.Users {
@@ -571,19 +590,20 @@ func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 		Note: this is not the same as the server being deleted; server still exists, but YOU are not in it.
 	*/
 
-	if data.User == s.Self().ID {
+	self := s.Self()
+	if self != nil && data.User == self.ID {
 		s.deleteServer(&EventServerDelete{ID: data.ID})
+		return
+	}
+
+	if !s.trackMembers {
 		return
 	}
 
 	s.membersMu.Lock()
 	defer s.membersMu.Unlock()
 
-	if !s.trackMembers {
-		return
-	}
-
-	delete(s.members, data.ID)
+	delete(s.members[data.ID], data.User)
 }
 
 func (s *State) updateServerMember(event *EventServerMemberUpdate) {
@@ -753,7 +773,7 @@ func (s *State) createServer(event *EventServerCreate) {
 	if s.trackMembers {
 		s.membersMu.Lock()
 		member := &ServerMember{
-			ID: MemberCompositeID{User: s.self.ID, Server: event.ID},
+			ID: MemberCompositeID{User: s.self.Load().ID, Server: event.ID},
 		}
 
 		if id, err := ulid.Parse(event.Server.ID); err == nil {
@@ -808,21 +828,17 @@ func (s *State) updateServer(event *EventServerUpdate) {
 
 func (s *State) deleteServer(event *EventServerDelete) {
 
-	if !s.trackServers {
-		return
+	if s.trackServers {
+		s.serversMu.Lock()
+		delete(s.servers, event.ID)
+		s.serversMu.Unlock()
 	}
 
-	s.serversMu.Lock()
-	delete(s.servers, event.ID)
-	s.serversMu.Unlock()
-
-	if !s.trackMembers {
-		return
+	if s.trackMembers {
+		s.membersMu.Lock()
+		delete(s.members, event.ID)
+		s.membersMu.Unlock()
 	}
-
-	s.membersMu.Lock()
-	delete(s.members, event.ID)
-	s.membersMu.Unlock()
 }
 
 func (s *State) updateUser(event *EventUserUpdate) {
@@ -867,47 +883,4 @@ func (s *State) deleteEmoji(event *EventEmojiDelete) {
 	defer s.emojisMu.Unlock()
 
 	delete(s.emojis, event.ID)
-}
-
-func (s *State) createWebhook(event *EventWebhookCreate) {
-
-	if !s.trackWebhooks {
-		return
-	}
-
-	s.webhooksMu.Lock()
-	defer s.webhooksMu.Unlock()
-
-	s.webhooks[event.ID] = &event.Webhook
-}
-
-func (s *State) updateWebhook(event *EventWebhookUpdate) {
-
-	if !s.trackWebhooks {
-		return
-	}
-
-	s.webhooksMu.Lock()
-	defer s.webhooksMu.Unlock()
-
-	webhook := s.webhooks[event.ID]
-	if webhook == nil {
-		log.Printf("unknown webhook update %s\n", event.ID)
-		return
-	}
-
-	webhook.update(event.Data)
-	webhook.clear(event.Remove) // todo: does WebhookUpdate still call clear "Remove" in the API WS?
-}
-
-func (s *State) deleteWebhook(event *EventWebhookDelete) {
-
-	if !s.trackWebhooks {
-		return
-	}
-
-	s.webhooksMu.Lock()
-	defer s.webhooksMu.Unlock()
-
-	delete(s.webhooks, event.ID)
 }

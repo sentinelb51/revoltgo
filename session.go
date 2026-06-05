@@ -19,13 +19,13 @@ const ExpressLoginFile string = ".auth_token"
 
 func New(token string) *Session {
 	session := &Session{
-		Token:    token,
-		State:    newState(),
-		handlers: make(map[string][]func(*Session, any)),
+		Token:           token,
+		State:           newState(),
+		defaultHandlers: make(map[string]func(*Session, any)),
+		handlers:        make(map[string][]func(*Session, any)),
 	}
 
 	session.HTTP = newHTTPClient(session)
-	session.addDefaultHandlers()
 
 	// There may be some validation/boundary checks in the future.
 
@@ -100,7 +100,11 @@ type Session struct {
 	selfbot bool // Whether the session is a user or bot
 
 	handlersMu sync.RWMutex
-	handlers   map[string][]func(*Session, any)
+	// defaultHandlers are the library's own state-maintaining handlers; they run
+	// before user handlers so user code observes up-to-date state. There is at
+	// most one per event type, so a plain func (not a slice) is stored.
+	defaultHandlers map[string]func(*Session, any)
+	handlers        map[string][]func(*Session, any)
 }
 
 // Selfbot returns whether the session is a selfbot
@@ -108,12 +112,19 @@ func (s *Session) Selfbot() bool {
 	return s.selfbot
 }
 
-// addDefaultHandlers adds mission-critical handlers to keep the library working
-// todo: redo this; it's not dynamic
+// addDefaultHandlers registers the library's own handlers. It is called from Open once tracking is known:
+// state handlers are only registered for enabled trackers, so events for disabled trackers are dropped before decoding
+// (see Websocket.handle). These run before user handlers, so user code sees up-to-date state.
 func (s *Session) addDefaultHandlers() {
 
+	// Reset, so that a re-tried Open re-registers from scratch without leaving
+	// stale handlers for trackers disabled on a second attempt.
+	s.handlersMu.Lock()
+	s.defaultHandlers = make(map[string]func(*Session, any))
+	s.handlersMu.Unlock()
+
 	// The Websocket's first response if authentication was unsuccessful
-	AddHandler(s, func(s *Session, e *EventError) {
+	addDefaultHandler(s, func(s *Session, e *EventError) {
 
 		// todo: future logic should maybe invalidate ExpressLoginFile file if present
 
@@ -133,12 +144,12 @@ func (s *Session) addDefaultHandlers() {
 		_ = s.WS.WriteClose()
 	})
 
-	AddHandler(s, func(s *Session, e *EventLogout) {
+	addDefaultHandler(s, func(s *Session, e *EventLogout) {
 		log.Println("Logout event received; closing session")
 		_ = s.WS.WriteClose()
 	})
 
-	AddHandler(s, func(s *Session, e *EventBulk) {
+	addDefaultHandler(s, func(s *Session, e *EventBulk) {
 		// Process bulk sub-events synchronously to preserve their order; the
 		// server batches them expecting sequential application. We are already
 		// running inside a goroutine (the outer handle call), so this does not
@@ -148,120 +159,118 @@ func (s *Session) addDefaultHandlers() {
 		}
 	})
 
-	AddHandler(s, func(s *Session, e *EventReady) {
+	addDefaultHandler(s, func(s *Session, e *EventReady) {
 		s.State.populate(e)
-		s.selfbot = s.State.self != nil && s.State.self.Bot == nil
+
+		if s.State.Self() == nil {
+			self, err := s.User("@me")
+			if err == nil {
+				log.Printf("Identified self via API call\n")
+				s.State.setSelf(self)
+			} else {
+				log.Printf("Failed to identify self: %s\n", err)
+			}
+		}
+
+		self := s.State.Self()
+		s.selfbot = self != nil && self.Bot == nil
 
 		if s.CheckForUpdates {
 			go HasUpdate()
 		}
 	})
 
-	// If state is disabled, none of these handlers are required
-	if s.State == nil {
-		return
-	}
-
 	if s.State.TrackUsers() {
-		AddHandler(s, func(s *Session, e *EventUserPlatformWipe) {
+		addDefaultHandler(s, func(s *Session, e *EventUserPlatformWipe) {
 			s.State.platformWipe(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventUserUpdate) {
+			s.State.updateUser(e)
 		})
 	}
 
 	if s.State.TrackChannels() {
-		AddHandler(s, func(s *Session, e *EventChannelCreate) {
+		addDefaultHandler(s, func(s *Session, e *EventChannelCreate) {
 			s.State.createChannel(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventChannelDelete) {
+		addDefaultHandler(s, func(s *Session, e *EventChannelDelete) {
 			s.State.deleteChannel(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventChannelGroupJoin) {
+		addDefaultHandler(s, func(s *Session, e *EventChannelUpdate) {
+			s.State.updateChannel(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventChannelGroupJoin) {
 			s.State.addGroupParticipant(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventChannelGroupLeave) {
+		addDefaultHandler(s, func(s *Session, e *EventChannelGroupLeave) {
 			s.State.removeGroupParticipant(e)
 		})
 	}
 
 	if s.State.TrackServers() {
-		AddHandler(s, func(s *Session, e *EventServerCreate) {
+		addDefaultHandler(s, func(s *Session, e *EventServerCreate) {
 			s.State.createServer(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventServerDelete) {
+		addDefaultHandler(s, func(s *Session, e *EventServerUpdate) {
+			s.State.updateServer(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventServerDelete) {
 			s.State.deleteServer(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventServerRoleDelete) {
+		addDefaultHandler(s, func(s *Session, e *EventServerRoleUpdate) {
+			s.State.updateServerRole(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventServerRoleDelete) {
 			s.State.deleteServerRole(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventServerRoleRanksUpdate) {
+		addDefaultHandler(s, func(s *Session, e *EventServerRoleRanksUpdate) {
 			s.State.updateServerRoleRanks(e)
 		})
 	}
 
 	if s.State.TrackMembers() {
-		AddHandler(s, func(s *Session, e *EventServerMemberJoin) {
+		addDefaultHandler(s, func(s *Session, e *EventServerMemberJoin) {
 			s.State.createServerMember(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventServerMemberLeave) {
+		addDefaultHandler(s, func(s *Session, e *EventServerMemberUpdate) {
+			s.State.updateServerMember(e)
+		})
+	}
+
+	// A member leaving is also how we learn *we* left a server, which must evict
+	// it from the server cache even when members aren't tracked. deleteServerMember
+	// self-guards each branch on its tracking flag.
+	if s.State.TrackServers() || s.State.TrackMembers() {
+		addDefaultHandler(s, func(s *Session, e *EventServerMemberLeave) {
 			s.State.deleteServerMember(e)
 		})
 	}
 
 	if s.State.TrackEmojis() {
-		AddHandler(s, func(s *Session, e *EventEmojiCreate) {
+		addDefaultHandler(s, func(s *Session, e *EventEmojiCreate) {
 			s.State.createEmoji(e)
 		})
 
-		AddHandler(s, func(s *Session, e *EventEmojiDelete) {
+		addDefaultHandler(s, func(s *Session, e *EventEmojiDelete) {
 			s.State.deleteEmoji(e)
 		})
 	}
-
-	if s.State.TrackWebhooks() {
-		AddHandler(s, func(s *Session, e *EventWebhookCreate) {
-			s.State.createWebhook(e)
-		})
-
-		AddHandler(s, func(s *Session, e *EventWebhookDelete) {
-			s.State.deleteWebhook(e)
-		})
-	}
-
-	AddHandler(s, func(s *Session, e *EventServerUpdate) {
-		s.State.updateServer(e)
-	})
-
-	AddHandler(s, func(s *Session, e *EventServerMemberUpdate) {
-		s.State.updateServerMember(e)
-	})
-
-	AddHandler(s, func(s *Session, e *EventChannelUpdate) {
-		s.State.updateChannel(e)
-	})
-
-	AddHandler(s, func(s *Session, e *EventUserUpdate) {
-		s.State.updateUser(e)
-	})
-
-	AddHandler(s, func(s *Session, e *EventServerRoleUpdate) {
-		s.State.updateServerRole(e)
-	})
-
-	AddHandler(s, func(s *Session, e *EventWebhookUpdate) {
-		s.State.updateWebhook(e)
-	})
 }
 
-// AddHandler registers an event handler using generics.
-// It infers the event name from the handler's argument type, removing the need for a type switch.
-func AddHandler[T any](s *Session, handler func(*Session, T)) {
+// handlerName derives the event name (e.g. "Message") from a handler's event
+// struct type T, validating the struct shape. It fatals on misuse.
+func handlerName[T any]() string {
 
 	// Optimization: Get the type of T without allocating a zero value using *new(T)
 	t := reflect.TypeOf((*T)(nil)).Elem()
@@ -298,10 +307,38 @@ func AddHandler[T any](s *Session, handler func(*Session, T)) {
 		log.Fatalf("attempting to bind handler for unsupported event type: %s", t.Name())
 	}
 
+	return name
+}
+
+// AddHandler registers an event handler using generics.
+// It infers the event name from the handler's argument type, removing the need for a type switch.
+func AddHandler[T any](s *Session, handler func(*Session, T)) {
+	name := handlerName[T]()
+
 	s.handlersMu.Lock()
 	s.handlers[name] = append(s.handlers[name], func(s *Session, e any) {
 		handler(s, e.(T))
 	})
+	s.handlersMu.Unlock()
+}
+
+// addDefaultHandler registers a library handler, which runs before user handlers.
+// At most one default handler exists per event type, so it is stored directly.
+func addDefaultHandler[T any](s *Session, handler func(*Session, T)) {
+	name := handlerName[T]()
+
+	s.handlersMu.Lock()
+
+	// Catch a development error if we ever overwrite an existing handler; it probably wasn't intentional
+	_, exists := s.defaultHandlers[name]
+	if exists {
+		log.Printf("addDefaultHandler is overwriting for: %T", handler)
+	}
+
+	s.defaultHandlers[name] = func(s *Session, e any) {
+		handler(s, e.(T))
+	}
+
 	s.handlersMu.Unlock()
 }
 
@@ -319,39 +356,40 @@ func (s *Session) buildOpenQueryParams() url.Values {
 	parameters.Set("reconnect", "false") // undocumented: true omits EventReady
 
 	// See: https://developers.stoat.chat/developers/events/establishing#ready-fields
-	// todo: Session, State should work with none/some of these being enabled
 
-	if s.State != nil {
-		if s.State.trackUsers {
-			parameters.Add("ready", "users")
-		}
-
-		if s.State.trackServers {
-			parameters.Add("ready", "servers")
-		}
-
-		if s.State.trackChannels {
-			parameters.Add("ready", "channels")
-		}
-
-		if s.State.trackMembers {
-			parameters.Add("ready", "members")
-		}
-
-		if s.State.trackEmojis {
-			parameters.Add("ready", "emojis")
-		}
-
-		parameters.Add("ready", "channel_unreads")
-		parameters.Add("ready", "policy_changes")
+	if s.State.trackUsers {
+		parameters.Add("ready", "users")
 	}
+
+	if s.State.trackServers {
+		parameters.Add("ready", "servers")
+	}
+
+	if s.State.trackChannels {
+		parameters.Add("ready", "channels")
+	}
+
+	if s.State.trackMembers {
+		parameters.Add("ready", "members")
+	}
+
+	if s.State.trackEmojis {
+		parameters.Add("ready", "emojis")
+	}
+
+	parameters.Add("ready", "channel_unreads")
+	parameters.Add("ready", "policy_changes")
 
 	return parameters
 }
 
 // Open determines the Websocket URL and establishes a connection.
 // It also detects if you are logged in as a user or a bot.
-func (s *Session) Open() (err error) {
+//
+// An optional StateConfig defines what the State should track; if omitted,
+// DefaultStateConfig is used. Tracking is fixed for the lifetime of the
+// connection.
+func (s *Session) Open(config ...StateConfig) (err error) {
 
 	if s.IsConnected() {
 		return fmt.Errorf("already connected")
@@ -361,16 +399,26 @@ func (s *Session) Open() (err error) {
 		return fmt.Errorf("no token provided")
 	}
 
+	cfg := DefaultStateConfig()
+	if len(config) > 0 {
+		cfg = config[0]
+	}
+	s.State.applyConfig(cfg)
+
+	// Register default handlers now that tracking is known, so disabled trackers
+	// register nothing and their events are dropped before decoding.
+	s.addDefaultHandlers()
+
 	// Determine the Websocket URL
-	var config InstanceConfig
-	err = s.HTTP.Request(http.MethodGet, apiURL, nil, &config)
+	var instance InstanceConfig
+	err = s.HTTP.Request(http.MethodGet, apiURL, nil, &instance)
 	if err != nil {
 		return
 	}
 
-	log.Printf("API version detected: %s\n", config.Revolt)
+	log.Printf("API version detected: %s\n", instance.Revolt)
 
-	wsURL, err := url.Parse(config.WS)
+	wsURL, err := url.Parse(instance.WS)
 	if err != nil {
 		return
 	}
@@ -561,7 +609,6 @@ func (s *Session) ChannelEndTyping(cID string) (err error) {
 func (s *Session) ChannelWebhooks(cID string) (webhooks []*Webhook, err error) {
 	endpoint := EndpointChannelWebhooks(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &webhooks)
-	s.State.addWebhooks(webhooks)
 	return
 }
 
