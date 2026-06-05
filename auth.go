@@ -6,16 +6,16 @@ type AuthMFAMethod string
 
 const (
 	AuthMFAMethodPassword AuthMFAMethod = "Password"
-	AithMFAMethodRecovery AuthMFAMethod = "Recovery"
+	AuthMFAMethodRecovery AuthMFAMethod = "Recovery"
 	AuthMFAMethodTOTP     AuthMFAMethod = "Totp"
 )
 
 type AuthMFAResponse struct {
-	EmailOtp        bool `msg:"email_otp" json:"email_otp"`
+	EmailOTP        bool `msg:"email_otp" json:"email_otp"`
 	TrustedHandover bool `msg:"trusted_handover" json:"trusted_handover"`
-	EmailMfa        bool `msg:"email_mfa" json:"email_mfa"`
-	TotpMfa         bool `msg:"totp_mfa" json:"totp_mfa"`
-	SecurityKeyMfa  bool `msg:"security_key_mfa" json:"security_key_mfa"`
+	EmailMFA        bool `msg:"email_mfa" json:"email_mfa"`
+	TotpMFA         bool `msg:"totp_mfa" json:"totp_mfa"`
+	SecurityKeyMFA  bool `msg:"security_key_mfa" json:"security_key_mfa"`
 	RecoveryActive  bool `msg:"recovery_active" json:"recovery_active"`
 }
 
