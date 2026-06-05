@@ -312,6 +312,7 @@ func (ws *Websocket) handle(raw []byte) {
 	constructor, found := eventConstructors[eventType]
 	if !found {
 		log.Println("Unknown event type:", eventType)
+		return
 	}
 
 	event := constructor()
