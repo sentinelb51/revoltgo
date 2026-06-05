@@ -9,12 +9,13 @@ import (
 	This file contains all the endpoints used in this library for the Revolt API.
 	The naming scheme of the constants and methods has rules:
 
+ 	Use plural/singular forms to somewhat reflect the relationship between resources:
+	 - For example, "EndpointChannelAckMessage" relates to a single Channel and a single Message object
+	 - Conversely, "URLChannelsMessages" relates to multiple messages, but inherits "Channels" due to the hierarchy
+
 	Constants:
 	 - Prefix with "URL"
 	 - Follow a hierarchical structure that build on top of each other
-	 - Use plural/singular forms to somewhat reflect the relationship between resources;
-		- For example, "EndpointChannelAckMessage" relates to a single Channel and a single Message object
-		- Conversely, "URLChannelsMessages" relates to multiple messages, but inherits "Channels" due to the hierarchy
 
 	Methods:
 	 - Prefix with "Endpoint"
@@ -183,6 +184,7 @@ func EndpointUserFlags(uID string) string {
 	return fmt.Sprintf(URLUserFlags, uID)
 }
 
+// todo: check FriendAdd method
 func EndpointUserFriend(uID string) string {
 
 	if uID == "" {
@@ -272,8 +274,8 @@ func EndpointChannelAckMessage(cID, mID string) string {
 	return fmt.Sprintf(URLChannelAckMessage, cID, mID)
 }
 
-func EndpointChannelRecipients(cID, mID string) string {
-	return fmt.Sprintf(URLChannelRecipient, cID, mID)
+func EndpointChannelRecipients(cID, uID string) string {
+	return fmt.Sprintf(URLChannelRecipient, cID, uID)
 }
 
 func EndpointServerPermissions(sID, rID string) string {
@@ -296,7 +298,7 @@ func EndpointChannelMessage(cID, mID string) string {
 	return fmt.Sprintf(URLChannelMessage, cID, mID)
 }
 
-func EndpointChannelMessagesPin(cID, mID string) string {
+func EndpointChannelMessagePin(cID, mID string) string {
 	return fmt.Sprintf(URLChannelMessagePin, cID, mID)
 }
 

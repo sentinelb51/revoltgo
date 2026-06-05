@@ -52,6 +52,11 @@ func (r *Ratelimiter) Close() {
 	close(r.stop)
 }
 
+// https://developers.stoat.chat/developers/api/ratelimits
+// 		 /channels	15
+// POST	/channels/:id/messages	10
+// todo: check if ratelimits for /channels/:id/messages is per channel ID or global?
+
 func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
 
 	// Strip query params without allocating memory (no string split)
@@ -59,7 +64,7 @@ func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
 		endpoint = endpoint[:index]
 	}
 
-	key := fmt.Sprintf("%s:%s", method, endpoint)
+	key := method + ":" + endpoint
 
 	// Optimistic read-lock (cheap)
 	r.mu.RLock()
@@ -154,7 +159,7 @@ func (r *Ratelimiter) clean() {
 	now := time.Now()
 	for key, bucket := range r.endpoints {
 
-		// Expired if bucket has received headers (not zero) or now is after resetAfter
+		// Expired if bucket has received headers (not zero) and now is after resetAfter
 		bucket.Lock()
 		isExpired := !bucket.resetAfter.IsZero() && now.After(bucket.resetAfter)
 		bucket.Unlock()
