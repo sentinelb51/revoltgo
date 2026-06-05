@@ -148,7 +148,7 @@ func (ws *Websocket) reconnectLoop() {
 	}
 }
 
-func (ws *Websocket) heartbeatLoop() {
+func (ws *Websocket) heartbeatLoop(original *gws.Conn) {
 	ticker := time.NewTicker(ws.HeartbeatInterval)
 	defer ticker.Stop()
 
@@ -158,20 +158,21 @@ func (ws *Websocket) heartbeatLoop() {
 			return
 		case <-ticker.C:
 			ws.mu.RLock()
-			conn := ws.conn
+			current := ws.conn
 			ws.mu.RUnlock()
 
-			if conn == nil {
-				continue
+			// Original connection died, kill this goroutine.
+			if current != original {
+				return
 			}
 
 			count := atomic.LoadInt64(&ws.heartbeatCount)
 			payload := make([]byte, 8)
 			binary.LittleEndian.PutUint64(payload, uint64(count))
 
-			if err := conn.WritePing(payload); err != nil {
+			if err := current.WritePing(payload); err != nil {
 				log.Printf("Heartbeat failed: %s\n", err)
-				_ = conn.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
+				_ = current.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
 				return
 			}
 
@@ -190,7 +191,7 @@ func (ws *Websocket) OnOpen(socket *gws.Conn) {
 		log.Fatalf("Set deadline failed: %s\n", err)
 	}
 
-	go ws.heartbeatLoop()
+	go ws.heartbeatLoop(socket)
 }
 
 func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
@@ -208,8 +209,7 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 		gws.CloseNormalClosure is 1000
 	*/
 
-	var closeErr *gws.CloseError
-	if errors.As(err, &closeErr) {
+	if closeErr, ok := errors.AsType[*gws.CloseError](err); ok {
 		log.Printf("Connection closed with code %d: %s\n", closeErr.Code, err)
 	} else {
 		log.Printf("Connection closed with error: %s\n", err)
@@ -258,8 +258,8 @@ func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 		ws.printDebugData(buffer)
 	}
 
-	// Dispatch in separate goroutine; don't block ReadLoop
-	go ws.handle(buffer)
+	// gws already handles concurrency; no need for manual goroutines
+	ws.handle(buffer)
 }
 
 func (ws *Websocket) WriteMessage(opcode gws.Opcode, payload []byte) error {
@@ -300,14 +300,16 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
-	// Copy the slice header under the read lock, then release before invoking the
+	// Copy the slice headers under the read lock, then release before invoking the
 	// handlers. Holding the lock during invocation would deadlock if a handler
 	// registers another handler (AddHandler takes the write lock).
 	ws.session.handlersMu.RLock()
+	defaultHandlers := ws.session.defaultHandlers[eventType]
 	handlers := ws.session.handlers[eventType]
 	ws.session.handlersMu.RUnlock()
 
-	if len(handlers) == 0 {
+	// No one is listening for this event; drop it before paying the decode cost.
+	if len(defaultHandlers) == 0 && len(handlers) == 0 {
 		return
 	}
 
@@ -329,6 +331,11 @@ func (ws *Websocket) handle(raw []byte) {
 	if err != nil {
 		log.Printf("Failed to unmarshal event %T: %s\n", event, err)
 		return
+	}
+
+	// Library handlers first, so user handlers observe up-to-date state.
+	for _, h := range defaultHandlers {
+		h(ws.session, event)
 	}
 
 	for _, h := range handlers {
