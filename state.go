@@ -11,13 +11,10 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-// todo: add more methods like ServerCount, ServerSeq, ChannelCount?
+type uIDtoMember map[string]*ServerMember
 
-// stateServerMembers is an alias to make the code more readable
-type stateServerMembers map[string]*ServerMember
-
-// stateMembers maps a Server.ID to its members. stateServerMembers is map[uID]*ServerMember
-type stateMembers map[string]stateServerMembers
+// stateMembers maps a Server.ID -> [ User.ID -> ServerMember.ID ]
+type stateMembers map[string]uIDtoMember
 
 // add adds a singular member to a server's members
 func (sm stateMembers) add(member *ServerMember) {
@@ -26,7 +23,7 @@ func (sm stateMembers) add(member *ServerMember) {
 
 	// If the server's members are not allocated, allocate them
 	if members == nil {
-		members = make(stateServerMembers)
+		members = make(uIDtoMember)
 		sm[member.ID.Server] = members
 	}
 
@@ -49,7 +46,7 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 
 		// If the server's members are not allocated, allocate them
 		if members == nil {
-			members = make(stateServerMembers, len(serverMembers))
+			members = make(uIDtoMember, len(serverMembers))
 			sm[serverID] = members
 		}
 
@@ -60,15 +57,60 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 	}
 }
 
+// get returns a server's member, or nil if the server or user is not cached.
+// Indexing a nil map is safe, so no nil check is needed.
+func (sm stateMembers) get(sID, uID string) *ServerMember {
+	return sm[sID][uID]
+}
+
+// countInServer returns how many members are cached for a server.
+func (sm stateMembers) countInServer(sID string) int {
+	return len(sm[sID])
+}
+
+// remove drops a single membership from a server.
+func (sm stateMembers) remove(sID, uID string) {
+	delete(sm[sID], uID)
+}
+
+// removeServer drops a server's entire member cache.
+func (sm stateMembers) removeServer(sID string) {
+	delete(sm, sID)
+}
+
+// removeUser drops a user from every server they are cached in.
+func (sm stateMembers) removeUser(uID string) {
+	for _, members := range sm {
+		delete(members, uID)
+	}
+}
+
+// upsert returns the cached member for id, creating an empty one if absent.
+func (sm stateMembers) upsert(id MemberCompositeID) *ServerMember {
+	members := sm[id.Server]
+	if members == nil {
+		members = make(uIDtoMember)
+		sm[id.Server] = members
+	}
+
+	member := members[id.User]
+	if member == nil {
+		member = &ServerMember{ID: id}
+		members[id.User] = member
+	}
+
+	return member
+}
+
 type State struct {
 	self atomic.Pointer[User] // The current user, also present in users
 
 	/* Caches */
-	users    map[string]*User    // All users you have a relation with.
-	servers  map[string]*Server  // All servers you are in.
-	channels map[string]*Channel // All channels you have access to.
-	members  stateMembers        // Maps Server.ID to Members
-	emojis   map[string]*Emoji   // All emojis you have access to.
+	users    map[string]*User    // User.ID    -> User
+	servers  map[string]*Server  // Server.ID  -> Server
+	channels map[string]*Channel // Channel.ID -> Channel
+	emojis   map[string]*Emoji   // Emoji.ID   -> Emoji.
+	members  stateMembers        // Server.ID  -> [ User.ID -> Member.ID ]
 
 	/* Mutexes for caches */
 	usersMu    sync.RWMutex
@@ -142,11 +184,70 @@ func (s *State) User(id string) *User {
 	return s.users[id]
 }
 
+func (s *State) UserCount() int {
+	s.usersMu.RLock()
+	defer s.usersMu.RUnlock()
+
+	return len(s.users)
+}
+
+// UserSeq iterates all users without allocating a slice. The same loop-body
+// rules as MembersSeq apply: keep it quick and don't call other State methods
+// from inside it. Use Users if you need a snapshot.
+func (s *State) UserSeq() iter.Seq[*User] {
+	return func(yield func(*User) bool) {
+		s.usersMu.RLock()
+		defer s.usersMu.RUnlock()
+
+		for _, user := range s.users {
+			if !yield(user) {
+				return
+			}
+		}
+	}
+}
+
+// Users returns a slice of all users in state. For general use, User(id) is more common
+func (s *State) Users() []*User {
+	s.usersMu.RLock()
+	defer s.usersMu.RUnlock()
+
+	users := make([]*User, 0, len(s.users))
+	for _, user := range s.users {
+		users = append(users, user)
+	}
+
+	return users
+}
+
 func (s *State) Server(id string) *Server {
 	s.serversMu.RLock()
 	defer s.serversMu.RUnlock()
 
 	return s.servers[id]
+}
+
+func (s *State) ServerCount() int {
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	return len(s.servers)
+}
+
+// ServerSeq iterates all servers without allocating a slice. The same loop-body
+// rules as MembersSeq apply: keep it quick and don't call other State methods
+// from inside it. Use Servers if you need a snapshot.
+func (s *State) ServerSeq() iter.Seq[*Server] {
+	return func(yield func(*Server) bool) {
+		s.serversMu.RLock()
+		defer s.serversMu.RUnlock()
+
+		for _, server := range s.servers {
+			if !yield(server) {
+				return
+			}
+		}
+	}
 }
 
 // Servers returns a slice of all servers in state. For general use, Server(id) is more common
@@ -181,6 +282,42 @@ func (s *State) Channel(id string) *Channel {
 	return s.channels[id]
 }
 
+func (s *State) ChannelCount() int {
+	s.channelsMu.RLock()
+	defer s.channelsMu.RUnlock()
+
+	return len(s.channels)
+}
+
+// ChannelSeq iterates all channels without allocating a slice. The same loop-body
+// rules as MembersSeq apply: keep it quick and don't call other State methods
+// from inside it. Use Channels if you need a snapshot.
+func (s *State) ChannelSeq() iter.Seq[*Channel] {
+	return func(yield func(*Channel) bool) {
+		s.channelsMu.RLock()
+		defer s.channelsMu.RUnlock()
+
+		for _, channel := range s.channels {
+			if !yield(channel) {
+				return
+			}
+		}
+	}
+}
+
+// Channels returns a slice of all channels in state. For general use, Channel(id) is more common
+func (s *State) Channels() []*Channel {
+	s.channelsMu.RLock()
+	defer s.channelsMu.RUnlock()
+
+	channels := make([]*Channel, 0, len(s.channels))
+	for _, channel := range s.channels {
+		channels = append(channels, channel)
+	}
+
+	return channels
+}
+
 // Members returns a snapshot slice of a server's members. The members are
 // copied into a fresh slice while locked, then the lock is released, so you are
 // free to do anything inside your loop afterwards, including calling other State
@@ -200,43 +337,29 @@ func (s *State) Members(sID string) []*ServerMember {
 	return members
 }
 
-func (s *State) Member(uID, sID string) *ServerMember {
+func (s *State) Member(sID, uID string) *ServerMember {
 	s.membersMu.RLock()
 	defer s.membersMu.RUnlock()
 
-	members := s.members[sID]
-	if members == nil {
-		return nil
-	}
-
-	return members[uID]
+	return s.members.get(sID, uID)
 }
 
 // MemberCount is a helper function to avoid costly len(s.Members(sID)) calls; avoid allocating a whole slice just to count
 func (s *State) MemberCount(sID string) int {
 	s.membersMu.RLock()
 	defer s.membersMu.RUnlock()
-	return len(s.members[sID])
+	return s.members.countInServer(sID)
 }
 
-// MembersSeq iterates over a server's members without allocating a slice, for
-// use with a for-range loop:
+// MembersSeq iterates a server's members without allocating a slice:
 //
 //	for member := range session.State.MembersSeq(serverID) {
 //		// ...
 //	}
 //
-// Unlike Members, no snapshot is taken: the read lock is held for the entire
-// loop. That makes it cheaper, but imposes two rules on the loop body:
-//
-//  1. Do NOT call any other State method (Member, Members, MemberCount, or
-//     anything that joins/leaves/updates a member) from inside the loop. The
-//     lock is already held, and trying to take it again can freeze your program.
-//  2. Keep the body quick. While it runs, incoming member updates from the
-//     gateway are blocked, since they cannot take the lock until you finish.
-//
-// If you need to do either of those, use Members instead and loop over its
-// returned slice. Returning early from the loop (break/return) is fine.
+// The read lock is held for the whole loop, so keep the body quick and don't
+// call other State methods from inside it — the lock is already held, so doing
+// so can deadlock. Break/return is fine. If you need either, use Members.
 func (s *State) MembersSeq(sID string) iter.Seq[*ServerMember] {
 	return func(yield func(*ServerMember) bool) {
 		s.membersMu.RLock()
@@ -255,6 +378,42 @@ func (s *State) Emoji(id string) *Emoji {
 	defer s.emojisMu.RUnlock()
 
 	return s.emojis[id]
+}
+
+func (s *State) EmojiCount() int {
+	s.emojisMu.RLock()
+	defer s.emojisMu.RUnlock()
+
+	return len(s.emojis)
+}
+
+// EmojiSeq iterates all emojis without allocating a slice. The same loop-body
+// rules as MembersSeq apply: keep it quick and don't call other State methods
+// from inside it. Use Emojis if you need a snapshot.
+func (s *State) EmojiSeq() iter.Seq[*Emoji] {
+	return func(yield func(*Emoji) bool) {
+		s.emojisMu.RLock()
+		defer s.emojisMu.RUnlock()
+
+		for _, emoji := range s.emojis {
+			if !yield(emoji) {
+				return
+			}
+		}
+	}
+}
+
+// Emojis returns a slice of all emojis in state. For general use, Emoji(id) is more common
+func (s *State) Emojis() []*Emoji {
+	s.emojisMu.RLock()
+	defer s.emojisMu.RUnlock()
+
+	emojis := make([]*Emoji, 0, len(s.emojis))
+	for _, emoji := range s.emojis {
+		emojis = append(emojis, emoji)
+	}
+
+	return emojis
 }
 
 /*
@@ -353,9 +512,8 @@ func (s *State) addEmoji(emoji *Emoji) {
 }
 
 // StateConfig controls which entity caches the State maintains. Pass it to
-// Session.Open. The zero value tracks nothing; start from DefaultStateConfig and
-// disable selectively for the usual behaviour. Tracking is immutable once Open
-// has connected.
+// Session.Open. The zero value tracks nothing.
+// Tracking is immutable once Session.Open() has connected.
 type StateConfig struct {
 	TrackUsers    bool
 	TrackServers  bool
@@ -395,7 +553,6 @@ func (s *State) applyConfig(c StateConfig) {
 
 func newState() *State {
 	s := &State{
-
 		// We pre-alloc incase someone uses the library in an HTTP-before-READY way
 		users:    make(map[string]*User),
 		servers:  make(map[string]*Server),
@@ -488,10 +645,7 @@ func (s *State) platformWipe(event *EventUserPlatformWipe) {
 
 	// Remove server memberships
 	s.membersMu.Lock()
-	for _, members := range s.members {
-		delete(members, event.UserID)
-	}
-
+	s.members.removeUser(event.UserID)
 	s.membersMu.Unlock()
 }
 
@@ -603,7 +757,7 @@ func (s *State) deleteServerMember(data *EventServerMemberLeave) {
 	s.membersMu.Lock()
 	defer s.membersMu.Unlock()
 
-	delete(s.members[data.ID], data.User)
+	s.members.remove(data.ID, data.User)
 }
 
 func (s *State) updateServerMember(event *EventServerMemberUpdate) {
@@ -615,17 +769,7 @@ func (s *State) updateServerMember(event *EventServerMemberUpdate) {
 	s.membersMu.Lock()
 	defer s.membersMu.Unlock()
 
-	members := s.members[event.ID.Server]
-	if members == nil {
-		members = make(stateServerMembers)
-		s.members[event.ID.Server] = members
-	}
-
-	member := members[event.ID.User]
-	if member == nil {
-		member = &ServerMember{ID: event.ID}
-		members[event.ID.User] = member
-	}
+	member := s.members.upsert(event.ID)
 
 	member.update(event.Data)
 	member.clear(event.Clear)
@@ -836,7 +980,7 @@ func (s *State) deleteServer(event *EventServerDelete) {
 
 	if s.trackMembers {
 		s.membersMu.Lock()
-		delete(s.members, event.ID)
+		s.members.removeServer(event.ID)
 		s.membersMu.Unlock()
 	}
 }
