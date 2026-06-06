@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
@@ -19,11 +20,14 @@ const ExpressLoginFile string = ".auth_token"
 
 func New(token string) *Session {
 	session := &Session{
-		Token:           token,
-		State:           newState(),
-		defaultHandlers: make(map[string]func(*Session, any)),
-		handlers:        make(map[string][]func(*Session, any)),
+		Token: token,
+		State: newState(),
 	}
+
+	session.handlers.Store(&sessionHandlers{
+		defaults: make(map[string]func(*Session, any)),
+		user:     make(map[string][]func(*Session, any)),
+	})
 
 	session.HTTP = newHTTPClient(session)
 
@@ -97,14 +101,40 @@ type Session struct {
 	State           *State      // State is a central store for all data received from the API
 	CheckForUpdates bool        // Whether to check for updates in the default EventReady handler
 
+	// todo: maybe selfbot can be derived from runtime? maybe call User(@me) before connect
 	selfbot bool // Whether the session is a user or bot
 
-	handlersMu sync.RWMutex
-	// defaultHandlers are the library's own state-maintaining handlers; they run
-	// before user handlers so user code observes up-to-date state. There is at
-	// most one per event type, so a plain func (not a slice) is stored.
-	defaultHandlers map[string]func(*Session, any)
-	handlers        map[string][]func(*Session, any)
+	// handlersMu only serialises writers against each other. The hot path reads
+	// handlers lock-free via Load().
+	handlersMu sync.Mutex
+	handlers   atomic.Pointer[sessionHandlers]
+}
+
+type sessionHandlers struct {
+	// Library's own handlers that maintain the state and ensure user handlers get up-to-date information
+	defaults map[string]func(*Session, any)
+	// User-defined handlers, dispatched after defaults are done
+	user map[string][]func(*Session, any)
+}
+
+// clone copies the maps but shares their values with the original. Don't edit a
+// value in place after cloning (e.g. append to a slice); replace the whole entry
+// instead, or you'll also mutate the old snapshot that readers may still hold.
+func (h *sessionHandlers) clone() *sessionHandlers {
+	next := &sessionHandlers{
+		defaults: make(map[string]func(*Session, any), len(h.defaults)),
+		user:     make(map[string][]func(*Session, any), len(h.user)),
+	}
+
+	for name, handler := range h.defaults {
+		next.defaults[name] = handler
+	}
+
+	for name, handlers := range h.user {
+		next.user[name] = handlers
+	}
+
+	return next
 }
 
 // Selfbot returns whether the session is a selfbot
@@ -117,10 +147,13 @@ func (s *Session) Selfbot() bool {
 // (see Websocket.handle). These run before user handlers, so user code sees up-to-date state.
 func (s *Session) addDefaultHandlers() {
 
-	// Reset, so that a re-tried Open re-registers from scratch without leaving
-	// stale handlers for trackers disabled on a second attempt.
+	// Reset the defaults, so that a re-tried Open re-registers from scratch
+	// without leaving stale handlers for trackers disabled on a second attempt.
+	// User handlers are preserved.
 	s.handlersMu.Lock()
-	s.defaultHandlers = make(map[string]func(*Session, any))
+	next := s.handlers.Load().clone()
+	next.defaults = make(map[string]func(*Session, any))
+	s.handlers.Store(next)
 	s.handlersMu.Unlock()
 
 	// The Websocket's first response if authentication was unsuccessful
@@ -150,10 +183,7 @@ func (s *Session) addDefaultHandlers() {
 	})
 
 	addDefaultHandler(s, func(s *Session, e *EventBulk) {
-		// Process bulk sub-events synchronously to preserve their order; the
-		// server batches them expecting sequential application. We are already
-		// running inside a goroutine (the outer handle call), so this does not
-		// block the websocket ReadLoop.
+		// Process bulk sub-events synchronously to preserve their order
 		for _, event := range e.V {
 			s.WS.handle(event)
 		}
@@ -315,11 +345,23 @@ func handlerName[T any]() string {
 func AddHandler[T any](s *Session, handler func(*Session, T)) {
 	name := handlerName[T]()
 
-	s.handlersMu.Lock()
-	s.handlers[name] = append(s.handlers[name], func(s *Session, e any) {
+	wrapped := func(s *Session, e any) {
 		handler(s, e.(T))
-	})
-	s.handlersMu.Unlock()
+	}
+
+	s.handlersMu.Lock()
+	defer s.handlersMu.Unlock()
+
+	next := s.handlers.Load().clone()
+
+	// Fresh slice, not append in place: a live dispatch may still read the old one.
+	existing := next.user[name]
+	combined := make([]func(*Session, any), len(existing)+1)
+	copy(combined, existing)
+	combined[len(existing)] = wrapped
+	next.user[name] = combined
+
+	s.handlers.Store(next)
 }
 
 // addDefaultHandler registers a library handler, which runs before user handlers.
@@ -328,18 +370,20 @@ func addDefaultHandler[T any](s *Session, handler func(*Session, T)) {
 	name := handlerName[T]()
 
 	s.handlersMu.Lock()
+	defer s.handlersMu.Unlock()
+
+	next := s.handlers.Load().clone()
 
 	// Catch a development error if we ever overwrite an existing handler; it probably wasn't intentional
-	_, exists := s.defaultHandlers[name]
-	if exists {
+	if _, exists := next.defaults[name]; exists {
 		log.Printf("addDefaultHandler is overwriting for: %T", handler)
 	}
 
-	s.defaultHandlers[name] = func(s *Session, e any) {
+	next.defaults[name] = func(s *Session, e any) {
 		handler(s, e.(T))
 	}
 
-	s.handlersMu.Unlock()
+	s.handlers.Store(next)
 }
 
 func (s *Session) IsConnected() bool {
@@ -389,7 +433,7 @@ func (s *Session) buildOpenQueryParams() url.Values {
 // An optional StateConfig defines what the State should track; if omitted,
 // DefaultStateConfig is used. Tracking is fixed for the lifetime of the
 // connection.
-func (s *Session) Open(config ...StateConfig) (err error) {
+func (s *Session) Open(configuration ...StateConfig) (err error) {
 
 	if s.IsConnected() {
 		return fmt.Errorf("already connected")
@@ -399,11 +443,12 @@ func (s *Session) Open(config ...StateConfig) (err error) {
 		return fmt.Errorf("no token provided")
 	}
 
-	cfg := DefaultStateConfig()
-	if len(config) > 0 {
-		cfg = config[0]
+	config := DefaultStateConfig()
+	if len(configuration) > 0 {
+		config = configuration[0]
 	}
-	s.State.applyConfig(cfg)
+
+	s.State.applyConfig(config)
 
 	// Register default handlers now that tracking is known, so disabled trackers
 	// register nothing and their events are dropped before decoding.

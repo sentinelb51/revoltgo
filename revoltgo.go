@@ -18,13 +18,13 @@ import (
 )
 
 const (
-	VERSION        = "v3.0.0-beta.14"
+	VERSION        = "v3.0.0"
 	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
 )
 
 /* Logic related to the update checker */
 
-var COMMIT = "fc91199f3708f300b1d74b3b9e4104b153e51eca"
+var COMMIT = "c6aad679955eb5ee5267080189534a36c2ea8465"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`

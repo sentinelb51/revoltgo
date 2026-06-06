@@ -3,6 +3,8 @@ package revoltgo
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/tinylib/msgp/msgp"
 )
 
 //go:generate msgp -tests=false -io=false
@@ -51,60 +53,60 @@ func (e *Event) String() string {
 	return e.Type
 }
 
-var eventConstructors = map[string]func() any{
-	"Error":         func() any { return new(EventError) },
-	"Bulk":          func() any { return new(EventBulk) },
-	"Pong":          func() any { return new(EventPong) },
-	"Ready":         func() any { return new(EventReady) },
-	"Auth":          func() any { return new(EventAuth) },
-	"Authenticated": func() any { return new(EventAuthenticated) },
-	"Logout":        func() any { return new(EventLogout) },
+var eventConstructors = map[string]func() msgp.Unmarshaler{
+	"Error":         func() msgp.Unmarshaler { return new(EventError) },
+	"Bulk":          func() msgp.Unmarshaler { return new(EventBulk) },
+	"Pong":          func() msgp.Unmarshaler { return new(EventPong) },
+	"Ready":         func() msgp.Unmarshaler { return new(EventReady) },
+	"Auth":          func() msgp.Unmarshaler { return new(EventAuth) },
+	"Authenticated": func() msgp.Unmarshaler { return new(EventAuthenticated) },
+	"Logout":        func() msgp.Unmarshaler { return new(EventLogout) },
 
-	"Message":               func() any { return new(EventMessage) },
-	"MessageAppend":         func() any { return new(EventMessageAppend) },
-	"MessageDelete":         func() any { return new(EventMessageDelete) },
-	"BulkMessageDelete":     func() any { return new(EventBulkMessageDelete) },
-	"MessageReact":          func() any { return new(EventMessageReact) },
-	"MessageUnreact":        func() any { return new(EventMessageUnreact) },
-	"MessageRemoveReaction": func() any { return new(EventMessageRemoveReaction) },
-	"MessageUpdate":         func() any { return new(EventMessageUpdate) },
+	"Message":               func() msgp.Unmarshaler { return new(EventMessage) },
+	"MessageAppend":         func() msgp.Unmarshaler { return new(EventMessageAppend) },
+	"MessageDelete":         func() msgp.Unmarshaler { return new(EventMessageDelete) },
+	"BulkMessageDelete":     func() msgp.Unmarshaler { return new(EventBulkMessageDelete) },
+	"MessageReact":          func() msgp.Unmarshaler { return new(EventMessageReact) },
+	"MessageUnreact":        func() msgp.Unmarshaler { return new(EventMessageUnreact) },
+	"MessageRemoveReaction": func() msgp.Unmarshaler { return new(EventMessageRemoveReaction) },
+	"MessageUpdate":         func() msgp.Unmarshaler { return new(EventMessageUpdate) },
 
-	"ChannelCreate":      func() any { return new(EventChannelCreate) },
-	"ChannelDelete":      func() any { return new(EventChannelDelete) },
-	"ChannelAck":         func() any { return new(EventChannelAck) },
-	"ChannelStartTyping": func() any { return new(EventChannelStartTyping) },
-	"ChannelStopTyping":  func() any { return new(EventChannelStopTyping) },
-	"ChannelGroupJoin":   func() any { return new(EventChannelGroupJoin) },
-	"ChannelUpdate":      func() any { return new(EventChannelUpdate) },
-	"ChannelGroupLeave":  func() any { return new(EventChannelGroupLeave) },
+	"ChannelCreate":      func() msgp.Unmarshaler { return new(EventChannelCreate) },
+	"ChannelDelete":      func() msgp.Unmarshaler { return new(EventChannelDelete) },
+	"ChannelAck":         func() msgp.Unmarshaler { return new(EventChannelAck) },
+	"ChannelStartTyping": func() msgp.Unmarshaler { return new(EventChannelStartTyping) },
+	"ChannelStopTyping":  func() msgp.Unmarshaler { return new(EventChannelStopTyping) },
+	"ChannelGroupJoin":   func() msgp.Unmarshaler { return new(EventChannelGroupJoin) },
+	"ChannelUpdate":      func() msgp.Unmarshaler { return new(EventChannelUpdate) },
+	"ChannelGroupLeave":  func() msgp.Unmarshaler { return new(EventChannelGroupLeave) },
 
-	"ServerCreate":          func() any { return new(EventServerCreate) },
-	"ServerDelete":          func() any { return new(EventServerDelete) },
-	"ServerUpdate":          func() any { return new(EventServerUpdate) },
-	"ServerRoleDelete":      func() any { return new(EventServerRoleDelete) },
-	"ServerRoleUpdate":      func() any { return new(EventServerRoleUpdate) },
-	"ServerRoleRanksUpdate": func() any { return new(EventServerRoleRanksUpdate) },
-	"ServerMemberJoin":      func() any { return new(EventServerMemberJoin) },
-	"ServerMemberLeave":     func() any { return new(EventServerMemberLeave) },
-	"ServerMemberUpdate":    func() any { return new(EventServerMemberUpdate) },
+	"ServerCreate":          func() msgp.Unmarshaler { return new(EventServerCreate) },
+	"ServerDelete":          func() msgp.Unmarshaler { return new(EventServerDelete) },
+	"ServerUpdate":          func() msgp.Unmarshaler { return new(EventServerUpdate) },
+	"ServerRoleDelete":      func() msgp.Unmarshaler { return new(EventServerRoleDelete) },
+	"ServerRoleUpdate":      func() msgp.Unmarshaler { return new(EventServerRoleUpdate) },
+	"ServerRoleRanksUpdate": func() msgp.Unmarshaler { return new(EventServerRoleRanksUpdate) },
+	"ServerMemberJoin":      func() msgp.Unmarshaler { return new(EventServerMemberJoin) },
+	"ServerMemberLeave":     func() msgp.Unmarshaler { return new(EventServerMemberLeave) },
+	"ServerMemberUpdate":    func() msgp.Unmarshaler { return new(EventServerMemberUpdate) },
 
-	"EmojiCreate": func() any { return new(EventEmojiCreate) },
-	"EmojiDelete": func() any { return new(EventEmojiDelete) },
+	"EmojiCreate": func() msgp.Unmarshaler { return new(EventEmojiCreate) },
+	"EmojiDelete": func() msgp.Unmarshaler { return new(EventEmojiDelete) },
 
-	"UserSettingsUpdate": func() any { return new(EventUserSettingsUpdate) },
-	"UserRelationship":   func() any { return new(EventUserRelationship) },
-	"UserPlatformWipe":   func() any { return new(EventUserPlatformWipe) },
-	"UserUpdate":         func() any { return new(EventUserUpdate) },
+	"UserSettingsUpdate": func() msgp.Unmarshaler { return new(EventUserSettingsUpdate) },
+	"UserRelationship":   func() msgp.Unmarshaler { return new(EventUserRelationship) },
+	"UserPlatformWipe":   func() msgp.Unmarshaler { return new(EventUserPlatformWipe) },
+	"UserUpdate":         func() msgp.Unmarshaler { return new(EventUserUpdate) },
 
-	"WebhookCreate": func() any { return new(EventWebhookCreate) },
-	"WebhookDelete": func() any { return new(EventWebhookDelete) },
-	"WebhookUpdate": func() any { return new(EventWebhookUpdate) },
+	"WebhookCreate": func() msgp.Unmarshaler { return new(EventWebhookCreate) },
+	"WebhookDelete": func() msgp.Unmarshaler { return new(EventWebhookDelete) },
+	"WebhookUpdate": func() msgp.Unmarshaler { return new(EventWebhookUpdate) },
 
-	"VoiceChannelJoin":     func() any { return new(EventVoiceChannelJoin) },
-	"VoiceChannelLeave":    func() any { return new(EventVoiceChannelLeave) },
-	"VoiceChannelMove":     func() any { return new(EventVoiceChannelMove) },
-	"UserVoiceStateUpdate": func() any { return new(EventUserVoiceStateUpdate) },
-	"UserMoveVoiceChannel": func() any { return new(EventUserMoveVoiceChannel) },
+	"VoiceChannelJoin":     func() msgp.Unmarshaler { return new(EventVoiceChannelJoin) },
+	"VoiceChannelLeave":    func() msgp.Unmarshaler { return new(EventVoiceChannelLeave) },
+	"VoiceChannelMove":     func() msgp.Unmarshaler { return new(EventVoiceChannelMove) },
+	"UserVoiceStateUpdate": func() msgp.Unmarshaler { return new(EventUserVoiceStateUpdate) },
+	"UserMoveVoiceChannel": func() msgp.Unmarshaler { return new(EventUserMoveVoiceChannel) },
 
-	"ReportCreate": func() any { return new(EventReportCreate) },
+	"ReportCreate": func() msgp.Unmarshaler { return new(EventReportCreate) },
 }

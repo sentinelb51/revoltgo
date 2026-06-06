@@ -246,20 +246,17 @@ func (ws *Websocket) OnPing(_ *gws.Conn, payload []byte) {
 }
 
 func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
-	// Extract to buffer
-	data := message.Data.Bytes()
-	buffer := make([]byte, len(data))
-	copy(buffer, data)
 
-	// Release resources
-	_ = message.Close()
+	data := message.Data.Bytes()
+	ws.handle(data)
 
 	if ws.Debug {
-		ws.printDebugData(buffer)
+		ws.printDebugData(data)
 	}
 
-	// gws already handles concurrency; no need for manual goroutines
-	ws.handle(buffer)
+	if err := message.Close(); err != nil {
+		log.Printf("OnMessage Close() error: %s\n", err)
+	}
 }
 
 func (ws *Websocket) WriteMessage(opcode gws.Opcode, payload []byte) error {
@@ -300,16 +297,14 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
-	// Copy the slice headers under the read lock, then release before invoking the
-	// handlers. Holding the lock during invocation would deadlock if a handler
-	// registers another handler (AddHandler takes the write lock).
-	ws.session.handlersMu.RLock()
-	defaultHandler := ws.session.defaultHandlers[string(eventType)]
-	handlers := ws.session.handlers[string(eventType)]
-	ws.session.handlersMu.RUnlock()
+	// Load the immutable handler snapshot lock-free. Writers swap in a fresh
+	// snapshot via copy-on-write, so this read never blocks or tears.
+	handlers := ws.session.handlers.Load()
+	defaultHandler := handlers.defaults[string(eventType)]
+	userHandlers := handlers.user[string(eventType)]
 
 	// No one is listening for this event; drop it before paying the decode cost.
-	if defaultHandler == nil && len(handlers) == 0 {
+	if defaultHandler == nil && len(userHandlers) == 0 {
 		return
 	}
 
@@ -319,16 +314,10 @@ func (ws *Websocket) handle(raw []byte) {
 		return
 	}
 
+	// constructor returns msgp.Unmarshaler, so the missing-method case is now a
+	// compile-time error in eventConstructors rather than a runtime check here.
 	event := constructor()
-	unmarshaler, exists := event.(msgp.Unmarshaler)
-	if !exists {
-		log.Printf("event '%s' does not implement msgp.Unmarshaler\n"+
-			"Did you forget to run msgp_codegen.py?", eventType)
-		return
-	}
-
-	_, err = unmarshaler.UnmarshalMsg(raw)
-	if err != nil {
+	if _, err = event.UnmarshalMsg(raw); err != nil {
 		log.Printf("Failed to unmarshal event %T: %s\n", event, err)
 		return
 	}
@@ -338,7 +327,7 @@ func (ws *Websocket) handle(raw []byte) {
 		defaultHandler(ws.session, event)
 	}
 
-	for _, h := range handlers {
+	for _, h := range userHandlers {
 		h(ws.session, event)
 	}
 }
