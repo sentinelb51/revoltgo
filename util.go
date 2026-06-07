@@ -2,18 +2,9 @@ package revoltgo
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
-	"unicode"
-
-	"github.com/goccy/go-json"
 )
-
-// Ptr is a QoL function to quickly return a pointer to any value
-func Ptr[T any](v T) *T {
-	return &v
-}
 
 // WebhookFromURL extracts the webhook ID and token from a full webhook URL, for example:
 // https://stoat.chat/api/webhooks/08UE096D31N8ZM7PJFAHFSST8R/5uC1w7KjCixSD49XFOQ2qEkLo3ukvWDbK6_EEfZ-1gqRYRiVaXI8mYrSDjRv0T1y
@@ -38,14 +29,64 @@ func WebhookFromURL(uri string) (wID, wToken string, err error) {
 	return parts[2], parts[3], nil
 }
 
-func StrTrimAfter(s, substr string) string {
-	index := strings.Index(s, substr)
-	if index == -1 {
-		return s
+// sliceRemoveIndex is a O(1) swap-remove; does not preserve order
+// If the index is out of bounds, slice is returned unchanged.
+func sliceRemoveIndex[T any](slice []T, index int) []T {
+	if index < 0 {
+		panic("index must be >= 0")
+	} else if index >= len(slice) {
+		panic("index must be < len(slice)")
 	}
 
-	return s[:index]
+	// Pre-calculate size to avoid unnecessary len() calls
+	size := len(slice) - 1
+
+	// Swap the element to be removed with the last element
+	slice[index], slice[size] = slice[size], slice[index]
+
+	// Exclude last element, effectively removing it
+	return slice[:size]
 }
+
+func mustParseURL(raw string) *url.URL {
+	u, err := url.Parse(raw)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+func validateBaseURL(newURL string) (u *url.URL, err error) {
+	newURL = strings.TrimSuffix(strings.TrimSpace(newURL), "/")
+
+	u, err = url.Parse(newURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base URL: %w", err)
+	}
+
+	if u.Scheme != "https" {
+		return nil, fmt.Errorf("base URL must use HTTPS")
+	}
+
+	if u.Path != "" {
+		return nil, fmt.Errorf("base URL must not have a path (trailing /)")
+	}
+
+	if u.Host == "" {
+		return nil, fmt.Errorf("base URL must have a host")
+	}
+
+	if strings.Count(u.Hostname(), ".") < 1 {
+		return nil, fmt.Errorf("base URL must have a domain and TLD")
+	}
+
+	return
+}
+
+/*
+	Remnants from when we used to use abstraction for update events, which allowed re-usable code to work on
+	multiple structs, without the need to update "data", "clear" fields when the API changed:
+
 
 // mergeJSON deserializes the object into JSON, then merges the data into the object.
 // It will also remove any fields specified in the clear map.
@@ -148,56 +189,4 @@ func toSnakeCase(str string) string {
 	return result.String()
 }
 
-// sliceRemoveIndex removes the element at the specified index from slice.
-// If the index is out of bounds, slice is returned unchanged.
-func sliceRemoveIndex[T any](slice []T, index int) []T {
-	if index < 0 {
-		panic("index must be >= 0")
-	} else if index >= len(slice) {
-		panic("index must be < len(slice)")
-	}
-
-	// Pre-calculate size to avoid unnecessary len() calls
-	size := len(slice) - 1
-
-	// Swap the element to be removed with the last element
-	slice[index], slice[size] = slice[size], slice[index]
-
-	// Exclude last element, effectively removing it
-	return slice[:size]
-}
-
-func mustParseURL(raw string) *url.URL {
-	u, err := url.Parse(raw)
-	if err != nil {
-		panic(err)
-	}
-	return u
-}
-
-func validateBaseURL(newURL string) (u *url.URL, err error) {
-	newURL = strings.TrimSuffix(strings.TrimSpace(newURL), "/")
-
-	u, err = url.Parse(newURL)
-	if err != nil {
-		return nil, fmt.Errorf("invalid base URL: %w", err)
-	}
-
-	if u.Scheme != "https" {
-		return nil, fmt.Errorf("base URL must use HTTPS")
-	}
-
-	if u.Path != "" {
-		return nil, fmt.Errorf("base URL must not have a path (trailing /)")
-	}
-
-	if u.Host == "" {
-		return nil, fmt.Errorf("base URL must have a host")
-	}
-
-	if strings.Count(u.Hostname(), ".") < 1 {
-		return nil, fmt.Errorf("base URL must have a domain and TLD")
-	}
-
-	return
-}
+*/
