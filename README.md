@@ -6,25 +6,43 @@
 RevoltGo is a low-level API wrapper for the [Revolt API](https://stoat.chat) focused on performance and maintainability.
 
 ### Context
-Since July 2023 and until now, it has been the the only mature Revolt Go library that, in my opinion, does things right.
-Other projects had poor API coverage and consistency, as well as questionable code and design choices.
+Since July 2023 and until now, it has been the only mature Revolt Go library that, in my opinion, does things right.
+Other projects had poor API coverage, no consistency or maintenance, and questionable code/design choices. They've since
+been removed from [Awesome-Stoat's Go list](https://github.com/stoatchat/awesome-stoat#go), leaving this as the only
+survivor.
 
-### Audience
-This has primarily been designed for developing bots and self-bots, but can technically be used for clients.
-I have ideas for doing so myself.
+### Applications
+This library can be used for bots, self-bots, and clients
 
 ## Support
 The fastest way to contact me is via the [Revolt support server dedicated for this project](https://rvlt.gg/R55WJBjx).
 Of course, you can always create an issue or a PR.
 
 # Features
-- **Targets current Go releases and up-to-date dependencies**
-- **Low level bindings, minimal opinionation**, excluding comments
-- **High-performance WebSocket transport using MessagePack** with code-generated serializers for all payloads, while retaining JSON interop where required
-- **In-memory state caching for various objects**, including opportunistic refresh from HTTP calls
-- **REST API ratelimit handling** with some safe-guards against token leaks
-- **Minor utilities** such as a permission calculator, enums, and related helpers
-- **Debug options for both HTTP and Websocket operations**
+
+### Performance
+- **MessagePack websocket transport with code-generated serialisers**; no reflection, field look-ups, or runtime schema discovery. JSON inter-op is kept where the API requires it.
+- **Pay only for what you use**; we inspect websocket event types and drop them without ever decoding it.
+- **Low-level bindings, minimal opinionation**; you have full access to all the data the API/WS sends, no abstractions.
+- **Zero-copy frame handling**; websocket frames are processed straight from the network buffer.
+- **Lock-free event dispatch**; websocket frames are processed in parallel, and never content on a shared mutex.
+
+### State
+- **Optional, per-object caching**; track users, servers, channels, members, emojis, or none of it
+- **Ergonomic reads**; slice getters, iterators, and counts for cached objects
+- **Opportunistic refresh**; use HTTP responses to further synchronise the state
+- **Consistent, race-protected**; the library does its own house-keeping so that your code never sees a half-updated world
+
+### Authentication
+- **Bots and self-bots**; both supported first-class.
+- **Express login**; trade credentials for a re-usable token, get up and running fast.
+
+### Developer experience
+- **Targets latest Go releases and up-to-date dependencies**; no leaning on something three years stale
+- **Consistent naming scheme**; every type's name builds on each-other, creating predictable patterns
+- **REST API ratelimit handling** with safeguards against leaking your token
+- **Utilities**; permission calculator, enums for almost everything, and helper functions
+- **Debug toggles for HTTP and WebSocket** for when you need to see what's actually on the wire
 
 # Getting started
 
@@ -93,16 +111,18 @@ and how many objects are cached in the state. More handlers will increase CPU us
 more objects in the state will increase memory usage.
 
 For programs that need to be as lightweight as possible (and do not care about caching objects),
-they can disable the state by setting the following tracking options in `Session.State`:
+they can disable state tracking by passing a `revoltgo.StateConfig` to `Session.Open`:
 
 ```go
-/* Tracking options */
-TrackUsers    bool
-TrackServers  bool
-TrackChannels bool
-TrackMembers  bool
-TrackEmojis   bool
-TrackWebhooks bool
+type StateConfig struct {
+    TrackUsers        bool
+    TrackServers      bool
+    TrackChannels     bool
+    TrackMembers      bool
+    TrackEmojis       bool
+    TrackAPICalls     bool
+    TrackBulkAPICalls bool
+}
 ```
 
 ### Windows platforms
@@ -110,7 +130,7 @@ TrackWebhooks bool
 Standalone, with state enabled, the library uses:
 
 - ~0.00% CPU
-- ~6.0-6.8 MB of RAM
+- ~4-5 MB of RAM
 
 The memory usage is expected to grow with state enabled as more objects get cached.
 
@@ -132,3 +152,4 @@ RevoltGo is licensed under the BSD 3-Clause License. What this means is that:
 
 - Remove or alter the license and copyright notice.
 - Use the name "RevoltGo" or its contributors for endorsements without permission.
+- Hold the author liable for any damages arising from the use of the software.

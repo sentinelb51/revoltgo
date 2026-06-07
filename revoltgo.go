@@ -1,11 +1,13 @@
 /*
 Package revoltgo is a wrapper for the Revolt API with low-level bindings
 
-	Made by @sentinelb51
-	For support, join our revolt server on the GitHub README file
-	To compile correctly, always run beforehand:
-		/tools/msgp_codegen.py  (ensures all msgp code is generated: revoltgo_msgp_gen.go)
-		/tools/build_hash.py         (updates the COMMIT variable in this file)
+		Made by @sentinelb51
+		For support, join our revolt server on the GitHub README file
+		To compile correctly, always run beforehand:
+			/tools/msgp_codegen.py  (ensures all msgp code is generated: revoltgo_msgp_gen.go)
+			/tools/build_hash.py    (updates the COMMIT variable in this file)
+
+	   Todo: do we need state.go to track VoiceStates?
 */
 package revoltgo
 
@@ -24,7 +26,7 @@ const (
 
 /* Logic related to the update checker */
 
-var COMMIT = "c6aad679955eb5ee5267080189534a36c2ea8465"
+var COMMIT = "8e271caff4d519587977e13ef0cc15b072bd4646"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
