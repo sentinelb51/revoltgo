@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -58,6 +59,7 @@ func newWebsocket(session *Session, url string) *Websocket {
 		ShouldReconnect:   true,
 		HeartbeatInterval: 30 * time.Second,
 		ReconnectInterval: 5 * time.Second,
+		// CustomCompression; not defined as the websocket doesn't support it yet
 	}
 }
 
@@ -109,7 +111,8 @@ func (ws *Websocket) connect() {
 		return
 	}
 
-	log.Printf("Connecting to %s...\n", StrTrimAfter(ws.url, "?"))
+	url, _, _ := strings.Cut(ws.url, "?")
+	log.Printf("Connecting to %s...\n", url)
 
 	options := &gws.ClientOption{
 		Addr:             ws.url,
