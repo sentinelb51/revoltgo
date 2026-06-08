@@ -889,8 +889,8 @@ func (s *Session) ServerMember(sID, mID string) (member *ServerMember, err error
 	return
 }
 
-func (s *Session) ServerMembers(sID string) (data *ServerMembers, err error) {
-	endpoint := EndpointServerMembers(sID)
+func (s *Session) ServerMembers(sID string, excludeOffline bool) (data *ServerMembers, err error) {
+	endpoint := EndpointServerMembers(sID, excludeOffline)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
 	s.State.addServerMembersAndUsers(data.Users, data.Members)
 	return

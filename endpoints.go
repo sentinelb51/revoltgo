@@ -1,8 +1,8 @@
 package revoltgo
 
 import (
-	"fmt"
 	"log"
+	"strconv"
 )
 
 /*
@@ -141,241 +141,241 @@ const (
 )
 
 func EndpointOnboard(action string) string {
-	return fmt.Sprintf(URLOnboard, action)
+	return "/onboard/" + action
 }
 
 func EndpointAuthSession(action string) string {
-	return fmt.Sprintf(URLAuthSession, action)
-}
-
-func EndpointAuthAccountVerify(code string) string {
-	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("verify/%s", code))
+	return "/auth/session/" + action
 }
 
 func EndpointAuthAccount(action string) string {
-	return fmt.Sprintf(URLAuthAccount, action)
+	return "/auth/account/" + action
+}
+
+func EndpointAuthAccountVerify(code string) string {
+	return EndpointAuthAccount("verify/" + code)
 }
 
 func EndpointAuthAccountChange(detail string) string {
-	return fmt.Sprintf(URLAuthAccount, fmt.Sprintf("change/%s", detail))
+	return EndpointAuthAccount("change/" + detail)
 }
 
 func EndpointUser(uID string) string {
-	return fmt.Sprintf(URLUser, uID)
+	return "/users/" + uID
 }
 
 func EndpointUserBlock(uID string) string {
-	return fmt.Sprintf(URLUserBlock, uID)
+	return EndpointUser(uID) + "/block"
 }
 
 func EndpointUserMutual(uID string) string {
-	return fmt.Sprintf(URLUserMutual, uID)
+	return EndpointUser(uID) + "/mutual"
 }
 
 func EndpointUserDM(uID string) string {
-	return fmt.Sprintf(URLUserDM, uID)
+	return EndpointUser(uID) + "/dm"
 }
 
 func EndpointUserDefaultAvatar(uID string) string {
-	return fmt.Sprintf(URLUserDefaultAvatar, uID)
+	return EndpointUser(uID) + "/default_avatar"
 }
 
 func EndpointUserFlags(uID string) string {
-	return fmt.Sprintf(URLUserFlags, uID)
+	return EndpointUser(uID) + "/flags"
 }
 
 // todo: check FriendAdd method
+
 func EndpointUserFriend(uID string) string {
 
 	if uID == "" {
-		return fmt.Sprintf(URLUser, "friend")
+		return EndpointUser("friend")
 	}
 
-	return fmt.Sprintf(URLUserFriend, uID)
+	return EndpointUser(uID) + "/friend"
 }
 
 func EndpointUserProfile(uID string) string {
-	return fmt.Sprintf(URLUserProfile, uID)
+	return EndpointUser(uID) + "/profile"
 }
 
 func EndpointServer(sID string) string {
-	return fmt.Sprintf(URLServer, sID)
+	return "/servers/" + sID
 }
 
 func EndpointServerAck(sID string) string {
-	return fmt.Sprintf(URLServerAck, sID)
+	return EndpointServer(sID) + "/ack"
 }
 
 func EndpointServerChannels(sID string) string {
-	return fmt.Sprintf(URLServerChannels, sID)
+	return EndpointServer(sID) + "/channels"
 }
 
 func EndpointChannelPermission(cID, rID string) string {
-	return fmt.Sprintf(URLChannelPermission, cID, rID)
+	return EndpointChannel(cID) + "/permissions/" + rID
 }
 
-func EndpointServerMembers(sID string) string {
-	return fmt.Sprintf(URLServerMembers, sID)
+func EndpointServerMembers(sID string, excludeOffline bool) string {
+	return EndpointServer(sID) + "/members?exclude_offline=" + strconv.FormatBool(excludeOffline)
 }
 
 func EndpointServerMember(sID, mID string) string {
-	return fmt.Sprintf(URLServerMember, sID, mID)
+	return EndpointServer(sID) + "/members/" + mID
 }
 
 func EndpointServerBans(sID string) string {
-	return fmt.Sprintf(URLServerBans, sID)
+	return EndpointServer(sID) + "/bans"
 }
 
 func EndpointServerBan(sID, uID string) string {
-	return fmt.Sprintf(URLServerBan, sID, uID)
+	return EndpointServerBans(sID) + "/" + uID
 }
 
 func EndpointInvite(sID string) string {
-	return fmt.Sprintf(URLInvites, sID)
+	return "/invites/" + sID
 }
 
 func EndpointServerInvites(sID string) string {
-	return fmt.Sprintf(URLServerInvites, sID)
+	return EndpointServer(sID) + "/invites"
 }
 
 func EndpointServerRoles(sID string) string {
-	return fmt.Sprintf(URLServerRoles, sID)
+	return EndpointServer(sID) + "/roles"
 }
 
 func EndpointServerRolesRanks(sID string) string {
-	return fmt.Sprintf(URLServerRolesRanks, sID)
+	return EndpointServer(sID) + "/roles/ranks"
 }
 
 func EndpointServerEmojis(sID string) string {
-	return fmt.Sprintf(URLServerEmojis, sID)
+	return EndpointServer(sID) + "/emojis"
 }
 
 func EndpointServerRole(sID, rID string) string {
-	return fmt.Sprintf(URLServerRole, sID, rID)
+	return EndpointServer(sID) + "/roles/" + rID
 }
 
 func EndpointChannel(cID string) string {
-	return fmt.Sprintf(URLChannel, cID)
+	return "/channels/" + cID
 }
 
 func EndpointChannelMembers(cID string) string {
-	return fmt.Sprintf(URLChannelMembers, cID)
+	return EndpointChannel(cID) + "/members"
 }
 
 func EndpointChannelJoinCall(cID string) string {
-	return fmt.Sprintf(URLChannelJoinCall, cID)
+	return EndpointChannel(cID) + "/join_call"
 }
 
 func EndpointChannelEndRing(cID, uID string) string {
-	return fmt.Sprintf(URLChannelEndRing, cID, uID)
+	return EndpointChannel(cID) + "/end_ring/" + uID
 }
 
 func EndpointChannelAckMessage(cID, mID string) string {
-	return fmt.Sprintf(URLChannelAckMessage, cID, mID)
+	return EndpointChannel(cID) + "/ack/" + mID
 }
 
 func EndpointChannelRecipients(cID, uID string) string {
-	return fmt.Sprintf(URLChannelRecipient, cID, uID)
+	return EndpointChannel(cID) + "/recipients/" + uID
 }
 
 func EndpointServerPermissions(sID, rID string) string {
-	return fmt.Sprintf(URLServerPermissions, sID, rID)
+	return EndpointServer(sID) + "/permissions/" + rID
 }
 
 func EndpointChannelMessages(cID string) string {
-	return fmt.Sprintf(URLChannelMessages, cID)
-}
-
-func EndpointChannelMessageReaction(cID, mID, rID string) string {
-	return fmt.Sprintf(URLChannelMessageReaction, cID, mID, rID)
-}
-
-func EndpointChannelMessageReactions(cID, mID string) string {
-	return fmt.Sprintf(URLChannelMessageReactions, cID, mID)
+	return EndpointChannel(cID) + "/messages"
 }
 
 func EndpointChannelMessage(cID, mID string) string {
-	return fmt.Sprintf(URLChannelMessage, cID, mID)
+	return EndpointChannelMessages(cID) + "/" + mID
+}
+
+func EndpointChannelMessageReactions(cID, mID string) string {
+	return EndpointChannelMessage(cID, mID) + "/reactions"
+}
+
+func EndpointChannelMessageReaction(cID, mID, rID string) string {
+	return EndpointChannelMessageReactions(cID, mID) + "/" + rID
 }
 
 func EndpointChannelMessagePin(cID, mID string) string {
-	return fmt.Sprintf(URLChannelMessagePin, cID, mID)
+	return EndpointChannelMessages(cID) + "/" + mID + "/pin"
 }
 
 func EndpointChannelSearch(cID string) string {
-	return fmt.Sprintf(URLChannelSearch, cID)
+	return EndpointChannel(cID) + "/search"
 }
 
 func EndpointChannelInvites(cID string) string {
-	return fmt.Sprintf(URLChannelInvites, cID)
+	return EndpointChannel(cID) + "/invites"
 }
 
 func EndpointChannelWebhooks(cID string) string {
-	return fmt.Sprintf(URLChannelWebhooks, cID)
+	return EndpointChannel(cID) + "/webhooks"
 }
 
 func EndpointWebhook(wID string) string {
-	return fmt.Sprintf(URLWebhooks, wID)
+	return "/webhooks/" + wID
 }
 
 func EndpointWebhookToken(wID, token string) string {
-	return fmt.Sprintf(URLWebhookToken, wID, token)
+	return EndpointWebhook(wID) + "/" + token
 }
 
 func EndpointWebhookGitHub(wID, token string) string {
-	return fmt.Sprintf(URLWebhookTokenGitHub, wID, token)
+	return EndpointWebhookToken(wID, token) + "/github"
 }
 
 /* Bot endpoints */
 
 func EndpointBot(bID string) string {
-	return fmt.Sprintf(URLBots, bID)
+	return "/bots/" + bID
 }
 
 func EndpointBotInvite(bID string) string {
-	return fmt.Sprintf(URLBotInvite, bID)
+	return EndpointBot(bID) + "/invite"
 }
 
 /* Custom endpoints */
 
 func EndpointCustomEmoji(eID string) string {
-	return fmt.Sprintf(URLCustomEmoji, eID)
+	return "/custom/emoji/" + eID
 }
 
 /* Miscellaneous endpoints */
 
 func EndpointPolicy(action string) string {
-	return fmt.Sprintf(URLPolicy, action)
+	return "/policy/" + action
 }
 
 func EndpointSync(id string) string {
-	return fmt.Sprintf(URLSync, id)
+	return "/sync/" + id
 }
 
 // EndpointSyncSettings supports either "set" or "fetch" as action.
 func EndpointSyncSettings(action string) string {
-	return fmt.Sprintf(URLSync, fmt.Sprintf("settings/%s", action))
+	return EndpointSync("settings/" + action)
 }
 
 func EndpointPush(action string) string {
-	return fmt.Sprintf(URLPush, action)
+	return "/push/" + action
 }
 
 /* Authentication MFA endpoints */
 
 func EndpointAuthMFA(action string) string {
-	return fmt.Sprintf(URLAuthMFA, action)
+	return "/auth/mfa/" + action
 }
 
 /* CDN endpoints */
 
-func EndpointAutumn(tag string) (url string) {
-	url = fmt.Sprintf("%s/%s", cdnURL, tag)
-	return
+func EndpointAutumn(tag string) string {
+	return cdnURL + "/" + tag
 }
 
 func EndpointAutumnFile(tag, id, size string) (url string) {
-	url = fmt.Sprintf("%s/%s/%s", cdnURL, tag, id)
+	url = cdnURL + "/" + tag + "/" + id
 	if size != "" {
 		url += "?max_side=" + size
 	}

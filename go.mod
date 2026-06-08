@@ -1,6 +1,6 @@
 module github.com/sentinelb51/revoltgo
 
-go 1.26
+go 1.26.4
 
 require (
 	github.com/goccy/go-json v0.10.6
