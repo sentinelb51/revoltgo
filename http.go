@@ -2,7 +2,6 @@ package revoltgo
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -102,6 +101,12 @@ func (c *HTTPClient) Header(key string) string {
 // ResolveURL converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
 // It also allows absolute URLs targeting the CDN. Otherwise, it rejects the URL.
 func (c *HTTPClient) ResolveURL(destination string) (string, error) {
+
+	// Fast path: our endpoints are usually absolute paths ("/endpoint") -> Skip url.Parse/ResolveReference.
+	if strings.HasPrefix(destination, "/") && !strings.HasPrefix(destination, "//") {
+		return apiURL + destination, nil
+	}
+
 	destination = strings.TrimSpace(destination)
 	if destination == "" {
 		return "", fmt.Errorf("destination empty")
@@ -131,10 +136,6 @@ func sameHostname(a, b *url.URL) bool {
 
 // printDebugTX logs the outgoing request details if debugging is enabled.
 func (c *HTTPClient) printDebugTX(method, destination string, data any) {
-	if !c.Debug {
-		return
-	}
-
 	var payload string
 	if data != nil {
 		if _, ok := data.(*File); ok {
@@ -151,10 +152,6 @@ func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 // printDebugRX logs the incoming response details if debugging is enabled.
 // It reads the body and restores it so it can be read again later.
 func (c *HTTPClient) printDebugRX(response *http.Response) {
-	if !c.Debug {
-		return
-	}
-
 	// Read body for logging
 	bodyBytes, _ := io.ReadAll(response.Body)
 	response.Body.Close() // Close original network reader
@@ -195,7 +192,7 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 		return err
 	}
 
-	request, err := http.NewRequestWithContext(context.Background(), method, destination, reader)
+	request, err := http.NewRequest(method, destination, reader)
 	if err != nil {
 		return err
 	}
@@ -251,23 +248,26 @@ func (c *HTTPClient) prepareRequestBody(body any) (io.Reader, string, error) {
 
 // prepareFileUpload prepares a multipart form for uploading a file
 func (c *HTTPClient) prepareFileUpload(file *File) (io.Reader, string, error) {
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
+	reader, writer := io.Pipe()
+	form := multipart.NewWriter(writer)
 
-	part, err := writer.CreateFormFile("file", file.Name)
-	if err != nil {
-		return nil, "", fmt.Errorf("writer.CreateFormFile: %w", err)
-	}
+	// Stream the multipart body so large uploads aren't held in memory
+	go func() {
+		part, err := form.CreateFormFile("file", file.Name)
+		if err != nil {
+			writer.CloseWithError(fmt.Errorf("form.CreateFormFile: %w", err))
+			return
+		}
 
-	if _, err = io.Copy(part, file.Reader); err != nil {
-		return nil, "", fmt.Errorf("io.Copy: %w", err)
-	}
+		if _, err = io.Copy(part, file.Reader); err != nil {
+			writer.CloseWithError(fmt.Errorf("io.Copy: %w", err))
+			return
+		}
 
-	if err = writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("writer.Close: %w", err)
-	}
+		writer.CloseWithError(form.Close())
+	}()
 
-	return body, writer.FormDataContentType(), nil
+	return reader, form.FormDataContentType(), nil
 }
 
 // prepareJSONBody encodes data as JSON
