@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
+	"github.com/klauspost/compress/zstd"
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -23,6 +24,15 @@ const (
 	httpHeaderSessionToken = "X-Session-Token"
 	httpHeaderBotToken     = "X-Bot-Token"
 )
+
+// zstdPool reuses streaming decoders across requests. The pool grows to one
+// decoder per concurrent zstd response; concurrency 1 keeps each lean to pool.
+var zstdPool = sync.Pool{
+	New: func() any {
+		d, _ := zstd.NewReader(nil, zstd.WithDecoderConcurrency(1))
+		return d
+	},
+}
 
 type HTTPClient struct {
 	Debug bool
@@ -40,7 +50,8 @@ func newHTTPClient(session *Session) *HTTPClient {
 		client:      &http.Client{Timeout: 10 * time.Second},
 		ratelimiter: newRatelimiter(),
 		headers: map[string]string{
-			"User-Agent": fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
+			"User-Agent":      fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
+			"Accept-Encoding": "zstd",
 		},
 	}
 }
@@ -149,17 +160,12 @@ func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 	log.Printf("[HTTP/TX] %s %s -> %s", method, destination, payload)
 }
 
-// printDebugRX logs the incoming response details if debugging is enabled.
-// It reads the body and restores it so it can be read again later.
-func (c *HTTPClient) printDebugRX(response *http.Response) {
-	// Read body for logging
-	bodyBytes, _ := io.ReadAll(response.Body)
-	response.Body.Close() // Close original network reader
-
-	log.Printf("[HTTP/RX] %d %s", response.StatusCode, string(bodyBytes))
-
-	// Restore body with NopCloser over a buffer for handleResponse
-	response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+// printDebugRX logs the incoming response body and returns a replayable reader
+// so handleResponse can read it again.
+func (c *HTTPClient) printDebugRX(statusCode int, body io.Reader) io.Reader {
+	bodyBytes, _ := io.ReadAll(body)
+	log.Printf("[HTTP/RX] %d %s", statusCode, string(bodyBytes))
+	return bytes.NewReader(bodyBytes)
 }
 
 /*
@@ -219,18 +225,30 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 	if err != nil {
 		return err
 	}
-
-	if c.Debug {
-		c.printDebugRX(response)
-	}
-
 	defer response.Body.Close()
 
 	if err = rl.update(response.Header); err != nil {
 		return err
 	}
 
-	return c.handleResponse(response.StatusCode, response.Body, result)
+	body := io.Reader(response.Body)
+
+	// Handle ZStandard decompression
+	if response.Header.Get("Content-Encoding") == "zstd" {
+		decoder := zstdPool.Get().(*zstd.Decoder)
+		_ = decoder.Reset(response.Body) // only errors on a closed decoder; pooled ones never are
+		defer func() {
+			_ = decoder.Reset(nil) // release body; Reset (not Close) keeps it poolable
+			zstdPool.Put(decoder)
+		}()
+		body = decoder
+	}
+
+	if c.Debug {
+		body = c.printDebugRX(response.StatusCode, body)
+	}
+
+	return c.handleResponse(response.StatusCode, body, result)
 }
 
 // prepareRequestBody prepares an appropriate Request body and determines the content type
