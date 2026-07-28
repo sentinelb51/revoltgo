@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	VERSION        = "v3.0.0"
+	VERSION        = "v3.0.1"
 	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
 )
 
