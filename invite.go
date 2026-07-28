@@ -10,18 +10,18 @@ const (
 )
 
 type Invite struct {
-	Type               InviteType  `msg:"type" json:"type,omitempty"`
-	ServerID           string      `msg:"server_id" json:"server_id,omitempty"`
-	ServerName         string      `msg:"server_name" json:"server_name,omitempty"`
-	ServerIcon         *Attachment `msg:"server_icon" json:"server_icon,omitempty"`
-	ServerBanner       *Attachment `msg:"server_banner" json:"server_banner,omitempty"`
-	ServerFlags        uint32      `msg:"server_flags" json:"server_flags,omitempty"`
-	ChannelID          string      `msg:"channel_id" json:"channel_id,omitempty"`
-	ChannelName        string      `msg:"channel_name" json:"channel_name,omitempty"`
-	ChannelDescription string      `msg:"channel_description" json:"channel_description,omitempty"`
-	UserName           string      `msg:"user_name" json:"user_name,omitempty"`
-	UserAvatar         *Attachment `msg:"user_avatar" json:"user_avatar,omitempty"`
-	MemberCount        uint64      `msg:"member_count" json:"member_count,omitempty"`
+	Type               InviteType `msg:"type" json:"type,omitempty"`
+	ServerID           string     `msg:"server_id" json:"server_id,omitempty"`
+	ServerName         string     `msg:"server_name" json:"server_name,omitempty"`
+	ServerIcon         *File      `msg:"server_icon" json:"server_icon,omitempty"`
+	ServerBanner       *File      `msg:"server_banner" json:"server_banner,omitempty"`
+	ServerFlags        uint32     `msg:"server_flags" json:"server_flags,omitempty"`
+	ChannelID          string     `msg:"channel_id" json:"channel_id,omitempty"`
+	ChannelName        string     `msg:"channel_name" json:"channel_name,omitempty"`
+	ChannelDescription string     `msg:"channel_description" json:"channel_description,omitempty"`
+	UserName           string     `msg:"user_name" json:"user_name,omitempty"`
+	UserAvatar         *File      `msg:"user_avatar" json:"user_avatar,omitempty"`
+	MemberCount        uint64     `msg:"member_count" json:"member_count,omitempty"`
 }
 
 type InviteJoin struct {

@@ -72,7 +72,7 @@ func (s *State) ServerPermissions(user *User, server *Server) (int64, error) {
 	}
 
 	// Get member
-	member := s.Member(user.ID, server.ID)
+	member := s.Member(server.ID, user.ID)
 	if member == nil {
 		return 0, fmt.Errorf("member %s not found in %s", user.ID, server.ID)
 	}
@@ -104,9 +104,11 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (int64, error) 
 	case ChannelTypeSavedMessages:
 		return PermissionGrantAllSafe, nil
 	case ChannelTypeDM:
-		if *channel.Permissions&PermissionSendMessage == PermissionSendMessage {
+
+		if channel.Permissions != nil && *channel.Permissions&PermissionSendMessage == PermissionSendMessage {
 			return PermissionPresetDM, nil
 		}
+
 		return PermissionPresetViewOnly, nil
 	case ChannelTypeGroup:
 

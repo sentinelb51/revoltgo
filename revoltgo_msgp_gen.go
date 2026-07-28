@@ -384,182 +384,6 @@ func (z AccountReverifyParams) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z *Attachment) MarshalMsg(b []byte) (o []byte, err error) {
-	o = msgp.Require(b, z.Msgsize())
-	// map header, size 12
-	// string "_id"
-	o = append(o, 0x8c, 0xa3, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.ID)
-	// string "tag"
-	o = append(o, 0xa3, 0x74, 0x61, 0x67)
-	o = msgp.AppendString(o, z.Tag)
-	// string "filename"
-	o = append(o, 0xa8, 0x66, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65)
-	o = msgp.AppendString(o, z.Filename)
-	// string "metadata"
-	o = append(o, 0xa8, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61)
-	if z.Metadata == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		o, err = z.Metadata.MarshalMsg(o)
-		if err != nil {
-			err = msgp.WrapError(err, "Metadata")
-			return
-		}
-	}
-	// string "content_type"
-	o = append(o, 0xac, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65)
-	o = msgp.AppendString(o, z.ContentType)
-	// string "size"
-	o = append(o, 0xa4, 0x73, 0x69, 0x7a, 0x65)
-	o = msgp.AppendInt(o, z.Size)
-	// string "deleted"
-	o = append(o, 0xa7, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Deleted)
-	// string "reported"
-	o = append(o, 0xa8, 0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Reported)
-	// string "message_id"
-	o = append(o, 0xaa, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.MessageID)
-	// string "user_id"
-	o = append(o, 0xa7, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.UserID)
-	// string "server_id"
-	o = append(o, 0xa9, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.ServerID)
-	// string "object_id"
-	o = append(o, 0xa9, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64)
-	o = msgp.AppendString(o, z.ObjectID)
-	return
-}
-
-// UnmarshalMsg implements msgp.Unmarshaler
-func (z *Attachment) UnmarshalMsg(bts []byte) (o []byte, err error) {
-	var field []byte
-	_ = field
-	var zb0001 uint32
-	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
-	if err != nil {
-		err = msgp.WrapError(err)
-		return
-	}
-	for zb0001 > 0 {
-		zb0001--
-		field, bts, err = msgp.ReadMapKeyZC(bts)
-		if err != nil {
-			err = msgp.WrapError(err)
-			return
-		}
-		switch msgp.UnsafeString(field) {
-		case "_id":
-			z.ID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "ID")
-				return
-			}
-		case "tag":
-			z.Tag, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Tag")
-				return
-			}
-		case "filename":
-			z.Filename, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Filename")
-				return
-			}
-		case "metadata":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Metadata = nil
-			} else {
-				if z.Metadata == nil {
-					z.Metadata = new(AttachmentMetadata)
-				}
-				bts, err = z.Metadata.UnmarshalMsg(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Metadata")
-					return
-				}
-			}
-		case "content_type":
-			z.ContentType, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "ContentType")
-				return
-			}
-		case "size":
-			z.Size, bts, err = msgp.ReadIntBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Size")
-				return
-			}
-		case "deleted":
-			z.Deleted, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Deleted")
-				return
-			}
-		case "reported":
-			z.Reported, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Reported")
-				return
-			}
-		case "message_id":
-			z.MessageID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "MessageID")
-				return
-			}
-		case "user_id":
-			z.UserID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "UserID")
-				return
-			}
-		case "server_id":
-			z.ServerID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "ServerID")
-				return
-			}
-		case "object_id":
-			z.ObjectID, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "ObjectID")
-				return
-			}
-		default:
-			bts, err = msgp.Skip(bts)
-			if err != nil {
-				err = msgp.WrapError(err)
-				return
-			}
-		}
-	}
-	o = bts
-	return
-}
-
-// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z *Attachment) Msgsize() (s int) {
-	s = 1 + 4 + msgp.StringPrefixSize + len(z.ID) + 4 + msgp.StringPrefixSize + len(z.Tag) + 9 + msgp.StringPrefixSize + len(z.Filename) + 9
-	if z.Metadata == nil {
-		s += msgp.NilSize
-	} else {
-		s += z.Metadata.Msgsize()
-	}
-	s += 13 + msgp.StringPrefixSize + len(z.ContentType) + 5 + msgp.IntSize + 8 + msgp.BoolSize + 9 + msgp.BoolSize + 11 + msgp.StringPrefixSize + len(z.MessageID) + 8 + msgp.StringPrefixSize + len(z.UserID) + 10 + msgp.StringPrefixSize + len(z.ServerID) + 10 + msgp.StringPrefixSize + len(z.ObjectID)
-	return
-}
-
-// MarshalMsg implements msgp.Marshaler
 func (z AttachmentMetadata) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 3
@@ -601,7 +425,7 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					err = msgp.WrapError(err, "Type")
 					return
 				}
-				z.Type = AttachmentMetadataType(zb0002)
+				z.Type = FileMetadataType(zb0002)
 			}
 		case "width":
 			z.Width, bts, err = msgp.ReadIntBytes(bts)
@@ -630,34 +454,6 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z AttachmentMetadata) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.IntSize + 7 + msgp.IntSize
-	return
-}
-
-// MarshalMsg implements msgp.Marshaler
-func (z AttachmentMetadataType) MarshalMsg(b []byte) (o []byte, err error) {
-	o = msgp.Require(b, z.Msgsize())
-	o = msgp.AppendString(o, string(z))
-	return
-}
-
-// UnmarshalMsg implements msgp.Unmarshaler
-func (z *AttachmentMetadataType) UnmarshalMsg(bts []byte) (o []byte, err error) {
-	{
-		var zb0001 string
-		zb0001, bts, err = msgp.ReadStringBytes(bts)
-		if err != nil {
-			err = msgp.WrapError(err)
-			return
-		}
-		(*z) = AttachmentMetadataType(zb0001)
-	}
-	o = bts
-	return
-}
-
-// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z AttachmentMetadataType) Msgsize() (s int) {
-	s = msgp.StringPrefixSize + len(string(z))
 	return
 }
 
@@ -1629,7 +1425,7 @@ func (z *Channel) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Icon = nil
 			} else {
 				if z.Icon == nil {
-					z.Icon = new(Attachment)
+					z.Icon = new(File)
 				}
 				bts, err = z.Icon.UnmarshalMsg(bts)
 				if err != nil {
@@ -4394,7 +4190,7 @@ func (z *EventChannelCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Icon = nil
 			} else {
 				if z.Icon == nil {
-					z.Icon = new(Attachment)
+					z.Icon = new(File)
 				}
 				bts, err = z.Icon.UnmarshalMsg(bts)
 				if err != nil {
@@ -5659,111 +5455,36 @@ func (z EventLogout) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 18
+	// map header, size 21
 	// string "type"
-	o = append(o, 0xde, 0x0, 0x12, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0xde, 0x0, 0x15, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "_id"
 	o = append(o, 0xa3, 0x5f, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
-	// string "nonce"
-	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
-	o = msgp.AppendString(o, z.Nonce)
-	// string "channel"
-	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
-	o = msgp.AppendString(o, z.Channel)
 	// string "author"
 	o = append(o, 0xa6, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72)
 	o = msgp.AppendString(o, z.Author)
-	// string "content"
-	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
-	o = msgp.AppendString(o, z.Content)
-	// string "mentions"
-	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
-	for za0001 := range z.Mentions {
-		o = msgp.AppendString(o, z.Mentions[za0001])
-	}
-	// string "replies"
-	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
-	for za0002 := range z.Replies {
-		o = msgp.AppendString(o, z.Replies[za0002])
-	}
-	// string "reactions"
-	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
-	for za0003, za0004 := range z.Reactions {
-		o = msgp.AppendString(o, za0003)
-		o = msgp.AppendArrayHeader(o, uint32(len(za0004)))
-		for za0005 := range za0004 {
-			o = msgp.AppendString(o, za0004[za0005])
-		}
-	}
-	// string "pinned"
-	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Pinned)
-	// string "flags"
-	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
-	o = msgp.AppendUint32(o, uint32(z.Flags))
-	// string "webhook"
-	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
-	if z.Webhook == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "name"
-		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-		o = msgp.AppendString(o, z.Webhook.Name)
-		// string "avatar"
-		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		if z.Webhook.Avatar == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o = msgp.AppendString(o, *z.Webhook.Avatar)
-		}
-	}
-	// string "system"
-	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
-	if z.System == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "type"
-		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
-		o = msgp.AppendString(o, string(z.System.Type))
-		// string "id"
-		o = append(o, 0xa2, 0x69, 0x64)
-		o = msgp.AppendString(o, z.System.ID)
-	}
-	// string "embeds"
-	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o, err = z.Embeds[za0006].MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds", za0006)
-				return
-			}
-		}
-	}
+	// string "channel"
+	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
+	o = msgp.AppendString(o, z.Channel)
 	// string "attachments"
 	o = append(o, 0xab, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Attachments)))
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Attachments[za0007].MarshalMsg(o)
+			o, err = z.Attachments[za0001].MarshalMsg(o)
 			if err != nil {
-				err = msgp.WrapError(err, "Attachments", za0007)
+				err = msgp.WrapError(err, "Attachments", za0001)
 				return
 			}
 		}
 	}
+	// string "content"
+	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
+	o = msgp.AppendString(o, z.Content)
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
 	if z.Edited == nil {
@@ -5771,6 +5492,23 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 	} else {
 		o = msgp.AppendInt64(o, timeToMs(*z.Edited))
 	}
+	// string "embeds"
+	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Embeds[za0002].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds", za0002)
+				return
+			}
+		}
+	}
+	// string "flags"
+	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
+	o = msgp.AppendUint32(o, uint32(z.Flags))
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 	if z.Interactions == nil {
@@ -5780,8 +5518,8 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "reactions"
 		o = append(o, 0x82, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.Interactions.Reactions)))
-		for za0008 := range z.Interactions.Reactions {
-			o = msgp.AppendString(o, z.Interactions.Reactions[za0008])
+		for za0003 := range z.Interactions.Reactions {
+			o = msgp.AppendString(o, z.Interactions.Reactions[za0003])
 		}
 		// string "restrict_reactions"
 		o = append(o, 0xb2, 0x72, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -5802,6 +5540,92 @@ func (z *EventMessage) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "colour"
 		o = append(o, 0xa6, 0x63, 0x6f, 0x6c, 0x6f, 0x75, 0x72)
 		o = msgp.AppendString(o, z.Masquerade.Colour)
+	}
+	// string "member"
+	o = append(o, 0xa6, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72)
+	if z.Member == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Member.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Member")
+			return
+		}
+	}
+	// string "mentions"
+	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
+	for za0004 := range z.Mentions {
+		o = msgp.AppendString(o, z.Mentions[za0004])
+	}
+	// string "nonce"
+	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
+	o = msgp.AppendString(o, z.Nonce)
+	// string "pinned"
+	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Pinned)
+	// string "reactions"
+	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
+	for za0005, za0006 := range z.Reactions {
+		o = msgp.AppendString(o, za0005)
+		o = msgp.AppendArrayHeader(o, uint32(len(za0006)))
+		for za0007 := range za0006 {
+			o = msgp.AppendString(o, za0006[za0007])
+		}
+	}
+	// string "replies"
+	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
+	for za0008 := range z.Replies {
+		o = msgp.AppendString(o, z.Replies[za0008])
+	}
+	// string "role_mentions"
+	o = append(o, 0xad, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.RoleMentions)))
+	for za0009 := range z.RoleMentions {
+		o = msgp.AppendString(o, z.RoleMentions[za0009])
+	}
+	// string "system"
+	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
+	if z.System == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "type"
+		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+		o = msgp.AppendString(o, string(z.System.Type))
+		// string "id"
+		o = append(o, 0xa2, 0x69, 0x64)
+		o = msgp.AppendString(o, z.System.ID)
+	}
+	// string "user"
+	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
+	if z.User == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.User.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "User")
+			return
+		}
+	}
+	// string "webhook"
+	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
+	if z.Webhook == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "name"
+		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+		o = msgp.AppendString(o, z.Webhook.Name)
+		// string "avatar"
+		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
+		}
 	}
 	return
 }
@@ -5836,10 +5660,10 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "ID")
 				return
 			}
-		case "nonce":
-			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
+		case "author":
+			z.Author, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Nonce")
+				err = msgp.WrapError(err, "Author")
 				return
 			}
 		case "channel":
@@ -5848,11 +5672,35 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Channel")
 				return
 			}
-		case "author":
-			z.Author, bts, err = msgp.ReadStringBytes(bts)
+		case "attachments":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Author")
+				err = msgp.WrapError(err, "Attachments")
 				return
+			}
+			if cap(z.Attachments) >= int(zb0002) {
+				z.Attachments = (z.Attachments)[:zb0002]
+			} else {
+				z.Attachments = make([]*File, zb0002)
+			}
+			for za0001 := range z.Attachments {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Attachments[za0001] = nil
+				} else {
+					if z.Attachments[za0001] == nil {
+						z.Attachments[za0001] = new(File)
+					}
+					bts, err = z.Attachments[za0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Attachments", za0001)
+						return
+					}
+				}
 			}
 		case "content":
 			z.Content, bts, err = msgp.ReadStringBytes(bts)
@@ -5860,84 +5708,219 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Content")
 				return
 			}
+		case "edited":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				{
+					var zb0003 int64
+					zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Edited")
+						return
+					}
+					*z.Edited = msToTime(zb0003)
+				}
+			}
+		case "embeds":
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds")
+				return
+			}
+			if cap(z.Embeds) >= int(zb0004) {
+				z.Embeds = (z.Embeds)[:zb0004]
+			} else {
+				z.Embeds = make([]*MessageEmbed, zb0004)
+			}
+			for za0002 := range z.Embeds {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Embeds[za0002] = nil
+				} else {
+					if z.Embeds[za0002] == nil {
+						z.Embeds[za0002] = new(MessageEmbed)
+					}
+					bts, err = z.Embeds[za0002].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Embeds", za0002)
+						return
+					}
+				}
+			}
+		case "flags":
+			{
+				var zb0005 uint32
+				zb0005, bts, err = msgp.ReadUint32Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Flags")
+					return
+				}
+				z.Flags = MessageFlagsType(zb0005)
+			}
+		case "interactions":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Interactions = nil
+			} else {
+				if z.Interactions == nil {
+					z.Interactions = new(MessageInteractions)
+				}
+				var zb0006 uint32
+				zb0006, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Interactions")
+					return
+				}
+				for zb0006 > 0 {
+					zb0006--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Interactions")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "reactions":
+						var zb0007 uint32
+						zb0007, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "Reactions")
+							return
+						}
+						if cap(z.Interactions.Reactions) >= int(zb0007) {
+							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0007]
+						} else {
+							z.Interactions.Reactions = make([]string, zb0007)
+						}
+						for za0003 := range z.Interactions.Reactions {
+							z.Interactions.Reactions[za0003], bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Interactions", "Reactions", za0003)
+								return
+							}
+						}
+					case "restrict_reactions":
+						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions")
+							return
+						}
+					}
+				}
+			}
+		case "masquerade":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Masquerade = nil
+			} else {
+				if z.Masquerade == nil {
+					z.Masquerade = new(MessageMasquerade)
+				}
+				var zb0008 uint32
+				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Masquerade")
+					return
+				}
+				for zb0008 > 0 {
+					zb0008--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Masquerade")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "name":
+						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Name")
+							return
+						}
+					case "avatar":
+						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Avatar")
+							return
+						}
+					case "colour":
+						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Colour")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade")
+							return
+						}
+					}
+				}
+			}
+		case "member":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Member = nil
+			} else {
+				if z.Member == nil {
+					z.Member = new(ServerMember)
+				}
+				bts, err = z.Member.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Member")
+					return
+				}
+			}
 		case "mentions":
-			var zb0002 uint32
-			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0009 uint32
+			zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Mentions")
 				return
 			}
-			if cap(z.Mentions) >= int(zb0002) {
-				z.Mentions = (z.Mentions)[:zb0002]
+			if cap(z.Mentions) >= int(zb0009) {
+				z.Mentions = (z.Mentions)[:zb0009]
 			} else {
-				z.Mentions = make([]string, zb0002)
+				z.Mentions = make([]string, zb0009)
 			}
-			for za0001 := range z.Mentions {
-				z.Mentions[za0001], bts, err = msgp.ReadStringBytes(bts)
+			for za0004 := range z.Mentions {
+				z.Mentions[za0004], bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Mentions", za0001)
+					err = msgp.WrapError(err, "Mentions", za0004)
 					return
 				}
 			}
-		case "replies":
-			var zb0003 uint32
-			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		case "nonce":
+			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Replies")
+				err = msgp.WrapError(err, "Nonce")
 				return
-			}
-			if cap(z.Replies) >= int(zb0003) {
-				z.Replies = (z.Replies)[:zb0003]
-			} else {
-				z.Replies = make([]string, zb0003)
-			}
-			for za0002 := range z.Replies {
-				z.Replies[za0002], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Replies", za0002)
-					return
-				}
-			}
-		case "reactions":
-			var zb0004 uint32
-			zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Reactions")
-				return
-			}
-			if z.Reactions == nil {
-				z.Reactions = make(map[string][]string, zb0004)
-			} else if len(z.Reactions) > 0 {
-				clear(z.Reactions)
-			}
-			for zb0004 > 0 {
-				var za0004 []string
-				zb0004--
-				var za0003 string
-				za0003, bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions")
-					return
-				}
-				var zb0005 uint32
-				zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions", za0003)
-					return
-				}
-				if cap(za0004) >= int(zb0005) {
-					za0004 = (za0004)[:zb0005]
-				} else {
-					za0004 = make([]string, zb0005)
-				}
-				for za0005 := range za0004 {
-					za0004[za0005], bts, err = msgp.ReadStringBytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Reactions", za0003, za0005)
-						return
-					}
-				}
-				z.Reactions[za0003] = za0004
 			}
 		case "pinned":
 			z.Pinned, bts, err = msgp.ReadBoolBytes(bts)
@@ -5945,15 +5928,151 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Pinned")
 				return
 			}
-		case "flags":
-			{
-				var zb0006 uint32
-				zb0006, bts, err = msgp.ReadUint32Bytes(bts)
+		case "reactions":
+			var zb0010 uint32
+			zb0010, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Reactions")
+				return
+			}
+			if z.Reactions == nil {
+				z.Reactions = make(map[string][]string, zb0010)
+			} else if len(z.Reactions) > 0 {
+				clear(z.Reactions)
+			}
+			for zb0010 > 0 {
+				var za0006 []string
+				zb0010--
+				var za0005 string
+				za0005, bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Flags")
+					err = msgp.WrapError(err, "Reactions")
 					return
 				}
-				z.Flags = MessageFlagsType(zb0006)
+				var zb0011 uint32
+				zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Reactions", za0005)
+					return
+				}
+				if cap(za0006) >= int(zb0011) {
+					za0006 = (za0006)[:zb0011]
+				} else {
+					za0006 = make([]string, zb0011)
+				}
+				for za0007 := range za0006 {
+					za0006[za0007], bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Reactions", za0005, za0007)
+						return
+					}
+				}
+				z.Reactions[za0005] = za0006
+			}
+		case "replies":
+			var zb0012 uint32
+			zb0012, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Replies")
+				return
+			}
+			if cap(z.Replies) >= int(zb0012) {
+				z.Replies = (z.Replies)[:zb0012]
+			} else {
+				z.Replies = make([]string, zb0012)
+			}
+			for za0008 := range z.Replies {
+				z.Replies[za0008], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Replies", za0008)
+					return
+				}
+			}
+		case "role_mentions":
+			var zb0013 uint32
+			zb0013, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "RoleMentions")
+				return
+			}
+			if cap(z.RoleMentions) >= int(zb0013) {
+				z.RoleMentions = (z.RoleMentions)[:zb0013]
+			} else {
+				z.RoleMentions = make([]string, zb0013)
+			}
+			for za0009 := range z.RoleMentions {
+				z.RoleMentions[za0009], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "RoleMentions", za0009)
+					return
+				}
+			}
+		case "system":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.System = nil
+			} else {
+				if z.System == nil {
+					z.System = new(MessageSystem)
+				}
+				var zb0014 uint32
+				zb0014, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "System")
+					return
+				}
+				for zb0014 > 0 {
+					zb0014--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "System")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "type":
+						{
+							var zb0015 string
+							zb0015, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "System", "Type")
+								return
+							}
+							z.System.Type = MessageSystemType(zb0015)
+						}
+					case "id":
+						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System", "ID")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System")
+							return
+						}
+					}
+				}
+			}
+		case "user":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.User = nil
+			} else {
+				if z.User == nil {
+					z.User = new(User)
+				}
+				bts, err = z.User.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "User")
+					return
+				}
 			}
 		case "webhook":
 			if msgp.IsNil(bts) {
@@ -5966,14 +6085,14 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				if z.Webhook == nil {
 					z.Webhook = new(MessageWebhook)
 				}
-				var zb0007 uint32
-				zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0016 uint32
+				zb0016, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Webhook")
 					return
 				}
-				for zb0007 > 0 {
-					zb0007--
+				for zb0016 > 0 {
+					zb0016--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Webhook")
@@ -6012,248 +6131,6 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 				}
 			}
-		case "system":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.System = nil
-			} else {
-				if z.System == nil {
-					z.System = new(MessageSystem)
-				}
-				var zb0008 uint32
-				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "System")
-					return
-				}
-				for zb0008 > 0 {
-					zb0008--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "System")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "type":
-						{
-							var zb0009 string
-							zb0009, bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "System", "Type")
-								return
-							}
-							z.System.Type = MessageSystemType(zb0009)
-						}
-					case "id":
-						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System", "ID")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System")
-							return
-						}
-					}
-				}
-			}
-		case "embeds":
-			var zb0010 uint32
-			zb0010, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds")
-				return
-			}
-			if cap(z.Embeds) >= int(zb0010) {
-				z.Embeds = (z.Embeds)[:zb0010]
-			} else {
-				z.Embeds = make([]*MessageEmbed, zb0010)
-			}
-			for za0006 := range z.Embeds {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Embeds[za0006] = nil
-				} else {
-					if z.Embeds[za0006] == nil {
-						z.Embeds[za0006] = new(MessageEmbed)
-					}
-					bts, err = z.Embeds[za0006].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Embeds", za0006)
-						return
-					}
-				}
-			}
-		case "attachments":
-			var zb0011 uint32
-			zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Attachments")
-				return
-			}
-			if cap(z.Attachments) >= int(zb0011) {
-				z.Attachments = (z.Attachments)[:zb0011]
-			} else {
-				z.Attachments = make([]*Attachment, zb0011)
-			}
-			for za0007 := range z.Attachments {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Attachments[za0007] = nil
-				} else {
-					if z.Attachments[za0007] == nil {
-						z.Attachments[za0007] = new(Attachment)
-					}
-					bts, err = z.Attachments[za0007].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Attachments", za0007)
-						return
-					}
-				}
-			}
-		case "edited":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Edited = nil
-			} else {
-				if z.Edited == nil {
-					z.Edited = new(time.Time)
-				}
-				{
-					var zb0012 int64
-					zb0012, bts, err = msgp.ReadInt64Bytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Edited")
-						return
-					}
-					*z.Edited = msToTime(zb0012)
-				}
-			}
-		case "interactions":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Interactions = nil
-			} else {
-				if z.Interactions == nil {
-					z.Interactions = new(MessageInteractions)
-				}
-				var zb0013 uint32
-				zb0013, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Interactions")
-					return
-				}
-				for zb0013 > 0 {
-					zb0013--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Interactions")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "reactions":
-						var zb0014 uint32
-						zb0014, bts, err = msgp.ReadArrayHeaderBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "Reactions")
-							return
-						}
-						if cap(z.Interactions.Reactions) >= int(zb0014) {
-							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0014]
-						} else {
-							z.Interactions.Reactions = make([]string, zb0014)
-						}
-						for za0008 := range z.Interactions.Reactions {
-							z.Interactions.Reactions[za0008], bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Interactions", "Reactions", za0008)
-								return
-							}
-						}
-					case "restrict_reactions":
-						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions")
-							return
-						}
-					}
-				}
-			}
-		case "masquerade":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Masquerade = nil
-			} else {
-				if z.Masquerade == nil {
-					z.Masquerade = new(MessageMasquerade)
-				}
-				var zb0015 uint32
-				zb0015, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Masquerade")
-					return
-				}
-				for zb0015 > 0 {
-					zb0015--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Masquerade")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "name":
-						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Name")
-							return
-						}
-					case "avatar":
-						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Avatar")
-							return
-						}
-					case "colour":
-						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Colour")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade")
-							return
-						}
-					}
-				}
-			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -6268,25 +6145,85 @@ func (z *EventMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *EventMessage) Msgsize() (s int) {
-	s = 3 + 5 + msgp.StringPrefixSize + len(z.Type) + 4 + msgp.StringPrefixSize + len(z.ID) + 6 + msgp.StringPrefixSize + len(z.Nonce) + 8 + msgp.StringPrefixSize + len(z.Channel) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Content) + 9 + msgp.ArrayHeaderSize
-	for za0001 := range z.Mentions {
-		s += msgp.StringPrefixSize + len(z.Mentions[za0001])
+	s = 3 + 5 + msgp.StringPrefixSize + len(z.Type) + 4 + msgp.StringPrefixSize + len(z.ID) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Channel) + 12 + msgp.ArrayHeaderSize
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Attachments[za0001].Msgsize()
+		}
 	}
-	s += 8 + msgp.ArrayHeaderSize
-	for za0002 := range z.Replies {
-		s += msgp.StringPrefixSize + len(z.Replies[za0002])
+	s += 8 + msgp.StringPrefixSize + len(z.Content) + 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.Int64Size
 	}
-	s += 10 + msgp.MapHeaderSize
+	s += 7 + msgp.ArrayHeaderSize
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Embeds[za0002].Msgsize()
+		}
+	}
+	s += 6 + msgp.Uint32Size + 13
+	if z.Interactions == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 10 + msgp.ArrayHeaderSize
+		for za0003 := range z.Interactions.Reactions {
+			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0003])
+		}
+		s += 19 + msgp.BoolSize
+	}
+	s += 11
+	if z.Masquerade == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
+	}
+	s += 7
+	if z.Member == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Member.Msgsize()
+	}
+	s += 9 + msgp.ArrayHeaderSize
+	for za0004 := range z.Mentions {
+		s += msgp.StringPrefixSize + len(z.Mentions[za0004])
+	}
+	s += 6 + msgp.StringPrefixSize + len(z.Nonce) + 7 + msgp.BoolSize + 10 + msgp.MapHeaderSize
 	if z.Reactions != nil {
-		for za0003, za0004 := range z.Reactions {
-			_ = za0004
-			s += msgp.StringPrefixSize + len(za0003) + msgp.ArrayHeaderSize
-			for za0005 := range za0004 {
-				s += msgp.StringPrefixSize + len(za0004[za0005])
+		for za0005, za0006 := range z.Reactions {
+			_ = za0006
+			s += msgp.StringPrefixSize + len(za0005) + msgp.ArrayHeaderSize
+			for za0007 := range za0006 {
+				s += msgp.StringPrefixSize + len(za0006[za0007])
 			}
 		}
 	}
-	s += 7 + msgp.BoolSize + 6 + msgp.Uint32Size + 8
+	s += 8 + msgp.ArrayHeaderSize
+	for za0008 := range z.Replies {
+		s += msgp.StringPrefixSize + len(z.Replies[za0008])
+	}
+	s += 14 + msgp.ArrayHeaderSize
+	for za0009 := range z.RoleMentions {
+		s += msgp.StringPrefixSize + len(z.RoleMentions[za0009])
+	}
+	s += 7
+	if z.System == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
+	}
+	s += 5
+	if z.User == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.User.Msgsize()
+	}
+	s += 8
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
@@ -6297,59 +6234,18 @@ func (z *EventMessage) Msgsize() (s int) {
 			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
 	}
-	s += 7
-	if z.System == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
-	}
-	s += 7 + msgp.ArrayHeaderSize
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Embeds[za0006].Msgsize()
-		}
-	}
-	s += 12 + msgp.ArrayHeaderSize
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Attachments[za0007].Msgsize()
-		}
-	}
-	s += 7
-	if z.Edited == nil {
-		s += msgp.NilSize
-	} else {
-		s += msgp.Int64Size
-	}
-	s += 13
-	if z.Interactions == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 10 + msgp.ArrayHeaderSize
-		for za0008 := range z.Interactions.Reactions {
-			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0008])
-		}
-		s += 19 + msgp.BoolSize
-	}
-	s += 11
-	if z.Masquerade == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
-	}
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
 func (z *EventMessageAppend) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 3
+	// map header, size 4
+	// string "type"
+	o = append(o, 0x84, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.Type)
 	// string "id"
-	o = append(o, 0x83, 0xa2, 0x69, 0x64)
+	o = append(o, 0xa2, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "channel"
 	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
@@ -6382,6 +6278,12 @@ func (z *EventMessageAppend) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
+		case "type":
+			z.Type, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Type")
+				return
+			}
 		case "id":
 			z.ID, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
@@ -6414,7 +6316,7 @@ func (z *EventMessageAppend) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *EventMessageAppend) Msgsize() (s int) {
-	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 8 + msgp.StringPrefixSize + len(z.Channel) + 7 + z.Append.Msgsize()
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 8 + msgp.StringPrefixSize + len(z.Channel) + 7 + z.Append.Msgsize()
 	return
 }
 
@@ -6577,11 +6479,14 @@ func (z *EventMessageReact) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z EventMessageRemoveReaction) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *EventMessageRemoveReaction) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 3
+	// map header, size 4
+	// string "type"
+	o = append(o, 0x84, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.Type)
 	// string "id"
-	o = append(o, 0x83, 0xa2, 0x69, 0x64)
+	o = append(o, 0xa2, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "channel_id"
 	o = append(o, 0xaa, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x5f, 0x69, 0x64)
@@ -6610,6 +6515,12 @@ func (z *EventMessageRemoveReaction) UnmarshalMsg(bts []byte) (o []byte, err err
 			return
 		}
 		switch msgp.UnsafeString(field) {
+		case "type":
+			z.Type, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Type")
+				return
+			}
 		case "id":
 			z.ID, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
@@ -6641,8 +6552,8 @@ func (z *EventMessageRemoveReaction) UnmarshalMsg(bts []byte) (o []byte, err err
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z EventMessageRemoveReaction) Msgsize() (s int) {
-	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 11 + msgp.StringPrefixSize + len(z.ChannelID) + 9 + msgp.StringPrefixSize + len(z.EmojiID)
+func (z *EventMessageRemoveReaction) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 11 + msgp.StringPrefixSize + len(z.ChannelID) + 9 + msgp.StringPrefixSize + len(z.EmojiID)
 	return
 }
 
@@ -9470,7 +9381,7 @@ func (z *EventWebhookCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -10108,6 +10019,314 @@ func (z *FetchedGroupMembers) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *File) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 12
+	// string "_id"
+	o = append(o, 0x8c, 0xa3, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ID)
+	// string "content_type"
+	o = append(o, 0xac, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65)
+	o = msgp.AppendString(o, z.ContentType)
+	// string "filename"
+	o = append(o, 0xa8, 0x66, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65)
+	o = msgp.AppendString(o, z.Filename)
+	// string "metadata"
+	o = append(o, 0xa8, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61)
+	if z.Metadata == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Metadata.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Metadata")
+			return
+		}
+	}
+	// string "size"
+	o = append(o, 0xa4, 0x73, 0x69, 0x7a, 0x65)
+	o = msgp.AppendInt(o, z.Size)
+	// string "tag"
+	o = append(o, 0xa3, 0x74, 0x61, 0x67)
+	o = msgp.AppendString(o, z.Tag)
+	// string "deleted"
+	o = append(o, 0xa7, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Deleted)
+	// string "message_id"
+	o = append(o, 0xaa, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.MessageID)
+	// string "object_id"
+	o = append(o, 0xa9, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ObjectID)
+	// string "reported"
+	o = append(o, 0xa8, 0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Reported)
+	// string "server_id"
+	o = append(o, 0xa9, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ServerID)
+	// string "user_id"
+	o = append(o, 0xa7, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.UserID)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *File) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "_id":
+			z.ID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ID")
+				return
+			}
+		case "content_type":
+			z.ContentType, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ContentType")
+				return
+			}
+		case "filename":
+			z.Filename, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Filename")
+				return
+			}
+		case "metadata":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Metadata = nil
+			} else {
+				if z.Metadata == nil {
+					z.Metadata = new(AttachmentMetadata)
+				}
+				bts, err = z.Metadata.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Metadata")
+					return
+				}
+			}
+		case "size":
+			z.Size, bts, err = msgp.ReadIntBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Size")
+				return
+			}
+		case "tag":
+			z.Tag, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Tag")
+				return
+			}
+		case "deleted":
+			z.Deleted, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Deleted")
+				return
+			}
+		case "message_id":
+			z.MessageID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "MessageID")
+				return
+			}
+		case "object_id":
+			z.ObjectID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ObjectID")
+				return
+			}
+		case "reported":
+			z.Reported, bts, err = msgp.ReadBoolBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Reported")
+				return
+			}
+		case "server_id":
+			z.ServerID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ServerID")
+				return
+			}
+		case "user_id":
+			z.UserID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "UserID")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *File) Msgsize() (s int) {
+	s = 1 + 4 + msgp.StringPrefixSize + len(z.ID) + 13 + msgp.StringPrefixSize + len(z.ContentType) + 9 + msgp.StringPrefixSize + len(z.Filename) + 9
+	if z.Metadata == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Metadata.Msgsize()
+	}
+	s += 5 + msgp.IntSize + 4 + msgp.StringPrefixSize + len(z.Tag) + 8 + msgp.BoolSize + 11 + msgp.StringPrefixSize + len(z.MessageID) + 10 + msgp.StringPrefixSize + len(z.ObjectID) + 9 + msgp.BoolSize + 10 + msgp.StringPrefixSize + len(z.ServerID) + 8 + msgp.StringPrefixSize + len(z.UserID)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z FileMetadataType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *FileMetadataType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = FileMetadataType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z FileMetadataType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z FileParams) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 1
+	// string "Name"
+	o = append(o, 0x81, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
+	o = msgp.AppendString(o, z.Name)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *FileParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "Name":
+			z.Name, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Name")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z FileParams) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z FileParamsData) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 1
+	// string "id"
+	o = append(o, 0x81, 0xa2, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ID)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *FileParamsData) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "id":
+			z.ID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ID")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z FileParamsData) Msgsize() (s int) {
+	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *Group) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 5
@@ -10542,7 +10761,7 @@ func (z *Invite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.ServerIcon = nil
 			} else {
 				if z.ServerIcon == nil {
-					z.ServerIcon = new(Attachment)
+					z.ServerIcon = new(File)
 				}
 				bts, err = z.ServerIcon.UnmarshalMsg(bts)
 				if err != nil {
@@ -10559,7 +10778,7 @@ func (z *Invite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.ServerBanner = nil
 			} else {
 				if z.ServerBanner == nil {
-					z.ServerBanner = new(Attachment)
+					z.ServerBanner = new(File)
 				}
 				bts, err = z.ServerBanner.UnmarshalMsg(bts)
 				if err != nil {
@@ -10606,7 +10825,7 @@ func (z *Invite) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.UserAvatar = nil
 			} else {
 				if z.UserAvatar == nil {
-					z.UserAvatar = new(Attachment)
+					z.UserAvatar = new(File)
 				}
 				bts, err = z.UserAvatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -11437,108 +11656,33 @@ func (z MemberCompositeID) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 17
+	// map header, size 20
 	// string "_id"
-	o = append(o, 0xde, 0x0, 0x11, 0xa3, 0x5f, 0x69, 0x64)
+	o = append(o, 0xde, 0x0, 0x14, 0xa3, 0x5f, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
-	// string "nonce"
-	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
-	o = msgp.AppendString(o, z.Nonce)
-	// string "channel"
-	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
-	o = msgp.AppendString(o, z.Channel)
 	// string "author"
 	o = append(o, 0xa6, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72)
 	o = msgp.AppendString(o, z.Author)
-	// string "content"
-	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
-	o = msgp.AppendString(o, z.Content)
-	// string "mentions"
-	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
-	for za0001 := range z.Mentions {
-		o = msgp.AppendString(o, z.Mentions[za0001])
-	}
-	// string "replies"
-	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
-	for za0002 := range z.Replies {
-		o = msgp.AppendString(o, z.Replies[za0002])
-	}
-	// string "reactions"
-	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
-	for za0003, za0004 := range z.Reactions {
-		o = msgp.AppendString(o, za0003)
-		o = msgp.AppendArrayHeader(o, uint32(len(za0004)))
-		for za0005 := range za0004 {
-			o = msgp.AppendString(o, za0004[za0005])
-		}
-	}
-	// string "pinned"
-	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Pinned)
-	// string "flags"
-	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
-	o = msgp.AppendUint32(o, uint32(z.Flags))
-	// string "webhook"
-	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
-	if z.Webhook == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "name"
-		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-		o = msgp.AppendString(o, z.Webhook.Name)
-		// string "avatar"
-		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		if z.Webhook.Avatar == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o = msgp.AppendString(o, *z.Webhook.Avatar)
-		}
-	}
-	// string "system"
-	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
-	if z.System == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "type"
-		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
-		o = msgp.AppendString(o, string(z.System.Type))
-		// string "id"
-		o = append(o, 0xa2, 0x69, 0x64)
-		o = msgp.AppendString(o, z.System.ID)
-	}
-	// string "embeds"
-	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o, err = z.Embeds[za0006].MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds", za0006)
-				return
-			}
-		}
-	}
+	// string "channel"
+	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
+	o = msgp.AppendString(o, z.Channel)
 	// string "attachments"
 	o = append(o, 0xab, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Attachments)))
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Attachments[za0007].MarshalMsg(o)
+			o, err = z.Attachments[za0001].MarshalMsg(o)
 			if err != nil {
-				err = msgp.WrapError(err, "Attachments", za0007)
+				err = msgp.WrapError(err, "Attachments", za0001)
 				return
 			}
 		}
 	}
+	// string "content"
+	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
+	o = msgp.AppendString(o, z.Content)
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
 	if z.Edited == nil {
@@ -11546,6 +11690,23 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 	} else {
 		o = msgp.AppendInt64(o, timeToMs(*z.Edited))
 	}
+	// string "embeds"
+	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Embeds[za0002].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds", za0002)
+				return
+			}
+		}
+	}
+	// string "flags"
+	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
+	o = msgp.AppendUint32(o, uint32(z.Flags))
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 	if z.Interactions == nil {
@@ -11555,8 +11716,8 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "reactions"
 		o = append(o, 0x82, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.Interactions.Reactions)))
-		for za0008 := range z.Interactions.Reactions {
-			o = msgp.AppendString(o, z.Interactions.Reactions[za0008])
+		for za0003 := range z.Interactions.Reactions {
+			o = msgp.AppendString(o, z.Interactions.Reactions[za0003])
 		}
 		// string "restrict_reactions"
 		o = append(o, 0xb2, 0x72, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -11577,6 +11738,92 @@ func (z *Message) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "colour"
 		o = append(o, 0xa6, 0x63, 0x6f, 0x6c, 0x6f, 0x75, 0x72)
 		o = msgp.AppendString(o, z.Masquerade.Colour)
+	}
+	// string "member"
+	o = append(o, 0xa6, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72)
+	if z.Member == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Member.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Member")
+			return
+		}
+	}
+	// string "mentions"
+	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
+	for za0004 := range z.Mentions {
+		o = msgp.AppendString(o, z.Mentions[za0004])
+	}
+	// string "nonce"
+	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
+	o = msgp.AppendString(o, z.Nonce)
+	// string "pinned"
+	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Pinned)
+	// string "reactions"
+	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
+	for za0005, za0006 := range z.Reactions {
+		o = msgp.AppendString(o, za0005)
+		o = msgp.AppendArrayHeader(o, uint32(len(za0006)))
+		for za0007 := range za0006 {
+			o = msgp.AppendString(o, za0006[za0007])
+		}
+	}
+	// string "replies"
+	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
+	for za0008 := range z.Replies {
+		o = msgp.AppendString(o, z.Replies[za0008])
+	}
+	// string "role_mentions"
+	o = append(o, 0xad, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.RoleMentions)))
+	for za0009 := range z.RoleMentions {
+		o = msgp.AppendString(o, z.RoleMentions[za0009])
+	}
+	// string "system"
+	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
+	if z.System == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "type"
+		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+		o = msgp.AppendString(o, string(z.System.Type))
+		// string "id"
+		o = append(o, 0xa2, 0x69, 0x64)
+		o = msgp.AppendString(o, z.System.ID)
+	}
+	// string "user"
+	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
+	if z.User == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.User.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "User")
+			return
+		}
+	}
+	// string "webhook"
+	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
+	if z.Webhook == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "name"
+		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+		o = msgp.AppendString(o, z.Webhook.Name)
+		// string "avatar"
+		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
+		}
 	}
 	return
 }
@@ -11605,10 +11852,10 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "ID")
 				return
 			}
-		case "nonce":
-			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
+		case "author":
+			z.Author, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Nonce")
+				err = msgp.WrapError(err, "Author")
 				return
 			}
 		case "channel":
@@ -11617,11 +11864,35 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Channel")
 				return
 			}
-		case "author":
-			z.Author, bts, err = msgp.ReadStringBytes(bts)
+		case "attachments":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Author")
+				err = msgp.WrapError(err, "Attachments")
 				return
+			}
+			if cap(z.Attachments) >= int(zb0002) {
+				z.Attachments = (z.Attachments)[:zb0002]
+			} else {
+				z.Attachments = make([]*File, zb0002)
+			}
+			for za0001 := range z.Attachments {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Attachments[za0001] = nil
+				} else {
+					if z.Attachments[za0001] == nil {
+						z.Attachments[za0001] = new(File)
+					}
+					bts, err = z.Attachments[za0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Attachments", za0001)
+						return
+					}
+				}
 			}
 		case "content":
 			z.Content, bts, err = msgp.ReadStringBytes(bts)
@@ -11629,84 +11900,219 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Content")
 				return
 			}
+		case "edited":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				{
+					var zb0003 int64
+					zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Edited")
+						return
+					}
+					*z.Edited = msToTime(zb0003)
+				}
+			}
+		case "embeds":
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds")
+				return
+			}
+			if cap(z.Embeds) >= int(zb0004) {
+				z.Embeds = (z.Embeds)[:zb0004]
+			} else {
+				z.Embeds = make([]*MessageEmbed, zb0004)
+			}
+			for za0002 := range z.Embeds {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Embeds[za0002] = nil
+				} else {
+					if z.Embeds[za0002] == nil {
+						z.Embeds[za0002] = new(MessageEmbed)
+					}
+					bts, err = z.Embeds[za0002].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Embeds", za0002)
+						return
+					}
+				}
+			}
+		case "flags":
+			{
+				var zb0005 uint32
+				zb0005, bts, err = msgp.ReadUint32Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Flags")
+					return
+				}
+				z.Flags = MessageFlagsType(zb0005)
+			}
+		case "interactions":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Interactions = nil
+			} else {
+				if z.Interactions == nil {
+					z.Interactions = new(MessageInteractions)
+				}
+				var zb0006 uint32
+				zb0006, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Interactions")
+					return
+				}
+				for zb0006 > 0 {
+					zb0006--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Interactions")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "reactions":
+						var zb0007 uint32
+						zb0007, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "Reactions")
+							return
+						}
+						if cap(z.Interactions.Reactions) >= int(zb0007) {
+							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0007]
+						} else {
+							z.Interactions.Reactions = make([]string, zb0007)
+						}
+						for za0003 := range z.Interactions.Reactions {
+							z.Interactions.Reactions[za0003], bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Interactions", "Reactions", za0003)
+								return
+							}
+						}
+					case "restrict_reactions":
+						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions")
+							return
+						}
+					}
+				}
+			}
+		case "masquerade":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Masquerade = nil
+			} else {
+				if z.Masquerade == nil {
+					z.Masquerade = new(MessageMasquerade)
+				}
+				var zb0008 uint32
+				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Masquerade")
+					return
+				}
+				for zb0008 > 0 {
+					zb0008--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Masquerade")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "name":
+						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Name")
+							return
+						}
+					case "avatar":
+						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Avatar")
+							return
+						}
+					case "colour":
+						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Colour")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade")
+							return
+						}
+					}
+				}
+			}
+		case "member":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Member = nil
+			} else {
+				if z.Member == nil {
+					z.Member = new(ServerMember)
+				}
+				bts, err = z.Member.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Member")
+					return
+				}
+			}
 		case "mentions":
-			var zb0002 uint32
-			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0009 uint32
+			zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Mentions")
 				return
 			}
-			if cap(z.Mentions) >= int(zb0002) {
-				z.Mentions = (z.Mentions)[:zb0002]
+			if cap(z.Mentions) >= int(zb0009) {
+				z.Mentions = (z.Mentions)[:zb0009]
 			} else {
-				z.Mentions = make([]string, zb0002)
+				z.Mentions = make([]string, zb0009)
 			}
-			for za0001 := range z.Mentions {
-				z.Mentions[za0001], bts, err = msgp.ReadStringBytes(bts)
+			for za0004 := range z.Mentions {
+				z.Mentions[za0004], bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Mentions", za0001)
+					err = msgp.WrapError(err, "Mentions", za0004)
 					return
 				}
 			}
-		case "replies":
-			var zb0003 uint32
-			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		case "nonce":
+			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Replies")
+				err = msgp.WrapError(err, "Nonce")
 				return
-			}
-			if cap(z.Replies) >= int(zb0003) {
-				z.Replies = (z.Replies)[:zb0003]
-			} else {
-				z.Replies = make([]string, zb0003)
-			}
-			for za0002 := range z.Replies {
-				z.Replies[za0002], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Replies", za0002)
-					return
-				}
-			}
-		case "reactions":
-			var zb0004 uint32
-			zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Reactions")
-				return
-			}
-			if z.Reactions == nil {
-				z.Reactions = make(map[string][]string, zb0004)
-			} else if len(z.Reactions) > 0 {
-				clear(z.Reactions)
-			}
-			for zb0004 > 0 {
-				var za0004 []string
-				zb0004--
-				var za0003 string
-				za0003, bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions")
-					return
-				}
-				var zb0005 uint32
-				zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions", za0003)
-					return
-				}
-				if cap(za0004) >= int(zb0005) {
-					za0004 = (za0004)[:zb0005]
-				} else {
-					za0004 = make([]string, zb0005)
-				}
-				for za0005 := range za0004 {
-					za0004[za0005], bts, err = msgp.ReadStringBytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Reactions", za0003, za0005)
-						return
-					}
-				}
-				z.Reactions[za0003] = za0004
 			}
 		case "pinned":
 			z.Pinned, bts, err = msgp.ReadBoolBytes(bts)
@@ -11714,15 +12120,151 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Pinned")
 				return
 			}
-		case "flags":
-			{
-				var zb0006 uint32
-				zb0006, bts, err = msgp.ReadUint32Bytes(bts)
+		case "reactions":
+			var zb0010 uint32
+			zb0010, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Reactions")
+				return
+			}
+			if z.Reactions == nil {
+				z.Reactions = make(map[string][]string, zb0010)
+			} else if len(z.Reactions) > 0 {
+				clear(z.Reactions)
+			}
+			for zb0010 > 0 {
+				var za0006 []string
+				zb0010--
+				var za0005 string
+				za0005, bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Flags")
+					err = msgp.WrapError(err, "Reactions")
 					return
 				}
-				z.Flags = MessageFlagsType(zb0006)
+				var zb0011 uint32
+				zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Reactions", za0005)
+					return
+				}
+				if cap(za0006) >= int(zb0011) {
+					za0006 = (za0006)[:zb0011]
+				} else {
+					za0006 = make([]string, zb0011)
+				}
+				for za0007 := range za0006 {
+					za0006[za0007], bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Reactions", za0005, za0007)
+						return
+					}
+				}
+				z.Reactions[za0005] = za0006
+			}
+		case "replies":
+			var zb0012 uint32
+			zb0012, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Replies")
+				return
+			}
+			if cap(z.Replies) >= int(zb0012) {
+				z.Replies = (z.Replies)[:zb0012]
+			} else {
+				z.Replies = make([]string, zb0012)
+			}
+			for za0008 := range z.Replies {
+				z.Replies[za0008], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Replies", za0008)
+					return
+				}
+			}
+		case "role_mentions":
+			var zb0013 uint32
+			zb0013, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "RoleMentions")
+				return
+			}
+			if cap(z.RoleMentions) >= int(zb0013) {
+				z.RoleMentions = (z.RoleMentions)[:zb0013]
+			} else {
+				z.RoleMentions = make([]string, zb0013)
+			}
+			for za0009 := range z.RoleMentions {
+				z.RoleMentions[za0009], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "RoleMentions", za0009)
+					return
+				}
+			}
+		case "system":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.System = nil
+			} else {
+				if z.System == nil {
+					z.System = new(MessageSystem)
+				}
+				var zb0014 uint32
+				zb0014, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "System")
+					return
+				}
+				for zb0014 > 0 {
+					zb0014--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "System")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "type":
+						{
+							var zb0015 string
+							zb0015, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "System", "Type")
+								return
+							}
+							z.System.Type = MessageSystemType(zb0015)
+						}
+					case "id":
+						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System", "ID")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System")
+							return
+						}
+					}
+				}
+			}
+		case "user":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.User = nil
+			} else {
+				if z.User == nil {
+					z.User = new(User)
+				}
+				bts, err = z.User.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "User")
+					return
+				}
 			}
 		case "webhook":
 			if msgp.IsNil(bts) {
@@ -11735,14 +12277,14 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				if z.Webhook == nil {
 					z.Webhook = new(MessageWebhook)
 				}
-				var zb0007 uint32
-				zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0016 uint32
+				zb0016, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Webhook")
 					return
 				}
-				for zb0007 > 0 {
-					zb0007--
+				for zb0016 > 0 {
+					zb0016--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Webhook")
@@ -11781,248 +12323,6 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 				}
 			}
-		case "system":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.System = nil
-			} else {
-				if z.System == nil {
-					z.System = new(MessageSystem)
-				}
-				var zb0008 uint32
-				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "System")
-					return
-				}
-				for zb0008 > 0 {
-					zb0008--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "System")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "type":
-						{
-							var zb0009 string
-							zb0009, bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "System", "Type")
-								return
-							}
-							z.System.Type = MessageSystemType(zb0009)
-						}
-					case "id":
-						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System", "ID")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System")
-							return
-						}
-					}
-				}
-			}
-		case "embeds":
-			var zb0010 uint32
-			zb0010, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds")
-				return
-			}
-			if cap(z.Embeds) >= int(zb0010) {
-				z.Embeds = (z.Embeds)[:zb0010]
-			} else {
-				z.Embeds = make([]*MessageEmbed, zb0010)
-			}
-			for za0006 := range z.Embeds {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Embeds[za0006] = nil
-				} else {
-					if z.Embeds[za0006] == nil {
-						z.Embeds[za0006] = new(MessageEmbed)
-					}
-					bts, err = z.Embeds[za0006].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Embeds", za0006)
-						return
-					}
-				}
-			}
-		case "attachments":
-			var zb0011 uint32
-			zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Attachments")
-				return
-			}
-			if cap(z.Attachments) >= int(zb0011) {
-				z.Attachments = (z.Attachments)[:zb0011]
-			} else {
-				z.Attachments = make([]*Attachment, zb0011)
-			}
-			for za0007 := range z.Attachments {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Attachments[za0007] = nil
-				} else {
-					if z.Attachments[za0007] == nil {
-						z.Attachments[za0007] = new(Attachment)
-					}
-					bts, err = z.Attachments[za0007].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Attachments", za0007)
-						return
-					}
-				}
-			}
-		case "edited":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Edited = nil
-			} else {
-				if z.Edited == nil {
-					z.Edited = new(time.Time)
-				}
-				{
-					var zb0012 int64
-					zb0012, bts, err = msgp.ReadInt64Bytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Edited")
-						return
-					}
-					*z.Edited = msToTime(zb0012)
-				}
-			}
-		case "interactions":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Interactions = nil
-			} else {
-				if z.Interactions == nil {
-					z.Interactions = new(MessageInteractions)
-				}
-				var zb0013 uint32
-				zb0013, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Interactions")
-					return
-				}
-				for zb0013 > 0 {
-					zb0013--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Interactions")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "reactions":
-						var zb0014 uint32
-						zb0014, bts, err = msgp.ReadArrayHeaderBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "Reactions")
-							return
-						}
-						if cap(z.Interactions.Reactions) >= int(zb0014) {
-							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0014]
-						} else {
-							z.Interactions.Reactions = make([]string, zb0014)
-						}
-						for za0008 := range z.Interactions.Reactions {
-							z.Interactions.Reactions[za0008], bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Interactions", "Reactions", za0008)
-								return
-							}
-						}
-					case "restrict_reactions":
-						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions")
-							return
-						}
-					}
-				}
-			}
-		case "masquerade":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Masquerade = nil
-			} else {
-				if z.Masquerade == nil {
-					z.Masquerade = new(MessageMasquerade)
-				}
-				var zb0015 uint32
-				zb0015, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Masquerade")
-					return
-				}
-				for zb0015 > 0 {
-					zb0015--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Masquerade")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "name":
-						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Name")
-							return
-						}
-					case "avatar":
-						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Avatar")
-							return
-						}
-					case "colour":
-						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Colour")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade")
-							return
-						}
-					}
-				}
-			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -12037,25 +12337,85 @@ func (z *Message) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Message) Msgsize() (s int) {
-	s = 3 + 4 + msgp.StringPrefixSize + len(z.ID) + 6 + msgp.StringPrefixSize + len(z.Nonce) + 8 + msgp.StringPrefixSize + len(z.Channel) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Content) + 9 + msgp.ArrayHeaderSize
-	for za0001 := range z.Mentions {
-		s += msgp.StringPrefixSize + len(z.Mentions[za0001])
+	s = 3 + 4 + msgp.StringPrefixSize + len(z.ID) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Channel) + 12 + msgp.ArrayHeaderSize
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Attachments[za0001].Msgsize()
+		}
 	}
-	s += 8 + msgp.ArrayHeaderSize
-	for za0002 := range z.Replies {
-		s += msgp.StringPrefixSize + len(z.Replies[za0002])
+	s += 8 + msgp.StringPrefixSize + len(z.Content) + 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.Int64Size
 	}
-	s += 10 + msgp.MapHeaderSize
+	s += 7 + msgp.ArrayHeaderSize
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Embeds[za0002].Msgsize()
+		}
+	}
+	s += 6 + msgp.Uint32Size + 13
+	if z.Interactions == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 10 + msgp.ArrayHeaderSize
+		for za0003 := range z.Interactions.Reactions {
+			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0003])
+		}
+		s += 19 + msgp.BoolSize
+	}
+	s += 11
+	if z.Masquerade == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
+	}
+	s += 7
+	if z.Member == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Member.Msgsize()
+	}
+	s += 9 + msgp.ArrayHeaderSize
+	for za0004 := range z.Mentions {
+		s += msgp.StringPrefixSize + len(z.Mentions[za0004])
+	}
+	s += 6 + msgp.StringPrefixSize + len(z.Nonce) + 7 + msgp.BoolSize + 10 + msgp.MapHeaderSize
 	if z.Reactions != nil {
-		for za0003, za0004 := range z.Reactions {
-			_ = za0004
-			s += msgp.StringPrefixSize + len(za0003) + msgp.ArrayHeaderSize
-			for za0005 := range za0004 {
-				s += msgp.StringPrefixSize + len(za0004[za0005])
+		for za0005, za0006 := range z.Reactions {
+			_ = za0006
+			s += msgp.StringPrefixSize + len(za0005) + msgp.ArrayHeaderSize
+			for za0007 := range za0006 {
+				s += msgp.StringPrefixSize + len(za0006[za0007])
 			}
 		}
 	}
-	s += 7 + msgp.BoolSize + 6 + msgp.Uint32Size + 8
+	s += 8 + msgp.ArrayHeaderSize
+	for za0008 := range z.Replies {
+		s += msgp.StringPrefixSize + len(z.Replies[za0008])
+	}
+	s += 14 + msgp.ArrayHeaderSize
+	for za0009 := range z.RoleMentions {
+		s += msgp.StringPrefixSize + len(z.RoleMentions[za0009])
+	}
+	s += 7
+	if z.System == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
+	}
+	s += 5
+	if z.User == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.User.Msgsize()
+	}
+	s += 8
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
@@ -12065,50 +12425,6 @@ func (z *Message) Msgsize() (s int) {
 		} else {
 			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
-	}
-	s += 7
-	if z.System == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
-	}
-	s += 7 + msgp.ArrayHeaderSize
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Embeds[za0006].Msgsize()
-		}
-	}
-	s += 12 + msgp.ArrayHeaderSize
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Attachments[za0007].Msgsize()
-		}
-	}
-	s += 7
-	if z.Edited == nil {
-		s += msgp.NilSize
-	} else {
-		s += msgp.Int64Size
-	}
-	s += 13
-	if z.Interactions == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 10 + msgp.ArrayHeaderSize
-		for za0008 := range z.Interactions.Reactions {
-			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0008])
-		}
-		s += 19 + msgp.BoolSize
-	}
-	s += 11
-	if z.Masquerade == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
 	}
 	return
 }
@@ -12509,7 +12825,7 @@ func (z *MessageEmbed) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Media = nil
 			} else {
 				if z.Media == nil {
-					z.Media = new(Attachment)
+					z.Media = new(File)
 				}
 				bts, err = z.Media.UnmarshalMsg(bts)
 				if err != nil {
@@ -14045,7 +14361,7 @@ func (z *PartialChannel) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Icon = nil
 			} else {
 				if z.Icon == nil {
-					z.Icon = new(Attachment)
+					z.Icon = new(File)
 				}
 				bts, err = z.Icon.UnmarshalMsg(bts)
 				if err != nil {
@@ -14725,7 +15041,7 @@ func (z *PartialServer) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Icon = nil
 			} else {
 				if z.Icon == nil {
-					z.Icon = new(Attachment)
+					z.Icon = new(File)
 				}
 				bts, err = z.Icon.UnmarshalMsg(bts)
 				if err != nil {
@@ -14742,7 +15058,7 @@ func (z *PartialServer) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Banner = nil
 			} else {
 				if z.Banner == nil {
-					z.Banner = new(Attachment)
+					z.Banner = new(File)
 				}
 				bts, err = z.Banner.UnmarshalMsg(bts)
 				if err != nil {
@@ -15035,7 +15351,7 @@ func (z *PartialServerMember) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -15800,7 +16116,7 @@ func (z *PartialUser) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -15898,7 +16214,7 @@ func (z *PartialUser) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Profile.Background = nil
 						} else {
 							if z.Profile.Background == nil {
-								z.Profile.Background = new(Attachment)
+								z.Profile.Background = new(File)
 							}
 							bts, err = z.Profile.Background.UnmarshalMsg(bts)
 							if err != nil {
@@ -16364,7 +16680,7 @@ func (z *PartialWebhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -16742,7 +17058,7 @@ func (z *PublicBot) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -17053,7 +17369,7 @@ func (z *Server) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Icon = nil
 			} else {
 				if z.Icon == nil {
-					z.Icon = new(Attachment)
+					z.Icon = new(File)
 				}
 				bts, err = z.Icon.UnmarshalMsg(bts)
 				if err != nil {
@@ -17070,7 +17386,7 @@ func (z *Server) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Banner = nil
 			} else {
 				if z.Banner == nil {
-					z.Banner = new(Attachment)
+					z.Banner = new(File)
 				}
 				bts, err = z.Banner.UnmarshalMsg(bts)
 				if err != nil {
@@ -18073,7 +18389,7 @@ func (z *ServerMember) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -18170,6 +18486,67 @@ func (z *ServerMember) Msgsize() (s int) {
 		s += msgp.StringPrefixSize + len(z.Roles[za0001])
 	}
 	s += 12 + msgp.BoolSize + 12 + msgp.BoolSize
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z ServerMemberBanParams) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "delete_message_seconds"
+	o = append(o, 0x82, 0xb6, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73)
+	o = msgp.AppendInt64(o, z.DeleteMessageSeconds)
+	// string "reason"
+	o = append(o, 0xa6, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e)
+	o = msgp.AppendString(o, z.Reason)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *ServerMemberBanParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "delete_message_seconds":
+			z.DeleteMessageSeconds, bts, err = msgp.ReadInt64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "DeleteMessageSeconds")
+				return
+			}
+		case "reason":
+			z.Reason, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Reason")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z ServerMemberBanParams) Msgsize() (s int) {
+	s = 1 + 23 + msgp.Int64Size + 7 + msgp.StringPrefixSize + len(z.Reason)
 	return
 }
 
@@ -18453,9 +18830,12 @@ func (z *ServerMembers) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *ServerRole) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 5
+	// map header, size 7
+	// string "_id"
+	o = append(o, 0x87, 0xa3, 0x5f, 0x69, 0x64)
+	o = msgp.AppendString(o, z.ID)
 	// string "name"
-	o = append(o, 0x85, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+	o = append(o, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
 	o = msgp.AppendString(o, z.Name)
 	// string "permissions"
 	o = append(o, 0xab, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73)
@@ -18476,6 +18856,17 @@ func (z *ServerRole) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "hoist"
 	o = append(o, 0xa5, 0x68, 0x6f, 0x69, 0x73, 0x74)
 	o = msgp.AppendBool(o, z.Hoist)
+	// string "icon"
+	o = append(o, 0xa4, 0x69, 0x63, 0x6f, 0x6e)
+	if z.Icon == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Icon.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Icon")
+			return
+		}
+	}
 	// string "rank"
 	o = append(o, 0xa4, 0x72, 0x61, 0x6e, 0x6b)
 	o = msgp.AppendInt64(o, z.Rank)
@@ -18500,6 +18891,12 @@ func (z *ServerRole) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
+		case "_id":
+			z.ID, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ID")
+				return
+			}
 		case "name":
 			z.Name, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
@@ -18564,6 +18961,23 @@ func (z *ServerRole) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Hoist")
 				return
 			}
+		case "icon":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Icon = nil
+			} else {
+				if z.Icon == nil {
+					z.Icon = new(File)
+				}
+				bts, err = z.Icon.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Icon")
+					return
+				}
+			}
 		case "rank":
 			z.Rank, bts, err = msgp.ReadInt64Bytes(bts)
 			if err != nil {
@@ -18584,13 +18998,19 @@ func (z *ServerRole) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *ServerRole) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 12 + 1 + 2 + msgp.Int64Size + 2 + msgp.Int64Size + 7
+	s = 1 + 4 + msgp.StringPrefixSize + len(z.ID) + 5 + msgp.StringPrefixSize + len(z.Name) + 12 + 1 + 2 + msgp.Int64Size + 2 + msgp.Int64Size + 7
 	if z.Colour == nil {
 		s += msgp.NilSize
 	} else {
 		s += msgp.StringPrefixSize + len(*z.Colour)
 	}
-	s += 6 + msgp.BoolSize + 5 + msgp.Int64Size
+	s += 6 + msgp.BoolSize + 5
+	if z.Icon == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Icon.Msgsize()
+	}
+	s += 5 + msgp.Int64Size
 	return
 }
 
@@ -19491,7 +19911,7 @@ func (z *User) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -19589,7 +20009,7 @@ func (z *User) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Profile.Background = nil
 						} else {
 							if z.Profile.Background == nil {
-								z.Profile.Background = new(Attachment)
+								z.Profile.Background = new(File)
 							}
 							bts, err = z.Profile.Background.UnmarshalMsg(bts)
 							if err != nil {
@@ -19866,7 +20286,7 @@ func (z *UserEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 							z.Profile.Background = nil
 						} else {
 							if z.Profile.Background == nil {
-								z.Profile.Background = new(Attachment)
+								z.Profile.Background = new(File)
 							}
 							bts, err = z.Profile.Background.UnmarshalMsg(bts)
 							if err != nil {
@@ -20040,7 +20460,7 @@ func (z *UserProfile) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Background = nil
 			} else {
 				if z.Background == nil {
-					z.Background = new(Attachment)
+					z.Background = new(File)
 				}
 				bts, err = z.Background.UnmarshalMsg(bts)
 				if err != nil {
@@ -20584,7 +21004,7 @@ func (z *Webhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Avatar = nil
 			} else {
 				if z.Avatar == nil {
-					z.Avatar = new(Attachment)
+					z.Avatar = new(File)
 				}
 				bts, err = z.Avatar.UnmarshalMsg(bts)
 				if err != nil {
@@ -20822,108 +21242,33 @@ func (z *WebhookEditParams) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *WebhookExecuteParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 17
+	// map header, size 20
 	// string "_id"
-	o = append(o, 0xde, 0x0, 0x11, 0xa3, 0x5f, 0x69, 0x64)
+	o = append(o, 0xde, 0x0, 0x14, 0xa3, 0x5f, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
-	// string "nonce"
-	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
-	o = msgp.AppendString(o, z.Nonce)
-	// string "channel"
-	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
-	o = msgp.AppendString(o, z.Channel)
 	// string "author"
 	o = append(o, 0xa6, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72)
 	o = msgp.AppendString(o, z.Author)
-	// string "content"
-	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
-	o = msgp.AppendString(o, z.Content)
-	// string "mentions"
-	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
-	for za0001 := range z.Mentions {
-		o = msgp.AppendString(o, z.Mentions[za0001])
-	}
-	// string "replies"
-	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
-	for za0002 := range z.Replies {
-		o = msgp.AppendString(o, z.Replies[za0002])
-	}
-	// string "reactions"
-	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
-	for za0003, za0004 := range z.Reactions {
-		o = msgp.AppendString(o, za0003)
-		o = msgp.AppendArrayHeader(o, uint32(len(za0004)))
-		for za0005 := range za0004 {
-			o = msgp.AppendString(o, za0004[za0005])
-		}
-	}
-	// string "pinned"
-	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Pinned)
-	// string "flags"
-	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
-	o = msgp.AppendUint32(o, uint32(z.Flags))
-	// string "webhook"
-	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
-	if z.Webhook == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "name"
-		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-		o = msgp.AppendString(o, z.Webhook.Name)
-		// string "avatar"
-		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-		if z.Webhook.Avatar == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o = msgp.AppendString(o, *z.Webhook.Avatar)
-		}
-	}
-	// string "system"
-	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
-	if z.System == nil {
-		o = msgp.AppendNil(o)
-	} else {
-		// map header, size 2
-		// string "type"
-		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
-		o = msgp.AppendString(o, string(z.System.Type))
-		// string "id"
-		o = append(o, 0xa2, 0x69, 0x64)
-		o = msgp.AppendString(o, z.System.ID)
-	}
-	// string "embeds"
-	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
-	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			o = msgp.AppendNil(o)
-		} else {
-			o, err = z.Embeds[za0006].MarshalMsg(o)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds", za0006)
-				return
-			}
-		}
-	}
+	// string "channel"
+	o = append(o, 0xa7, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
+	o = msgp.AppendString(o, z.Channel)
 	// string "attachments"
 	o = append(o, 0xab, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Attachments)))
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Attachments[za0007].MarshalMsg(o)
+			o, err = z.Attachments[za0001].MarshalMsg(o)
 			if err != nil {
-				err = msgp.WrapError(err, "Attachments", za0007)
+				err = msgp.WrapError(err, "Attachments", za0001)
 				return
 			}
 		}
 	}
+	// string "content"
+	o = append(o, 0xa7, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
+	o = msgp.AppendString(o, z.Content)
 	// string "edited"
 	o = append(o, 0xa6, 0x65, 0x64, 0x69, 0x74, 0x65, 0x64)
 	if z.Edited == nil {
@@ -20931,6 +21276,23 @@ func (z *WebhookExecuteParams) MarshalMsg(b []byte) (o []byte, err error) {
 	} else {
 		o = msgp.AppendInt64(o, timeToMs(*z.Edited))
 	}
+	// string "embeds"
+	o = append(o, 0xa6, 0x65, 0x6d, 0x62, 0x65, 0x64, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Embeds)))
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Embeds[za0002].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds", za0002)
+				return
+			}
+		}
+	}
+	// string "flags"
+	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
+	o = msgp.AppendUint32(o, uint32(z.Flags))
 	// string "interactions"
 	o = append(o, 0xac, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 	if z.Interactions == nil {
@@ -20940,8 +21302,8 @@ func (z *WebhookExecuteParams) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "reactions"
 		o = append(o, 0x82, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.Interactions.Reactions)))
-		for za0008 := range z.Interactions.Reactions {
-			o = msgp.AppendString(o, z.Interactions.Reactions[za0008])
+		for za0003 := range z.Interactions.Reactions {
+			o = msgp.AppendString(o, z.Interactions.Reactions[za0003])
 		}
 		// string "restrict_reactions"
 		o = append(o, 0xb2, 0x72, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x5f, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
@@ -20962,6 +21324,92 @@ func (z *WebhookExecuteParams) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "colour"
 		o = append(o, 0xa6, 0x63, 0x6f, 0x6c, 0x6f, 0x75, 0x72)
 		o = msgp.AppendString(o, z.Masquerade.Colour)
+	}
+	// string "member"
+	o = append(o, 0xa6, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72)
+	if z.Member == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Member.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "Member")
+			return
+		}
+	}
+	// string "mentions"
+	o = append(o, 0xa8, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Mentions)))
+	for za0004 := range z.Mentions {
+		o = msgp.AppendString(o, z.Mentions[za0004])
+	}
+	// string "nonce"
+	o = append(o, 0xa5, 0x6e, 0x6f, 0x6e, 0x63, 0x65)
+	o = msgp.AppendString(o, z.Nonce)
+	// string "pinned"
+	o = append(o, 0xa6, 0x70, 0x69, 0x6e, 0x6e, 0x65, 0x64)
+	o = msgp.AppendBool(o, z.Pinned)
+	// string "reactions"
+	o = append(o, 0xa9, 0x72, 0x65, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendMapHeader(o, uint32(len(z.Reactions)))
+	for za0005, za0006 := range z.Reactions {
+		o = msgp.AppendString(o, za0005)
+		o = msgp.AppendArrayHeader(o, uint32(len(za0006)))
+		for za0007 := range za0006 {
+			o = msgp.AppendString(o, za0006[za0007])
+		}
+	}
+	// string "replies"
+	o = append(o, 0xa7, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Replies)))
+	for za0008 := range z.Replies {
+		o = msgp.AppendString(o, z.Replies[za0008])
+	}
+	// string "role_mentions"
+	o = append(o, 0xad, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x6d, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.RoleMentions)))
+	for za0009 := range z.RoleMentions {
+		o = msgp.AppendString(o, z.RoleMentions[za0009])
+	}
+	// string "system"
+	o = append(o, 0xa6, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d)
+	if z.System == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "type"
+		o = append(o, 0x82, 0xa4, 0x74, 0x79, 0x70, 0x65)
+		o = msgp.AppendString(o, string(z.System.Type))
+		// string "id"
+		o = append(o, 0xa2, 0x69, 0x64)
+		o = msgp.AppendString(o, z.System.ID)
+	}
+	// string "user"
+	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
+	if z.User == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.User.MarshalMsg(o)
+		if err != nil {
+			err = msgp.WrapError(err, "User")
+			return
+		}
+	}
+	// string "webhook"
+	o = append(o, 0xa7, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b)
+	if z.Webhook == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "name"
+		o = append(o, 0x82, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+		o = msgp.AppendString(o, z.Webhook.Name)
+		// string "avatar"
+		o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
+		if z.Webhook.Avatar == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o = msgp.AppendString(o, *z.Webhook.Avatar)
+		}
 	}
 	return
 }
@@ -20990,10 +21438,10 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "ID")
 				return
 			}
-		case "nonce":
-			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
+		case "author":
+			z.Author, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Nonce")
+				err = msgp.WrapError(err, "Author")
 				return
 			}
 		case "channel":
@@ -21002,11 +21450,35 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Channel")
 				return
 			}
-		case "author":
-			z.Author, bts, err = msgp.ReadStringBytes(bts)
+		case "attachments":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Author")
+				err = msgp.WrapError(err, "Attachments")
 				return
+			}
+			if cap(z.Attachments) >= int(zb0002) {
+				z.Attachments = (z.Attachments)[:zb0002]
+			} else {
+				z.Attachments = make([]*File, zb0002)
+			}
+			for za0001 := range z.Attachments {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Attachments[za0001] = nil
+				} else {
+					if z.Attachments[za0001] == nil {
+						z.Attachments[za0001] = new(File)
+					}
+					bts, err = z.Attachments[za0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Attachments", za0001)
+						return
+					}
+				}
 			}
 		case "content":
 			z.Content, bts, err = msgp.ReadStringBytes(bts)
@@ -21014,84 +21486,219 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Content")
 				return
 			}
+		case "edited":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Edited = nil
+			} else {
+				if z.Edited == nil {
+					z.Edited = new(time.Time)
+				}
+				{
+					var zb0003 int64
+					zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Edited")
+						return
+					}
+					*z.Edited = msToTime(zb0003)
+				}
+			}
+		case "embeds":
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Embeds")
+				return
+			}
+			if cap(z.Embeds) >= int(zb0004) {
+				z.Embeds = (z.Embeds)[:zb0004]
+			} else {
+				z.Embeds = make([]*MessageEmbed, zb0004)
+			}
+			for za0002 := range z.Embeds {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Embeds[za0002] = nil
+				} else {
+					if z.Embeds[za0002] == nil {
+						z.Embeds[za0002] = new(MessageEmbed)
+					}
+					bts, err = z.Embeds[za0002].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Embeds", za0002)
+						return
+					}
+				}
+			}
+		case "flags":
+			{
+				var zb0005 uint32
+				zb0005, bts, err = msgp.ReadUint32Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Flags")
+					return
+				}
+				z.Flags = MessageFlagsType(zb0005)
+			}
+		case "interactions":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Interactions = nil
+			} else {
+				if z.Interactions == nil {
+					z.Interactions = new(MessageInteractions)
+				}
+				var zb0006 uint32
+				zb0006, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Interactions")
+					return
+				}
+				for zb0006 > 0 {
+					zb0006--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Interactions")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "reactions":
+						var zb0007 uint32
+						zb0007, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "Reactions")
+							return
+						}
+						if cap(z.Interactions.Reactions) >= int(zb0007) {
+							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0007]
+						} else {
+							z.Interactions.Reactions = make([]string, zb0007)
+						}
+						for za0003 := range z.Interactions.Reactions {
+							z.Interactions.Reactions[za0003], bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "Interactions", "Reactions", za0003)
+								return
+							}
+						}
+					case "restrict_reactions":
+						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Interactions")
+							return
+						}
+					}
+				}
+			}
+		case "masquerade":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Masquerade = nil
+			} else {
+				if z.Masquerade == nil {
+					z.Masquerade = new(MessageMasquerade)
+				}
+				var zb0008 uint32
+				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Masquerade")
+					return
+				}
+				for zb0008 > 0 {
+					zb0008--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Masquerade")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "name":
+						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Name")
+							return
+						}
+					case "avatar":
+						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Avatar")
+							return
+						}
+					case "colour":
+						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade", "Colour")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "Masquerade")
+							return
+						}
+					}
+				}
+			}
+		case "member":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Member = nil
+			} else {
+				if z.Member == nil {
+					z.Member = new(ServerMember)
+				}
+				bts, err = z.Member.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Member")
+					return
+				}
+			}
 		case "mentions":
-			var zb0002 uint32
-			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0009 uint32
+			zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Mentions")
 				return
 			}
-			if cap(z.Mentions) >= int(zb0002) {
-				z.Mentions = (z.Mentions)[:zb0002]
+			if cap(z.Mentions) >= int(zb0009) {
+				z.Mentions = (z.Mentions)[:zb0009]
 			} else {
-				z.Mentions = make([]string, zb0002)
+				z.Mentions = make([]string, zb0009)
 			}
-			for za0001 := range z.Mentions {
-				z.Mentions[za0001], bts, err = msgp.ReadStringBytes(bts)
+			for za0004 := range z.Mentions {
+				z.Mentions[za0004], bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Mentions", za0001)
+					err = msgp.WrapError(err, "Mentions", za0004)
 					return
 				}
 			}
-		case "replies":
-			var zb0003 uint32
-			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		case "nonce":
+			z.Nonce, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "Replies")
+				err = msgp.WrapError(err, "Nonce")
 				return
-			}
-			if cap(z.Replies) >= int(zb0003) {
-				z.Replies = (z.Replies)[:zb0003]
-			} else {
-				z.Replies = make([]string, zb0003)
-			}
-			for za0002 := range z.Replies {
-				z.Replies[za0002], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Replies", za0002)
-					return
-				}
-			}
-		case "reactions":
-			var zb0004 uint32
-			zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Reactions")
-				return
-			}
-			if z.Reactions == nil {
-				z.Reactions = make(map[string][]string, zb0004)
-			} else if len(z.Reactions) > 0 {
-				clear(z.Reactions)
-			}
-			for zb0004 > 0 {
-				var za0004 []string
-				zb0004--
-				var za0003 string
-				za0003, bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions")
-					return
-				}
-				var zb0005 uint32
-				zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Reactions", za0003)
-					return
-				}
-				if cap(za0004) >= int(zb0005) {
-					za0004 = (za0004)[:zb0005]
-				} else {
-					za0004 = make([]string, zb0005)
-				}
-				for za0005 := range za0004 {
-					za0004[za0005], bts, err = msgp.ReadStringBytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Reactions", za0003, za0005)
-						return
-					}
-				}
-				z.Reactions[za0003] = za0004
 			}
 		case "pinned":
 			z.Pinned, bts, err = msgp.ReadBoolBytes(bts)
@@ -21099,15 +21706,151 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Pinned")
 				return
 			}
-		case "flags":
-			{
-				var zb0006 uint32
-				zb0006, bts, err = msgp.ReadUint32Bytes(bts)
+		case "reactions":
+			var zb0010 uint32
+			zb0010, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Reactions")
+				return
+			}
+			if z.Reactions == nil {
+				z.Reactions = make(map[string][]string, zb0010)
+			} else if len(z.Reactions) > 0 {
+				clear(z.Reactions)
+			}
+			for zb0010 > 0 {
+				var za0006 []string
+				zb0010--
+				var za0005 string
+				za0005, bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Flags")
+					err = msgp.WrapError(err, "Reactions")
 					return
 				}
-				z.Flags = MessageFlagsType(zb0006)
+				var zb0011 uint32
+				zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Reactions", za0005)
+					return
+				}
+				if cap(za0006) >= int(zb0011) {
+					za0006 = (za0006)[:zb0011]
+				} else {
+					za0006 = make([]string, zb0011)
+				}
+				for za0007 := range za0006 {
+					za0006[za0007], bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Reactions", za0005, za0007)
+						return
+					}
+				}
+				z.Reactions[za0005] = za0006
+			}
+		case "replies":
+			var zb0012 uint32
+			zb0012, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Replies")
+				return
+			}
+			if cap(z.Replies) >= int(zb0012) {
+				z.Replies = (z.Replies)[:zb0012]
+			} else {
+				z.Replies = make([]string, zb0012)
+			}
+			for za0008 := range z.Replies {
+				z.Replies[za0008], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Replies", za0008)
+					return
+				}
+			}
+		case "role_mentions":
+			var zb0013 uint32
+			zb0013, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "RoleMentions")
+				return
+			}
+			if cap(z.RoleMentions) >= int(zb0013) {
+				z.RoleMentions = (z.RoleMentions)[:zb0013]
+			} else {
+				z.RoleMentions = make([]string, zb0013)
+			}
+			for za0009 := range z.RoleMentions {
+				z.RoleMentions[za0009], bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "RoleMentions", za0009)
+					return
+				}
+			}
+		case "system":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.System = nil
+			} else {
+				if z.System == nil {
+					z.System = new(MessageSystem)
+				}
+				var zb0014 uint32
+				zb0014, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "System")
+					return
+				}
+				for zb0014 > 0 {
+					zb0014--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "System")
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "type":
+						{
+							var zb0015 string
+							zb0015, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "System", "Type")
+								return
+							}
+							z.System.Type = MessageSystemType(zb0015)
+						}
+					case "id":
+						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System", "ID")
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "System")
+							return
+						}
+					}
+				}
+			}
+		case "user":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.User = nil
+			} else {
+				if z.User == nil {
+					z.User = new(User)
+				}
+				bts, err = z.User.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "User")
+					return
+				}
 			}
 		case "webhook":
 			if msgp.IsNil(bts) {
@@ -21120,14 +21863,14 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				if z.Webhook == nil {
 					z.Webhook = new(MessageWebhook)
 				}
-				var zb0007 uint32
-				zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0016 uint32
+				zb0016, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Webhook")
 					return
 				}
-				for zb0007 > 0 {
-					zb0007--
+				for zb0016 > 0 {
+					zb0016--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Webhook")
@@ -21166,248 +21909,6 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 				}
 			}
-		case "system":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.System = nil
-			} else {
-				if z.System == nil {
-					z.System = new(MessageSystem)
-				}
-				var zb0008 uint32
-				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "System")
-					return
-				}
-				for zb0008 > 0 {
-					zb0008--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "System")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "type":
-						{
-							var zb0009 string
-							zb0009, bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "System", "Type")
-								return
-							}
-							z.System.Type = MessageSystemType(zb0009)
-						}
-					case "id":
-						z.System.ID, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System", "ID")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "System")
-							return
-						}
-					}
-				}
-			}
-		case "embeds":
-			var zb0010 uint32
-			zb0010, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Embeds")
-				return
-			}
-			if cap(z.Embeds) >= int(zb0010) {
-				z.Embeds = (z.Embeds)[:zb0010]
-			} else {
-				z.Embeds = make([]*MessageEmbed, zb0010)
-			}
-			for za0006 := range z.Embeds {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Embeds[za0006] = nil
-				} else {
-					if z.Embeds[za0006] == nil {
-						z.Embeds[za0006] = new(MessageEmbed)
-					}
-					bts, err = z.Embeds[za0006].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Embeds", za0006)
-						return
-					}
-				}
-			}
-		case "attachments":
-			var zb0011 uint32
-			zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Attachments")
-				return
-			}
-			if cap(z.Attachments) >= int(zb0011) {
-				z.Attachments = (z.Attachments)[:zb0011]
-			} else {
-				z.Attachments = make([]*Attachment, zb0011)
-			}
-			for za0007 := range z.Attachments {
-				if msgp.IsNil(bts) {
-					bts, err = msgp.ReadNilBytes(bts)
-					if err != nil {
-						return
-					}
-					z.Attachments[za0007] = nil
-				} else {
-					if z.Attachments[za0007] == nil {
-						z.Attachments[za0007] = new(Attachment)
-					}
-					bts, err = z.Attachments[za0007].UnmarshalMsg(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Attachments", za0007)
-						return
-					}
-				}
-			}
-		case "edited":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Edited = nil
-			} else {
-				if z.Edited == nil {
-					z.Edited = new(time.Time)
-				}
-				{
-					var zb0012 int64
-					zb0012, bts, err = msgp.ReadInt64Bytes(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Edited")
-						return
-					}
-					*z.Edited = msToTime(zb0012)
-				}
-			}
-		case "interactions":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Interactions = nil
-			} else {
-				if z.Interactions == nil {
-					z.Interactions = new(MessageInteractions)
-				}
-				var zb0013 uint32
-				zb0013, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Interactions")
-					return
-				}
-				for zb0013 > 0 {
-					zb0013--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Interactions")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "reactions":
-						var zb0014 uint32
-						zb0014, bts, err = msgp.ReadArrayHeaderBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "Reactions")
-							return
-						}
-						if cap(z.Interactions.Reactions) >= int(zb0014) {
-							z.Interactions.Reactions = (z.Interactions.Reactions)[:zb0014]
-						} else {
-							z.Interactions.Reactions = make([]string, zb0014)
-						}
-						for za0008 := range z.Interactions.Reactions {
-							z.Interactions.Reactions[za0008], bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Interactions", "Reactions", za0008)
-								return
-							}
-						}
-					case "restrict_reactions":
-						z.Interactions.RestrictReactions, bts, err = msgp.ReadBoolBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions", "RestrictReactions")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Interactions")
-							return
-						}
-					}
-				}
-			}
-		case "masquerade":
-			if msgp.IsNil(bts) {
-				bts, err = msgp.ReadNilBytes(bts)
-				if err != nil {
-					return
-				}
-				z.Masquerade = nil
-			} else {
-				if z.Masquerade == nil {
-					z.Masquerade = new(MessageMasquerade)
-				}
-				var zb0015 uint32
-				zb0015, bts, err = msgp.ReadMapHeaderBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Masquerade")
-					return
-				}
-				for zb0015 > 0 {
-					zb0015--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						err = msgp.WrapError(err, "Masquerade")
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "name":
-						z.Masquerade.Name, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Name")
-							return
-						}
-					case "avatar":
-						z.Masquerade.Avatar, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Avatar")
-							return
-						}
-					case "colour":
-						z.Masquerade.Colour, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade", "Colour")
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Masquerade")
-							return
-						}
-					}
-				}
-			}
 		default:
 			bts, err = msgp.Skip(bts)
 			if err != nil {
@@ -21422,25 +21923,85 @@ func (z *WebhookExecuteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *WebhookExecuteParams) Msgsize() (s int) {
-	s = 3 + 4 + msgp.StringPrefixSize + len(z.ID) + 6 + msgp.StringPrefixSize + len(z.Nonce) + 8 + msgp.StringPrefixSize + len(z.Channel) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Content) + 9 + msgp.ArrayHeaderSize
-	for za0001 := range z.Mentions {
-		s += msgp.StringPrefixSize + len(z.Mentions[za0001])
+	s = 3 + 4 + msgp.StringPrefixSize + len(z.ID) + 7 + msgp.StringPrefixSize + len(z.Author) + 8 + msgp.StringPrefixSize + len(z.Channel) + 12 + msgp.ArrayHeaderSize
+	for za0001 := range z.Attachments {
+		if z.Attachments[za0001] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Attachments[za0001].Msgsize()
+		}
 	}
-	s += 8 + msgp.ArrayHeaderSize
-	for za0002 := range z.Replies {
-		s += msgp.StringPrefixSize + len(z.Replies[za0002])
+	s += 8 + msgp.StringPrefixSize + len(z.Content) + 7
+	if z.Edited == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.Int64Size
 	}
-	s += 10 + msgp.MapHeaderSize
+	s += 7 + msgp.ArrayHeaderSize
+	for za0002 := range z.Embeds {
+		if z.Embeds[za0002] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Embeds[za0002].Msgsize()
+		}
+	}
+	s += 6 + msgp.Uint32Size + 13
+	if z.Interactions == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 10 + msgp.ArrayHeaderSize
+		for za0003 := range z.Interactions.Reactions {
+			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0003])
+		}
+		s += 19 + msgp.BoolSize
+	}
+	s += 11
+	if z.Masquerade == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
+	}
+	s += 7
+	if z.Member == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Member.Msgsize()
+	}
+	s += 9 + msgp.ArrayHeaderSize
+	for za0004 := range z.Mentions {
+		s += msgp.StringPrefixSize + len(z.Mentions[za0004])
+	}
+	s += 6 + msgp.StringPrefixSize + len(z.Nonce) + 7 + msgp.BoolSize + 10 + msgp.MapHeaderSize
 	if z.Reactions != nil {
-		for za0003, za0004 := range z.Reactions {
-			_ = za0004
-			s += msgp.StringPrefixSize + len(za0003) + msgp.ArrayHeaderSize
-			for za0005 := range za0004 {
-				s += msgp.StringPrefixSize + len(za0004[za0005])
+		for za0005, za0006 := range z.Reactions {
+			_ = za0006
+			s += msgp.StringPrefixSize + len(za0005) + msgp.ArrayHeaderSize
+			for za0007 := range za0006 {
+				s += msgp.StringPrefixSize + len(za0006[za0007])
 			}
 		}
 	}
-	s += 7 + msgp.BoolSize + 6 + msgp.Uint32Size + 8
+	s += 8 + msgp.ArrayHeaderSize
+	for za0008 := range z.Replies {
+		s += msgp.StringPrefixSize + len(z.Replies[za0008])
+	}
+	s += 14 + msgp.ArrayHeaderSize
+	for za0009 := range z.RoleMentions {
+		s += msgp.StringPrefixSize + len(z.RoleMentions[za0009])
+	}
+	s += 7
+	if z.System == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
+	}
+	s += 5
+	if z.User == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.User.Msgsize()
+	}
+	s += 8
 	if z.Webhook == nil {
 		s += msgp.NilSize
 	} else {
@@ -21450,50 +22011,6 @@ func (z *WebhookExecuteParams) Msgsize() (s int) {
 		} else {
 			s += msgp.StringPrefixSize + len(*z.Webhook.Avatar)
 		}
-	}
-	s += 7
-	if z.System == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(string(z.System.Type)) + 3 + msgp.StringPrefixSize + len(z.System.ID)
-	}
-	s += 7 + msgp.ArrayHeaderSize
-	for za0006 := range z.Embeds {
-		if z.Embeds[za0006] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Embeds[za0006].Msgsize()
-		}
-	}
-	s += 12 + msgp.ArrayHeaderSize
-	for za0007 := range z.Attachments {
-		if z.Attachments[za0007] == nil {
-			s += msgp.NilSize
-		} else {
-			s += z.Attachments[za0007].Msgsize()
-		}
-	}
-	s += 7
-	if z.Edited == nil {
-		s += msgp.NilSize
-	} else {
-		s += msgp.Int64Size
-	}
-	s += 13
-	if z.Interactions == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 10 + msgp.ArrayHeaderSize
-		for za0008 := range z.Interactions.Reactions {
-			s += msgp.StringPrefixSize + len(z.Interactions.Reactions[za0008])
-		}
-		s += 19 + msgp.BoolSize
-	}
-	s += 11
-	if z.Masquerade == nil {
-		s += msgp.NilSize
-	} else {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Masquerade.Name) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Avatar) + 7 + msgp.StringPrefixSize + len(z.Masquerade.Colour)
 	}
 	return
 }

@@ -9,6 +9,7 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 
 	   Todo: do we need state.go to track VoiceStates?
 */
+
 package revoltgo
 
 import (
@@ -26,7 +27,7 @@ const (
 
 /* Logic related to the update checker */
 
-var COMMIT = "9f8e300a18637a2edb5bdae18bc628d7c8712aea"
+var COMMIT = "eeea8c05edbeba726ee54c09353a8cdda781a519"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`

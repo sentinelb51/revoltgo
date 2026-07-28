@@ -79,7 +79,6 @@ const (
 	URLUserFriend        = URLUser + "/friend"
 	URLUserBlock         = URLUser + "/block"
 	URLUserProfile       = URLUser + "/profile"
-	URLUserRelationships = URLUser + "/relationships"
 	URLUserDefaultAvatar = URLUser + "/default_avatar"
 
 	URLServer            = "/servers/%s"

@@ -52,22 +52,31 @@ const (
 // Message contains information about a message.
 type Message struct {
 	ID           string               `msg:"_id" json:"_id,omitempty"`
-	Nonce        string               `msg:"nonce" json:"nonce,omitempty"`
-	Channel      string               `msg:"channel" json:"channel,omitempty"`
 	Author       string               `msg:"author" json:"author,omitempty"`
+	Channel      string               `msg:"channel" json:"channel,omitempty"`
+	Attachments  []*File              `msg:"attachments" json:"attachments,omitempty"`
 	Content      string               `msg:"content" json:"content,omitempty"`
-	Mentions     []string             `msg:"mentions" json:"mentions,omitempty"`
-	Replies      []string             `msg:"replies" json:"replies,omitempty"`
-	Reactions    map[string][]string  `msg:"reactions" json:"reactions,omitempty"` // Emoji ID to array of users IDs that reacted
-	Pinned       bool                 `msg:"pinned" json:"pinned,omitempty"`
-	Flags        MessageFlagsType     `msg:"flags" json:"flags,omitempty"`
-	Webhook      *MessageWebhook      `msg:"webhook" json:"webhook,omitempty"`
-	System       *MessageSystem       `msg:"system" json:"system,omitempty"`
-	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
-	Attachments  []*Attachment        `msg:"attachments" json:"attachments,omitempty"`
 	Edited       *time.Time           `msg:"edited" json:"edited,omitempty"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
+	Flags        MessageFlagsType     `msg:"flags" json:"flags,omitempty"`
 	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
 	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
+	Member       *ServerMember        `msg:"member" json:"member,omitempty"`
+	Mentions     []string             `msg:"mentions" json:"mentions,omitempty"`
+	Nonce        string               `msg:"nonce" json:"nonce,omitempty"`
+	Pinned       bool                 `msg:"pinned" json:"pinned,omitempty"`
+
+	// Emoji.ID -> []User.ID
+	Reactions map[string][]string `msg:"reactions" json:"reactions,omitempty"`
+
+	// []Message.ID's that this message replies to
+	Replies []string `msg:"replies" json:"replies,omitempty"`
+
+	// Server that were mentioned
+	RoleMentions []string        `msg:"role_mentions" json:"role-mentions,omitempty"`
+	System       *MessageSystem  `msg:"system" json:"system,omitempty"`
+	User         *User           `msg:"user" json:"user,omitempty"`
+	Webhook      *MessageWebhook `msg:"webhook" json:"webhook,omitempty"`
 }
 
 // MessageWebhook is derived from:
@@ -115,7 +124,7 @@ type MessageEmbed struct {
 	SiteName    string               `msg:"site_name" json:"site_name,omitempty"`
 	IconURL     string               `msg:"icon_url" json:"icon_url,omitempty"`
 	Colour      string               `msg:"colour" json:"colour,omitempty"`
-	Media       *Attachment          `msg:"media" json:"media,omitempty"`
+	Media       *File                `msg:"media" json:"media,omitempty"`
 }
 
 type MessageEmbedSpecial struct {

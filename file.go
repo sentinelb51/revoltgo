@@ -1,18 +1,55 @@
 package revoltgo
 
-import "io"
+//go:generate msgp -tests=false -io=false
+
+type FileMetadataType string
+
+const (
+	FileMetadataTypeFile  FileMetadataType = "File"
+	FileMetadataTypeText  FileMetadataType = "Text"
+	FileMetadataTypeImage FileMetadataType = "Image"
+	FileMetadataTypeVideo FileMetadataType = "Video"
+	FileMetadataTypeAudio FileMetadataType = "Audio"
+)
 
 type File struct {
-	// The name of the file; this is completely arbitrary because the backend determines the file-type anyway
-	// However, it should not be empty, otherwise the media will not load on the client
-	Name string
+	ID string `msg:"_id" json:"_id,omitempty"`
 
-	// The contents of the file to be read when uploading
-	Reader io.Reader
+	// Raw content type of this file
+	ContentType string `msg:"content_type" json:"content_type,omitempty"`
+
+	// Original filename
+	Filename string `msg:"filename" json:"filename,omitempty"`
+
+	// Metadata associated with file
+	Metadata *AttachmentMetadata `msg:"metadata" json:"metadata,omitempty"`
+
+	// FileParams size in bytes
+	Size int `msg:"size" json:"size,omitempty"`
+
+	// Tag (bucket) this file was uploaded to
+	Tag string `msg:"tag" json:"tag,omitempty"`
+
+	// Whether this file was deleted
+	Deleted bool `msg:"deleted" json:"deleted,omitempty"`
+
+	MessageID string `msg:"message_id" json:"message_id,omitempty"`
+	ObjectID  string `msg:"object_id" json:"object_id,omitempty"`
+
+	// Whether this file was reported
+	Reported bool `msg:"reported" json:"reported,omitempty"`
+
+	ServerID string `msg:"server_id" json:"server_id,omitempty"`
+	UserID   string `msg:"user_id" json:"user_id,omitempty"`
 }
 
-// FileAttachment is the response from the API when uploading a file.
-// To upload a file, you must reference this ID in MessageSend.Attachments.
-type FileAttachment struct {
-	ID string `msg:"id" json:"id,omitempty"`
+func (a File) URL(size string) string {
+	return EndpointAutumnFile(a.Tag, a.ID, size)
+}
+
+type AttachmentMetadata struct {
+	Type FileMetadataType `msg:"type" json:"type,omitempty"`
+
+	Width  int `msg:"width" json:"width,omitempty"`
+	Height int `msg:"height" json:"height,omitempty"`
 }

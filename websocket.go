@@ -102,13 +102,15 @@ func (ws *Websocket) Uptime() time.Duration {
 	return uptime
 }
 
-func (ws *Websocket) connect() {
+// connect dials the gateway. The caller decides what a failure means:
+// Open reports it, reconnectLoop retries it.
+func (ws *Websocket) connect() error {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
 	// If we are already shutting down, do not reconnect
 	if ws.ctx.Err() != nil {
-		return
+		return ws.ctx.Err()
 	}
 
 	url, _, _ := strings.Cut(ws.url, "?")
@@ -127,9 +129,7 @@ func (ws *Websocket) connect() {
 
 	socket, response, err := gws.NewClient(ws, options)
 	if err != nil {
-		log.Printf("Connection failed: %s\n", err)
-		go ws.reconnectLoop()
-		return
+		return err
 	}
 
 	if response != nil && response.Body != nil {
@@ -139,15 +139,27 @@ func (ws *Websocket) connect() {
 	ws.conn = socket
 
 	go socket.ReadLoop()
+	return nil
 }
 
+// reconnectLoop retries until the connection succeeds, the session is closed,
+// or reconnects are disabled.
 func (ws *Websocket) reconnectLoop() {
-	select {
-	case <-ws.ctx.Done():
-		return
-	case <-time.After(ws.ReconnectInterval):
+	for ws.ShouldReconnect {
+		select {
+		case <-ws.ctx.Done():
+			return
+		case <-time.After(ws.ReconnectInterval):
+		}
+
 		log.Printf("Re-connecting...")
-		ws.connect()
+
+		err := ws.connect()
+		if err == nil {
+			return
+		}
+
+		log.Printf("Connection failed: %s\n", err)
 	}
 }
 
@@ -191,7 +203,9 @@ func (ws *Websocket) OnOpen(socket *gws.Conn) {
 	atomic.StoreInt64(&ws.heartbeatCount, 0)
 
 	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
-		log.Fatalf("Set deadline failed: %s\n", err)
+		log.Printf("Set deadline failed: %s\n", err)
+		_ = socket.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
+		return
 	}
 
 	go ws.heartbeatLoop(socket)

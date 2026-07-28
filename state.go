@@ -886,6 +886,11 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 		return
 	}
 
+	// If channel doesn't belong to a server, skip
+	if channel.Server == nil {
+		return
+	}
+
 	s.serversMu.Lock()
 	defer s.serversMu.Unlock()
 
@@ -909,15 +914,27 @@ func (s *State) createServer(event *EventServerCreate) {
 		return
 	}
 
+	if event.Server == nil {
+		log.Printf("State.createServer: server %s has no server data\n", event.ID)
+		return
+	}
+
 	s.serversMu.Lock()
 	s.servers[event.ID] = event.Server
 	s.serversMu.Unlock()
 
 	// If there's something you'll be first at in life, it's being a member in your own server.
 	if s.trackMembers {
+
+		self := s.Self()
+		if self == nil {
+			log.Printf("State.createServer: s.TrackMembers & self is nil")
+			return
+		}
+
 		s.membersMu.Lock()
 		member := &ServerMember{
-			ID: MemberCompositeID{User: s.self.Load().ID, Server: event.ID},
+			ID: MemberCompositeID{User: self.ID, Server: event.ID},
 		}
 
 		if id, err := ulid.Parse(event.Server.ID); err == nil {
