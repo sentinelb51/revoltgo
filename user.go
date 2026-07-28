@@ -34,7 +34,7 @@ type User struct {
 	Relations     []UserRelationship   `msg:"relations" json:"relations,omitempty"`
 	Relationship  UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
 	DisplayName   *string              `msg:"display_name" json:"display_name,omitempty"`
-	Avatar        *Attachment          `msg:"avatar" json:"avatar,omitempty"`
+	Avatar        *File                `msg:"avatar" json:"avatar,omitempty"`
 	Status        *UserStatus          `msg:"status" json:"status,omitempty"`
 	Profile       *UserProfile         `msg:"profile" json:"profile,omitempty"` // todo: deprecated? not present in src
 	Bot           *Bot                 `msg:"bot" json:"bot,omitempty"`
@@ -134,7 +134,7 @@ type PartialUser struct {
 	Relations     *[]UserRelationship   `msg:"relations" json:"relations,omitempty"`
 	Relationship  *UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
 	DisplayName   *string               `msg:"display_name" json:"display_name,omitempty"`
-	Avatar        *Attachment           `msg:"avatar" json:"avatar,omitempty"`
+	Avatar        *File                 `msg:"avatar" json:"avatar,omitempty"`
 	Status        *UserStatus           `msg:"status" json:"status,omitempty"`
 	Profile       *UserProfile          `msg:"profile" json:"profile,omitempty"` // todo: deprecated? not present in src
 	Bot           *Bot                  `msg:"bot" json:"bot,omitempty"`
@@ -145,8 +145,8 @@ func (u *User) Mention() string {
 }
 
 type UserProfile struct {
-	Content    string      `msg:"content" json:"content,omitempty"`
-	Background *Attachment `msg:"background" json:"background,omitempty"`
+	Content    string `msg:"content" json:"content,omitempty"`
+	Background *File  `msg:"background" json:"background,omitempty"`
 }
 
 type UserRelationship struct {

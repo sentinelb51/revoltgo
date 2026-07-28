@@ -34,10 +34,10 @@ type Bot struct {
 }
 
 type PublicBot struct {
-	ID          string      `msg:"_id" json:"_id,omitempty"`
-	Username    string      `msg:"username" json:"username,omitempty"`
-	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
-	Description string      `msg:"description" json:"description,omitempty"`
+	ID          string `msg:"_id" json:"_id,omitempty"`
+	Username    string `msg:"username" json:"username,omitempty"`
+	Avatar      *File  `msg:"avatar" json:"avatar,omitempty"`
+	Description string `msg:"description" json:"description,omitempty"`
 }
 
 type FetchedBot struct {

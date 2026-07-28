@@ -177,6 +177,7 @@ type EventMessageUpdate struct {
 }
 
 type EventMessageAppend struct {
+	Event   `msg:",flatten"`
 	ID      string  `msg:"id" json:"id,omitempty"`
 	Channel string  `msg:"channel" json:"channel,omitempty"`
 	Append  Message `msg:"append" json:"append,omitempty"`
@@ -275,6 +276,7 @@ type EventMessageUnreact struct {
 
 // EventMessageRemoveReaction is sent when all the reactions are removed from a message.
 type EventMessageRemoveReaction struct {
+	Event     `msg:",flatten"`
 	ID        string `msg:"id" json:"id,omitempty"`
 	ChannelID string `msg:"channel_id" json:"channel_id,omitempty"`
 	EmojiID   string `msg:"emoji_id" json:"emoji_id,omitempty"`

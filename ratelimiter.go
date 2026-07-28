@@ -33,7 +33,8 @@ type Ratelimiter struct {
 	// Interval to clean-up stale ratelimit buckets.
 	CleanInterval time.Duration
 	// stop the background cleaner
-	stop chan struct{}
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 func newRatelimiter() *Ratelimiter {
@@ -47,9 +48,9 @@ func newRatelimiter() *Ratelimiter {
 	return r
 }
 
-// Close stops the background cleaner goroutine
+// Close stops the background cleaner goroutine. Safe to call more than once.
 func (r *Ratelimiter) Close() {
-	close(r.stop)
+	r.stopOnce.Do(func() { close(r.stop) })
 }
 
 // https://developers.stoat.chat/developers/api/ratelimits

@@ -20,11 +20,11 @@ type Channel struct {
 	ID          string      `msg:"_id" json:"_id,omitempty"`
 	ChannelType ChannelType `msg:"channel_type" json:"channel_type,omitempty"`
 
-	Name        string      `msg:"name" json:"name,omitempty"`
-	Description *string     `msg:"description" json:"description,omitempty"`
-	Icon        *Attachment `msg:"icon" json:"icon,omitempty"`
-	NSFW        bool        `msg:"nsfw" json:"nsfw,omitempty"`
-	Active      bool        `msg:"active" json:"active,omitempty"`
+	Name        string  `msg:"name" json:"name,omitempty"`
+	Description *string `msg:"description" json:"description,omitempty"`
+	Icon        *File   `msg:"icon" json:"icon,omitempty"`
+	NSFW        bool    `msg:"nsfw" json:"nsfw,omitempty"`
+	Active      bool    `msg:"active" json:"active,omitempty"`
 
 	Server          *string                        `msg:"server" json:"server,omitempty"`                     // Server channels only
 	Voice           *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`                       // Server channels only
@@ -98,11 +98,13 @@ func (c *Channel) clear(fields []string) {
 }
 
 type PartialChannel struct {
-	Name               *string                        `msg:"name" json:"name,omitempty"`
-	Owner              *string                        `msg:"owner" json:"owner,omitempty"`
-	Description        *string                        `msg:"description" json:"description,omitempty"`
-	Icon               *Attachment                    `msg:"icon" json:"icon,omitempty"`
-	NSFW               *bool                          `msg:"nsfw" json:"nsfw,omitempty"`
+	Name        *string `msg:"name" json:"name,omitempty"`
+	Owner       *string `msg:"owner" json:"owner,omitempty"`
+	Description *string `msg:"description" json:"description,omitempty"`
+	Icon        *File   `msg:"icon" json:"icon,omitempty"`
+	NSFW        *bool   `msg:"nsfw" json:"nsfw,omitempty"`
+
+	// Whether the channel is listed in direct messages. False means hidden; the DM was closed.
 	Active             *bool                          `msg:"active" json:"active,omitempty"`
 	Permissions        *int64                         `msg:"permissions" json:"permissions,omitempty"`
 	RolePermissions    map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitempty"`

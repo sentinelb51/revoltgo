@@ -174,12 +174,12 @@ func (s *Session) addDefaultHandlers() {
 			log.Println("Internal server error; please try again later")
 		}
 
-		_ = s.WS.WriteClose()
+		_ = s.Close()
 	})
 
 	addDefaultHandler(s, func(s *Session, e *EventLogout) {
 		log.Println("Logout event received; closing session")
-		_ = s.WS.WriteClose()
+		_ = s.Close()
 	})
 
 	addDefaultHandler(s, func(s *Session, e *EventBulk) {
@@ -309,6 +309,11 @@ func handlerName[T any]() string {
 	// reflect.Type.Name() returns an empty string for pointers (e.g., *EventMessage),
 	// so we must find the struct type (EventMessage) to get the correct name.
 	// todo: look if this is needed
+
+	if t.Kind() != reflect.Ptr {
+		log.Fatalf("handler must be a pointer to a struct")
+	}
+
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
@@ -471,16 +476,20 @@ func (s *Session) Open(configuration ...StateConfig) (err error) {
 	wsURL.RawQuery = s.buildOpenQueryParams().Encode()
 
 	s.WS = newWebsocket(s, wsURL.String())
-	s.WS.connect()
-
-	return
+	return s.WS.connect()
 }
 
-// Close closes the Websocket connection.
+// Close closes the Websocket connection and stops background workers.
 func (s *Session) Close() error {
+
+	if s.HTTP != nil {
+		s.HTTP.ratelimiter.Close()
+	}
+
 	if s.WS != nil {
 		return s.WS.WriteClose()
 	}
+
 	return nil
 }
 
@@ -498,8 +507,6 @@ func (s *Session) WriteSocketJSON(data any) error {
 func (s *Session) WriteSocketMSGP(data any) error {
 	marshaler, ok := data.(msgp.Marshaler)
 	if !ok {
-		// todo: maybe err should just be "%T doesn't implement msgp.Marshaler"
-		// todo: test if sending websocket events even works
 		err := fmt.Errorf("%T doesn't implement msgp.Marshaler", data)
 		log.Println(fmt.Errorf("%w. Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", err))
 		return err
@@ -513,7 +520,7 @@ func (s *Session) WriteSocketMSGP(data any) error {
 	return err
 }
 
-func (s *Session) AttachmentUpload(file *File) (attachment *FileAttachment, err error) {
+func (s *Session) AttachmentUpload(file *FileParams) (attachment *FileParamsData, err error) {
 
 	if file.Name == "" {
 		log.Printf("Warning: uploading files without names may cause the media to not load on the client")
@@ -561,13 +568,13 @@ func (s *Session) User(uID string) (user *User, err error) {
 
 func (s *Session) UserBlock(uID string) (user *User, err error) {
 	endpoint := EndpointUserBlock(uID)
-	err = s.HTTP.Request(http.MethodPut, endpoint, nil, user)
+	err = s.HTTP.Request(http.MethodPut, endpoint, nil, &user)
 	return
 }
 
 func (s *Session) UserUnblock(uID string) (user *User, err error) {
 	endpoint := EndpointUserBlock(uID)
-	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, user)
+	err = s.HTTP.Request(http.MethodDelete, endpoint, nil, &user)
 	return
 }
 
@@ -864,9 +871,9 @@ func (s *Session) ServerMemberUnban(sID, mID string) (err error) {
 	return
 }
 
-func (s *Session) ServerMemberBan(sID, mID string) (err error) {
+func (s *Session) ServerMemberBan(sID, mID string, data ServerMemberBanParams) (err error) {
 	endpoint := EndpointServerBan(sID, mID)
-	err = s.HTTP.Request(http.MethodPut, endpoint, nil, nil)
+	err = s.HTTP.Request(http.MethodPut, endpoint, data, nil)
 	return
 }
 
@@ -968,7 +975,10 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
 		if params[0].IncludeUsers {
 			err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
-			s.State.addServerMembersAndUsers(data.Users, data.Members)
+			if err != nil {
+				s.State.addServerMembersAndUsers(data.Users, data.Members)
+			}
+
 			return
 		}
 	}
@@ -1138,13 +1148,6 @@ func (s *Session) DirectMessageCreate(uID string) (channel *Channel, err error) 
 	return
 }
 
-// Relationships returns a list of relationships for the current user
-func (s *Session) Relationships() (relationships []*UserRelationship, err error) {
-	endpoint := URLUserRelationships
-	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &relationships)
-	return
-}
-
 // FriendAdd sends or accepts a friend Request.
 // todo: this might be completely wrong, check: https://developers.stoat.chat/api-reference#tag/relationships/POST/users/friend
 // todo: this POSTS to /user/friend with body "username" (Username and discriminator combo separated by #)
@@ -1214,13 +1217,13 @@ func (s *Session) SyncUnreads() (data []ChannelUnread, err error) {
 }
 
 func (s *Session) SyncSettingsFetch(payload SyncSettingsFetchParams) (data *SyncSettingsParams, err error) {
-	endpoint := EndpointSync("settings")
+	endpoint := EndpointSyncSettings("fetch")
 	err = s.HTTP.Request(http.MethodPost, endpoint, payload, &data)
 	return
 }
 
 func (s *Session) SyncSettingsSet(payload SyncSettingsParams) error {
-	endpoint := EndpointSync("settings")
+	endpoint := EndpointSyncSettings("set")
 	return s.HTTP.Request(http.MethodPost, endpoint, payload, nil)
 }
 

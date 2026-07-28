@@ -30,7 +30,7 @@ func main() {
 		}
 
 		// Create a file object with a name and the file reader
-		payload := &revoltgo.File{
+		payload := &revoltgo.FileParams{
 			Name:   "The name is arbitrary, but don't leave it empty or the media won't load",
 			Reader: file,
 		}

@@ -149,7 +149,7 @@ func sameHostname(a, b *url.URL) bool {
 func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 	var payload string
 	if data != nil {
-		if _, ok := data.(*File); ok {
+		if _, ok := data.(*FileParams); ok {
 			payload = "[Multipart File]"
 		} else {
 			if b, err := json.Marshal(data); err == nil {
@@ -173,7 +173,7 @@ Request sends a JSON Request with "method" to a destination URL
 - "result" will be used to decode the response into, and
 - "data" is the Request body which wil be encoded as JSON
 
-- If the "data" is a *File, it will be uploaded as a multipart form
+- If the "data" is a *FileParams, it will be uploaded as a multipart form
 This function automatically handles rate-limiting and response status codes
 */
 func (c *HTTPClient) Request(method, destination string, data, result any) error {
@@ -257,7 +257,7 @@ func (c *HTTPClient) prepareRequestBody(body any) (io.Reader, string, error) {
 		return http.NoBody, "application/json", nil
 	}
 
-	if file, ok := body.(*File); ok {
+	if file, ok := body.(*FileParams); ok {
 		return c.prepareFileUpload(file)
 	}
 
@@ -265,7 +265,7 @@ func (c *HTTPClient) prepareRequestBody(body any) (io.Reader, string, error) {
 }
 
 // prepareFileUpload prepares a multipart form for uploading a file
-func (c *HTTPClient) prepareFileUpload(file *File) (io.Reader, string, error) {
+func (c *HTTPClient) prepareFileUpload(file *FileParams) (io.Reader, string, error) {
 	reader, writer := io.Pipe()
 	form := multipart.NewWriter(writer)
 
@@ -304,7 +304,16 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 	case http.StatusNoContent:
 		return nil
 	case http.StatusOK, http.StatusCreated:
-		if result != nil {
+		switch result := result.(type) {
+		case nil:
+		case *[]byte:
+			// Binary endpoints (e.g. default avatars) return raw bytes, not JSON
+			data, err := io.ReadAll(body)
+			if err != nil {
+				return fmt.Errorf("handleResponse: %w", err)
+			}
+			*result = data
+		default:
 			if err := json.NewDecoder(body).Decode(result); err != nil {
 				return fmt.Errorf("handleResponse: %w", err)
 			}
@@ -454,6 +463,13 @@ type ServerMemberEditParams struct {
 	Roles    []string  `msg:"roles" json:"roles,omitempty"`
 	Timeout  time.Time `msg:"timeout" json:"timeout,omitempty"`
 	Remove   []string  `msg:"remove" json:"remove,omitempty"`
+}
+
+// ServerMemberBanParams derived from:
+// https://developers.stoat.chat/api-reference/#tag/server-members/PUT/servers/{server}/bans/{target}
+type ServerMemberBanParams struct {
+	DeleteMessageSeconds int64  `msg:"delete_message_seconds" json:"delete_message_seconds,omitempty"`
+	Reason               string `msg:"reason" json:"reason,omitempty"`
 }
 
 type MessageEditParams struct {
@@ -611,3 +627,25 @@ type AuthMFAParams struct {
 	RecoveryCode string `msg:"recovery_code" json:"recovery_code,omitempty"`
 	TOTPCode     string `msg:"totp_code" json:"totp_code,omitempty"`
 }
+
+// FileParams is used to upload files to the API. For dealing with files, see: File
+// When FileParams is uploaded, the API responds with FileParamsData, which is just an ID of the file you uploaded
+type FileParams struct {
+	// The name of the file; this is completely arbitrary because the backend determines the file-type anyway
+	// However, it should not be empty, otherwise the media will not load on the client
+	Name string
+
+	// The contents of the file to be read when uploading
+	Reader io.Reader `msg:"-"`
+}
+
+// FileParamsData is the response from the API when uploading a file.
+// To upload a file, you must reference this ID in MessageSend.Attachments.
+type FileParamsData struct {
+	ID string `msg:"id" json:"id,omitempty"`
+}
+
+/*
+http.go: Lines 615-631: FileParams and FileParamsData; are these appropriate names for the structs? Especially FileParamsData, which is the response the API gives.
+  [Context: I have recently changed "Attachment" struct name to "File" as it better fits the API spec conventions]
+*/

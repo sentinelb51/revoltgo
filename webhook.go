@@ -14,13 +14,13 @@ const (
 // Webhook is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/channel_webhooks/model.rs#L8
 type Webhook struct {
-	ID          string      `msg:"_id" json:"_id,omitempty"`
-	Name        string      `msg:"name" json:"name,omitempty"`
-	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
-	CreatorID   string      `msg:"creator_id" json:"creator_id,omitempty"`
-	ChannelID   string      `msg:"channel_id" json:"channel_id,omitempty"`
-	Permissions uint64      `msg:"permissions" json:"permissions,omitempty"`
-	Token       *string     `msg:"token" json:"token,omitempty"`
+	ID          string  `msg:"_id" json:"_id,omitempty"`
+	Name        string  `msg:"name" json:"name,omitempty"`
+	Avatar      *File   `msg:"avatar" json:"avatar,omitempty"`
+	CreatorID   string  `msg:"creator_id" json:"creator_id,omitempty"`
+	ChannelID   string  `msg:"channel_id" json:"channel_id,omitempty"`
+	Permissions uint64  `msg:"permissions" json:"permissions,omitempty"`
+	Token       *string `msg:"token" json:"token,omitempty"`
 }
 
 func (w *Webhook) update(data PartialWebhook) {
@@ -61,10 +61,10 @@ func (w *Webhook) clear(fields []string) {
 }
 
 type PartialWebhook struct {
-	Name        *string     `msg:"name" json:"name,omitempty"`
-	Avatar      *Attachment `msg:"avatar" json:"avatar,omitempty"`
-	CreatorID   *string     `msg:"creator_id" json:"creator_id,omitempty"`
-	ChannelID   *string     `msg:"channel_id" json:"channel_id,omitempty"`
-	Permissions *uint64     `msg:"permissions" json:"permissions,omitempty"`
-	Token       *string     `msg:"token" json:"token,omitempty"`
+	Name        *string `msg:"name" json:"name,omitempty"`
+	Avatar      *File   `msg:"avatar" json:"avatar,omitempty"`
+	CreatorID   *string `msg:"creator_id" json:"creator_id,omitempty"`
+	ChannelID   *string `msg:"channel_id" json:"channel_id,omitempty"`
+	Permissions *uint64 `msg:"permissions" json:"permissions,omitempty"`
+	Token       *string `msg:"token" json:"token,omitempty"`
 }

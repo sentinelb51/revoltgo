@@ -9,6 +9,49 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 
 	   Todo: do we need state.go to track VoiceStates?
 */
+
+/*
+	TODO:
+
+Full pass over the library hunting for critical bugs, logic errors, and dead weight. Hot paths (decode-skip dispatch, COW handlers, zstd pooling, ratelimiter) are already lean — no major perf rework needed. The real value i↑ a set of genuine bugs, several of which panic or silently break features.
+
+	                                                                                                                                                                                                                                 ↑
+	  Critical bugs
+	                                                                                                                                                                                                                                 ↑
+	  1. ServerMembers panics on request error — session.go:892: s.State.addServerMembersAndUsers(data.Users, data.Members) runs even when err != nil, and data (a *ServerMembers) is nil → nil-pointer panic on any timeout/error. Guard with if err == nil.                                                                                                                                                                                                      ↑
+	  2. deleteChannel panics for non-server channels — state.go:892: *channel.Server derefs nil when a DM/Group/SavedMessages channel is deleted. Nil-check channel.Server before the server-cleanup half.
+	  3. ServerPermissions has swapped args — permissions.go:75: s.Member(user.ID, server.ID) but the signature is Member(sID, uID). Member lookup always fails → permission calc errors for every non-owner. Swap to s.Member(server.ID, user.ID).
+	  4. ChannelPermissions DM nil deref — permissions.go:107: *channel.Permissions without nil check (Group case below checks; DM doesn't). Nil-check like the Group branch.                                                        ↑
+	  5. UserBlock/UserUnblock decode into nil pointer — session.go:564,570: pass user (nil *User) instead of &user. Result is never populated and a 200-with-body returns a decode error. Use &user.
+	  6. MessageFlagsMentionsOnline = 3 — message.go:49: bitflag value should be 4; 3 equals SuppressNotifications|MentionsEveryone (the comment even says they're mutually exclusive). Change to 4.                                 ↑
+	  7. Relationships requests a literal %s path — session.go:1143: uses const URLUserRelationships = "/users/%s/relationships" directly with no formatting → garbage URL. Correct API path is /users/relationships(verify); replace with a literal/Endpoint func.                                                                                                                                                                                                  ↑
+	  8. AddHandler for EventMessageAppend/EventMessageRemoveReaction kills the process — events.go:179,277: these two structs don't embed Event, so they have no Type field and handlerName (session.go:303) hits log.Fatalf. Embed Event in both (msgp regen needed — user runs codegen).                                                                                                                                                                         ↑
+	                                                                                                                                                                                                                                 ↑
+	  Medium bugs
+
+	  9. connect() ignores ShouldReconnect — websocket.go:128-133: dial failure unconditionally spawns reconnectLoop, even when reconnects are disabled. Also Open() returns nil for a failed first connect. Gate the reconnect on ws.ShouldReconnect; optionally have connect() return the error so Open can report the initial failure.
+	  10. log.Fatalf in OnOpen — websocket.go:194: a SetDeadline error kills the host process. Log + close the socket instead (OnClose path handles reconnect).
+	  11. Sync settings endpoints wrong — session.go:1216-1225: both SyncSettingsFetch and SyncSettingsSet POST /sync/settings; correct paths are /sync/settings/fetch and /sync/settings/set. The unused EndpointSyncSettings (endpoints.go:357) already exists for this — use it.
+	  12. UserDefaultAvatar can't work — session.go:580: JSON-decodes a binary PNG body into []byte → always errors. Needs a raw-body path (e.g. special-case *[]byte in handleResponse to io.ReadAll).
+	  13. Ratelimiter cleaner goroutine leaks — Session.Close/WriteClose never call Ratelimiter.Close(); one goroutine leaks per session forever. Call it from Session.Close.
+	  14. createServer nil derefs — state.go:920: s.self.Load().ID panics if self is unknown (Ready had no users and the @me fetch failed); event.Server also unchecked before event.Server.ID. Add nil guards.
+
+	  Cleanup / simplification
+
+	15. Delete the dead URL* const block — endpoints.go:73-141 (~70 lines): everything except URLUserMeUsername is unused or broken (URLUserRelationships is bug #7). Keep those two as literals or Endpoint funcs.
+	  16. Delete eventTypeFromJSON + jsonSkipAheadKeyType — event.go:13-26: dead since the msgpack switch.
+	  17. handlerName: reject non-pointer T — registering func(*Session, EventMessage) (value, not pointer) currently registers fine, then panics at dispatch on e.(T) since constructors produce pointers. Make handlerName fatal at registration if T isn't a pointer-to-struct (it already drills pointers; just require Kind == Ptr at top instead).
+
+	  Files touched
+
+	  session.go, state.go, permissions.go, message.go, websocket.go, events.go, event.go, endpoints.go, http.go (item 12).
+
+	  Verification
+
+	  - Item 8 requires msgp regeneration (tools/msgp_codegen.py) — user runs this.
+	- User verifies compilation per their workflow (no go build/vet from me).
+	  - Behavioral spot-checks: ServerMembers against a failing request must return error, not panic; ServerPermissions for a non-owner member must resolve; DM channel delete event must not panic.
+*/
 package revoltgo
 
 import (
@@ -26,7 +69,7 @@ const (
 
 /* Logic related to the update checker */
 
-var COMMIT = "9f8e300a18637a2edb5bdae18bc628d7c8712aea"
+var COMMIT = "eeea8c05edbeba726ee54c09353a8cdda781a519"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
