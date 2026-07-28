@@ -534,7 +534,10 @@ func (s *Session) AttachmentUpload(file *FileParams) (attachment *FileParamsData
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
 	endpoint := EndpointCustomEmoji(eID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &emoji)
-	s.State.addEmoji(emoji)
+	if err == nil {
+		s.State.addEmoji(emoji)
+
+	}
 	return
 }
 
@@ -553,7 +556,10 @@ func (s *Session) EmojiDelete(eID string) error {
 func (s *Session) Channel(cID string) (channel *Channel, err error) {
 	endpoint := EndpointChannel(cID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channel)
-	s.State.addChannel(channel)
+	if err == nil {
+		s.State.addChannel(channel)
+	}
+
 	return
 }
 
@@ -562,7 +568,10 @@ func (s *Session) Channel(cID string) (channel *Channel, err error) {
 func (s *Session) User(uID string) (user *User, err error) {
 	endpoint := EndpointUser(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &user)
-	s.State.addUser(user)
+	if err == nil {
+		s.State.addUser(user)
+	}
+
 	return
 }
 
@@ -613,7 +622,10 @@ func (s *Session) Server(id string) (server *Server, err error) {
 	// todo: yep... this exists. Turns channels into object array of channels
 	// endpoint = fmt.Sprintf("%s?include_channels=true", endpoint)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &server)
-	s.State.addServer(server)
+	if err == nil {
+		s.State.addServer(server)
+	}
+
 	return
 }
 
@@ -892,14 +904,20 @@ func (s *Session) ServerMemberEdit(sID, mID string, data ServerMemberEditParams)
 func (s *Session) ServerMember(sID, mID string) (member *ServerMember, err error) {
 	endpoint := EndpointServerMember(sID, mID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &member)
-	s.State.addServerMember(member)
+	if err == nil {
+		s.State.addServerMember(member)
+	}
+
 	return
 }
 
 func (s *Session) ServerMembers(sID string, excludeOffline bool) (data *ServerMembers, err error) {
 	endpoint := EndpointServerMembers(sID, excludeOffline)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
-	s.State.addServerMembersAndUsers(data.Users, data.Members)
+	if err == nil {
+		s.State.addServerMembersAndUsers(data.Users, data.Members)
+	}
+
 	return
 }
 
@@ -975,7 +993,7 @@ func (s *Session) ChannelMessages(cID string, params ...ChannelMessagesParams) (
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params[0].Encode())
 		if params[0].IncludeUsers {
 			err = s.HTTP.Request(http.MethodGet, endpoint, nil, &data)
-			if err != nil {
+			if err == nil {
 				s.State.addServerMembersAndUsers(data.Users, data.Members)
 			}
 
