@@ -445,6 +445,24 @@ func (s *State) addServer(server *Server) {
 	s.servers[server.ID] = server
 }
 
+func (s *State) addChannels(channels []*Channel) {
+
+	if !s.trackBulkAPICalls || len(channels) == 0 {
+		return
+	}
+
+	s.channelsMu.Lock()
+	defer s.channelsMu.Unlock()
+
+	for _, channel := range channels {
+		if channel == nil {
+			continue
+		}
+
+		s.channels[channel.ID] = channel
+	}
+}
+
 func (s *State) addChannel(channel *Channel) {
 
 	if !s.trackAPICalls || channel == nil {

@@ -16,6 +16,8 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
+// todo: consider more methods which can create an API resource which don't get automatically cached by State
+
 const ExpressLoginFile string = ".auth_token"
 
 func New(token string) *Session {
@@ -1155,6 +1157,9 @@ func (s *Session) UserMutual(uID string) (mutual []*MutualFriendsAndServersRespo
 func (s *Session) DirectMessages() (channels []*Channel, err error) {
 	endpoint := EndpointUser("dms")
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &channels)
+	if err == nil {
+		s.State.addChannels(channels)
+	}
 	return
 }
 
