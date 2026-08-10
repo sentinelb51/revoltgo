@@ -28,7 +28,7 @@ const (
 
 /* Logic related to the update checker */
 
-var COMMIT = "d300083efbf2fbf03ea7b1ad277799d3a9d54c8c"
+var COMMIT = "c9d9932ac4583e13ed6b25e6b2784a7dbc508495"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`

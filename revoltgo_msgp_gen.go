@@ -7398,7 +7398,7 @@ func (z *EventReadyPolicyChange) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendInt64(o, timeToMs(z.CreatedTime))
 	// string "effective_time"
 	o = append(o, 0xae, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65)
-	o = msgp.AppendString(o, z.EffectiveTime)
+	o = msgp.AppendInt64(o, timeToMs(z.EffectiveTime))
 	// string "description"
 	o = append(o, 0xab, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e)
 	o = msgp.AppendString(o, z.Description)
@@ -7437,10 +7437,14 @@ func (z *EventReadyPolicyChange) UnmarshalMsg(bts []byte) (o []byte, err error) 
 				z.CreatedTime = msToTime(zb0002)
 			}
 		case "effective_time":
-			z.EffectiveTime, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "EffectiveTime")
-				return
+			{
+				var zb0003 int64
+				zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "EffectiveTime")
+					return
+				}
+				z.EffectiveTime = msToTime(zb0003)
 			}
 		case "description":
 			z.Description, bts, err = msgp.ReadStringBytes(bts)
@@ -7468,7 +7472,7 @@ func (z *EventReadyPolicyChange) UnmarshalMsg(bts []byte) (o []byte, err error) 
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *EventReadyPolicyChange) Msgsize() (s int) {
-	s = 1 + 13 + msgp.Int64Size + 15 + msgp.StringPrefixSize + len(z.EffectiveTime) + 12 + msgp.StringPrefixSize + len(z.Description) + 4 + msgp.StringPrefixSize + len(z.URL)
+	s = 1 + 13 + msgp.Int64Size + 15 + msgp.Int64Size + 12 + msgp.StringPrefixSize + len(z.Description) + 4 + msgp.StringPrefixSize + len(z.URL)
 	return
 }
 
