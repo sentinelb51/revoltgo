@@ -468,7 +468,10 @@ func (s *Session) Open(configuration ...StateConfig) (err error) {
 		return
 	}
 
-	log.Printf("API version detected: %s\n", instance.Revolt)
+	log.Printf("Using API version: %s\n", instance.Revolt)
+	if instance.Revolt != ExpectedAPI {
+		log.Printf("This version was built against API version %s; behaviour may differ", ExpectedAPI)
+	}
 
 	wsURL, err := url.Parse(instance.WS)
 	if err != nil {
