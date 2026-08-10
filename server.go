@@ -193,13 +193,18 @@ type ServerMember struct {
 	ID       MemberCompositeID `msg:"_id" json:"_id,omitempty"`
 	JoinedAt time.Time         `msg:"joined_at" json:"joined_at,omitempty"`
 
-	Nickname *string    `msg:"nickname" json:"nickname,omitempty"`
-	Avatar   *File      `msg:"avatar" json:"avatar,omitempty"`
-	Timeout  *time.Time `msg:"timeout" json:"timeout,omitempty"`
+	Nickname *string  `msg:"nickname" json:"nickname,omitempty"`
+	Pronouns *string  `msg:"pronouns" json:"pronouns,omitempty"`
+	Avatar   *File    `msg:"avatar" json:"avatar,omitempty"`
+	Roles    []string `msg:"roles" json:"roles,omitempty"`
 
-	Roles      []string `msg:"roles" json:"roles,omitempty"`
-	CanPublish bool     `msg:"can_publish" json:"can_publish,omitempty"`
-	CanReceive bool     `msg:"can_receive" json:"can_receive,omitempty"`
+	Timeout *time.Time `msg:"timeout" json:"timeout,omitempty"`
+
+	// Whether member is server-wide voice-muted
+	CanPublish bool `msg:"can_publish" json:"can_publish,omitempty"`
+
+	// Whether member is server-wide voice-deafened
+	CanReceive bool `msg:"can_receive" json:"can_receive,omitempty"`
 }
 
 func (m *ServerMember) update(data PartialServerMember) {
@@ -229,16 +234,58 @@ func (m *ServerMember) update(data PartialServerMember) {
 	}
 }
 
+/*
+		ServerMemberClearNickname,
+        ServerMemberClearPronouns,
+        ServerMemberClearAvatar,
+        ServerMemberClearRoles,
+        ServerMemberClearTimeout,
+        ServerMemberClearCanReceive,
+        ServerMemberClearCanPublish,
+        ServerMemberClearJoinedAt,
+        ServerMemberClearVoiceChannel,
+*/
+
+type ServerMemberClearType string
+
+const (
+	ServerMemberClearNickname     = "Nickname"
+	ServerMemberClearPronouns     = "Pronouns"
+	ServerMemberClearAvatar       = "Avatar"
+	ServerMemberClearRoles        = "Roles"
+	ServerMemberClearTimeout      = "Timeout"
+	ServerMemberClearCanReceive   = "CanReceive"
+	ServerMemberClearCanPublish   = "CanPublish"
+	ServerMemberClearJoinedAt     = "JoinedAt"
+	ServerMemberClearVoiceChannel = "VoiceChannel"
+)
+
 // Clear resets nullable fields to nil based on the JSON key name.
 func (m *ServerMember) clear(fields []string) {
 	for _, field := range fields {
 		switch field {
-		case string(WebhookRemoveNickname):
+		case ServerMemberClearNickname:
 			m.Nickname = nil
-		case string(WebhookRemoveAvatar):
+		case ServerMemberClearPronouns:
+			m.Pronouns = nil
+		case ServerMemberClearAvatar:
 			m.Avatar = nil
+		case ServerMemberClearRoles:
+			m.Roles = nil
+		case ServerMemberClearTimeout:
+			m.Timeout = nil
+		case ServerMemberClearCanReceive:
+			m.CanReceive = false
+		case ServerMemberClearCanPublish:
+			m.CanPublish = false
+		case ServerMemberClearJoinedAt:
+			// todo: investigate wtf?
+			fallthrough
+		case ServerMemberClearVoiceChannel:
+			// todo: wtf?
+			fallthrough
 		default:
-			fmt.Printf("ServerMember.clear(): unknown field %s\n", field)
+			fmt.Printf("ServerMember.clear(): unhandled field %s\n", field)
 		}
 	}
 }
