@@ -216,7 +216,7 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 	ws.conn = nil
 	ws.mu.Unlock()
 
-	if err == nil {
+	if err == nil || ws.ctx.Err() != nil {
 		log.Println("Connection closed gracefully")
 		return
 	}
