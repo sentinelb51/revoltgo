@@ -6,6 +6,8 @@ import "log"
 
 type WebhookRemoveField string
 
+// todo: why aren't we using this?
+
 const (
 	WebhookRemoveNickname WebhookRemoveField = "Nickname"
 	WebhookRemoveAvatar   WebhookRemoveField = "Avatar"
