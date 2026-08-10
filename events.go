@@ -66,13 +66,13 @@ type EventPong struct {
 	Data int64 `msg:"data" json:"data,omitempty"`
 }
 
+// EventReadyPolicyChange is derived from:
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/policy_changes.rs
 type EventReadyPolicyChange struct {
-	// might be a Timestamp?
-	CreatedTime string `msg:"created_time" json:"created_time,omitempty"`
-	// might be a Timestamp?
-	EffectiveTime string `msg:"effective_time" json:"effective_time,omitempty"`
-	Description   string `msg:"description" json:"description,omitempty"`
-	URL           string `msg:"url" json:"url,omitempty"`
+	CreatedTime   time.Time `msg:"created_time" json:"created_time,omitempty"`
+	EffectiveTime time.Time `msg:"effective_time" json:"effective_time,omitempty"`
+	Description   string    `msg:"description" json:"description,omitempty"`
+	URL           string    `msg:"url" json:"url,omitempty"`
 }
 
 // EventReady provides information about objects relative to the user.
