@@ -30,7 +30,7 @@ type Bot struct {
 	PrivacyPolicyURL string `msg:"privacy_policy_url" json:"privacy_policy_url,omitempty"`
 
 	// Enum of bot flags
-	Flags int `msg:"flags" json:"flags,omitempty"`
+	Flags uint32 `msg:"flags" json:"flags,omitempty"`
 }
 
 type PublicBot struct {

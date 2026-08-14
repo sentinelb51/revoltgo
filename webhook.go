@@ -21,7 +21,7 @@ type Webhook struct {
 	Avatar      *File   `msg:"avatar" json:"avatar,omitempty"`
 	CreatorID   string  `msg:"creator_id" json:"creator_id,omitempty"`
 	ChannelID   string  `msg:"channel_id" json:"channel_id,omitempty"`
-	Permissions uint64  `msg:"permissions" json:"permissions,omitempty"`
+	Permissions int64   `msg:"permissions" json:"permissions,omitempty"`
 	Token       *string `msg:"token" json:"token,omitempty"`
 }
 
@@ -67,6 +67,6 @@ type PartialWebhook struct {
 	Avatar      *File   `msg:"avatar" json:"avatar,omitempty"`
 	CreatorID   *string `msg:"creator_id" json:"creator_id,omitempty"`
 	ChannelID   *string `msg:"channel_id" json:"channel_id,omitempty"`
-	Permissions *uint64 `msg:"permissions" json:"permissions,omitempty"`
+	Permissions *int64  `msg:"permissions" json:"permissions,omitempty"`
 	Token       *string `msg:"token" json:"token,omitempty"`
 }

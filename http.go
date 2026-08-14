@@ -397,8 +397,8 @@ type UserEditParams struct {
 	Avatar      string       `msg:"avatar" json:"avatar,omitempty"`
 	Status      *UserStatus  `msg:"status" json:"status,omitempty"`
 	Profile     *UserProfile `msg:"profile" json:"profile,omitempty"`
-	Badges      *int         `msg:"badges" json:"badges,omitempty"`
-	Flags       *int         `msg:"flags" json:"flags,omitempty"`
+	Badges      *uint32      `msg:"badges" json:"badges,omitempty"`
+	Flags       *uint32      `msg:"flags" json:"flags,omitempty"`
 	Remove      []string     `msg:"remove" json:"remove,omitempty"`
 }
 
@@ -437,7 +437,7 @@ type ServerEditParams struct {
 	Banner         string                   `msg:"banner" json:"banner,omitempty"`
 	Categories     []*ServerCategory        `msg:"categories" json:"categories,omitempty"`
 	SystemMessages *ServerSystemMessages    `msg:"system_messages" json:"system_messages,omitempty"`
-	Flags          *int                     `msg:"flags" json:"flags,omitempty"`
+	Flags          *uint32                  `msg:"flags" json:"flags,omitempty"`
 	Discoverable   *bool                    `msg:"discoverable" json:"discoverable,omitempty"`
 	Analytics      *bool                    `msg:"analytics" json:"analytics,omitempty"`
 	Remove         []ServerEditParamsRemove `msg:"remove" json:"remove,omitempty"`
@@ -580,7 +580,7 @@ type ServerRoleCreateParams struct {
 
 type PermissionsSetDefaultParams struct {
 	// Always sent; 0 is a valid value that denies everything
-	Permissions uint `msg:"permissions" json:"permissions"`
+	Permissions int64 `msg:"permissions" json:"permissions"`
 }
 
 type ChannelMessageBulkDeleteParams struct {

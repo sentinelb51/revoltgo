@@ -200,11 +200,11 @@ type ServerMember struct {
 
 	Timeout *time.Time `msg:"timeout" json:"timeout,omitempty"`
 
-	// Whether member is server-wide voice-muted
-	CanPublish bool `msg:"can_publish" json:"can_publish,omitempty"`
+	// False means server-wide voice-muted; nil if unset
+	CanPublish *bool `msg:"can_publish" json:"can_publish,omitempty"`
 
-	// Whether member is server-wide voice-deafened
-	CanReceive bool `msg:"can_receive" json:"can_receive,omitempty"`
+	// False means server-wide voice-deafened; nil if unset
+	CanReceive *bool `msg:"can_receive" json:"can_receive,omitempty"`
 }
 
 func (m *ServerMember) update(data PartialServerMember) {
@@ -226,11 +226,11 @@ func (m *ServerMember) update(data PartialServerMember) {
 	}
 
 	if data.CanPublish != nil {
-		m.CanPublish = *data.CanPublish
+		m.CanPublish = data.CanPublish
 	}
 
 	if data.CanReceive != nil {
-		m.CanReceive = *data.CanReceive
+		m.CanReceive = data.CanReceive
 	}
 }
 
@@ -275,9 +275,9 @@ func (m *ServerMember) clear(fields []string) {
 		case ServerMemberClearTimeout:
 			m.Timeout = nil
 		case ServerMemberClearCanReceive:
-			m.CanReceive = false
+			m.CanReceive = nil
 		case ServerMemberClearCanPublish:
-			m.CanPublish = false
+			m.CanPublish = nil
 		case ServerMemberClearJoinedAt:
 			// todo: investigate wtf?
 			fallthrough

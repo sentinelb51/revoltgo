@@ -43,8 +43,8 @@ type File struct {
 	UserID   string `msg:"user_id" json:"user_id,omitempty"`
 }
 
-func (a File) URL(size string) string {
-	return EndpointAutumnFile(a.Tag, a.ID, size)
+func (f *File) URL(size string) string {
+	return EndpointAutumnFile(f.Tag, f.ID, size)
 }
 
 type AttachmentMetadata struct {

@@ -311,7 +311,7 @@ type EventUserRelationship struct {
 type EventUserPlatformWipe struct {
 	Event
 	UserID string `msg:"user_id" json:"user_id,omitempty"`
-	Flags  int    `msg:"flags" json:"flags,omitempty"`
+	Flags  uint32 `msg:"flags" json:"flags,omitempty"`
 }
 
 type EventUserSettingsUpdate struct {

@@ -86,7 +86,7 @@ type MessageWebhook struct {
 	Avatar *string `msg:"avatar" json:"avatar,omitempty"`
 }
 
-func (ms MessageWebhook) AvatarURL(size string) string {
+func (ms *MessageWebhook) AvatarURL(size string) string {
 	if ms.Avatar == nil {
 		return ""
 	}
