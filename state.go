@@ -711,7 +711,7 @@ func (s *State) updateServerRole(event *EventServerRoleUpdate) {
 	role := server.Roles[event.RoleID]
 	if role == nil {
 		// Role was created
-		role = new(ServerRole)
+		role = &ServerRole{ID: event.RoleID}
 		server.Roles[event.RoleID] = role
 	}
 
