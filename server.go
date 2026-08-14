@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -96,7 +97,7 @@ func (s *Server) clear(fields []string) {
 		case "Description":
 			s.Description = ""
 		default:
-			fmt.Printf("Server.clear(): unknown field %s\n", field)
+			log.Printf("Server.clear(): unknown field %s\n", field)
 		}
 	}
 }
@@ -159,7 +160,7 @@ func (r *ServerRole) clear(fields []string) {
 		case "Colour":
 			r.Colour = nil
 		default:
-			fmt.Printf("ServerRole.clear(): unknown field %s\n", field)
+			log.Printf("ServerRole.clear(): unknown field %s\n", field)
 		}
 	}
 }
@@ -285,7 +286,7 @@ func (m *ServerMember) clear(fields []string) {
 			// todo: wtf?
 			fallthrough
 		default:
-			fmt.Printf("ServerMember.clear(): unhandled field %s\n", field)
+			log.Printf("ServerMember.clear(): unhandled field %s\n", field)
 		}
 	}
 }

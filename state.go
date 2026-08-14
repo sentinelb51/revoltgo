@@ -588,9 +588,13 @@ func newState() *State {
 func (s *State) populate(ready *EventReady) {
 
 	if len(ready.Users) > 0 {
-		// The last user in the ready event is the current user
+		// The last user in the ready event should be the current user
 		self := ready.Users[len(ready.Users)-1]
-		s.self.Store(self)
+
+		// Sanity check: if last user is indeed self, it should be relationship type User
+		if self.Relationship == UserRelationshipTypeUser {
+			s.self.Store(self)
+		}
 	}
 
 	/* Populate the caches */
@@ -820,7 +824,7 @@ func (s *State) createChannel(event *EventChannelCreate) {
 		return
 	}
 
-	server.Channels = append(server.Channels, event.ID)
+	server.Channels = sliceAppendUnique(server.Channels, event.ID)
 }
 
 func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
@@ -838,7 +842,7 @@ func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
 		return
 	}
 
-	channel.Recipients = append(channel.Recipients, event.User)
+	channel.Recipients = sliceAppendUnique(channel.Recipients, event.User)
 }
 
 func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {

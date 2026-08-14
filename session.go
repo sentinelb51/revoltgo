@@ -450,6 +450,9 @@ func (s *Session) Open(configuration ...StateConfig) (err error) {
 		return fmt.Errorf("no token provided")
 	}
 
+	// Close stops the ratelimiter's cleaner; restart it in case this is a reopen
+	s.HTTP.ratelimiter.start()
+
 	config := DefaultStateConfig()
 	if len(configuration) > 0 {
 		config = configuration[0]

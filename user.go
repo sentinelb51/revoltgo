@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
@@ -12,13 +13,13 @@ import (
 type UserRelationshipType string
 
 const (
-	UserRelationsTypeNone         = "None"
-	UserRelationsTypeUser         = "User"
-	UserRelationsTypeFriend       = "Friend"
-	UserRelationsTypeOutgoing     = "Outgoing"
-	UserRelationsTypeIncoming     = "Incoming"
-	UserRelationsTypeBlocked      = "Blocked"
-	UserRelationsTypeBlockedOther = "BlockedOther"
+	UserRelationshipTypeNone         = "None"
+	UserRelationshipTypeUser         = "User"
+	UserRelationshipTypeFriend       = "Friend"
+	UserRelationshipTypeOutgoing     = "Outgoing"
+	UserRelationshipTypeIncoming     = "Incoming"
+	UserRelationshipTypeBlocked      = "Blocked"
+	UserRelationshipTypeBlockedOther = "BlockedOther"
 )
 
 // User is derived from
@@ -118,7 +119,7 @@ func (u *User) clear(fields []string) {
 		case "DisplayName":
 			u.DisplayName = nil
 		default:
-			fmt.Printf("User.Clear(): unknown field %s\n", field)
+			log.Printf("User.Clear(): unknown field %s\n", field)
 		}
 	}
 }

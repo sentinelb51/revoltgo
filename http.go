@@ -200,6 +200,11 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 
 	request, err := http.NewRequest(method, destination, reader)
 	if err != nil {
+		// Nothing owns the reader yet;
+		// Close it so a streaming body's writer doesn't pull a "step-bro I'm stuck >.<"
+		if closer, ok := reader.(io.Closer); ok {
+			_ = closer.Close()
+		}
 		return err
 	}
 
@@ -225,11 +230,40 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
 
 	if err = rl.update(response.Header); err != nil {
+		response.Body.Close()
 		return err
 	}
+
+	// Retry once on 429; rl.update already absorbed the reset window from the response.
+	// Requests without GetBody (file uploads stream from a pipe) cannot be replayed.
+	if response.StatusCode == http.StatusTooManyRequests && request.GetBody != nil {
+		response.Body.Close()
+
+		if wait := rl.delay(); wait > 0 {
+			if c.Debug {
+				log.Printf("[HTTP/RATELIMIT] %s %s got 429, retrying in %s", method, destination, wait)
+			}
+
+			time.Sleep(wait)
+		}
+
+		if request.Body, err = request.GetBody(); err != nil {
+			return err
+		}
+
+		if response, err = c.client.Do(request); err != nil {
+			return err
+		}
+
+		if err = rl.update(response.Header); err != nil {
+			response.Body.Close()
+			return err
+		}
+	}
+
+	defer response.Body.Close()
 
 	body := io.Reader(response.Body)
 

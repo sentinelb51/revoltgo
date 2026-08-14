@@ -32,25 +32,41 @@ type Ratelimiter struct {
 
 	// Interval to clean-up stale ratelimit buckets.
 	CleanInterval time.Duration
-	// stop the background cleaner
-	stop     chan struct{}
-	stopOnce sync.Once
+	// stop signals the background cleaner; nil when no cleaner is running
+	stop chan struct{}
 }
 
 func newRatelimiter() *Ratelimiter {
 	r := &Ratelimiter{
 		endpoints:     make(map[string]*ratelimitBucket),
 		CleanInterval: time.Minute,
-		stop:          make(chan struct{}),
 	}
 
-	go r.cleaner()
+	r.start()
 	return r
+}
+
+// start launches the background cleaner unless one is already running.
+// Session.Open calls this so a session can be reopened after Close.
+func (r *Ratelimiter) start() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.stop == nil {
+		r.stop = make(chan struct{})
+		go r.cleaner(r.stop)
+	}
 }
 
 // Close stops the background cleaner goroutine. Safe to call more than once.
 func (r *Ratelimiter) Close() {
-	r.stopOnce.Do(func() { close(r.stop) })
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.stop != nil {
+		close(r.stop)
+		r.stop = nil
+	}
 }
 
 // https://developers.stoat.chat/developers/api/ratelimits
@@ -140,13 +156,14 @@ func (b *ratelimitBucket) delay() time.Duration {
 	return wait
 }
 
-func (r *Ratelimiter) cleaner() {
+// cleaner takes stop as an argument so a restart cannot race with the channel it was started on
+func (r *Ratelimiter) cleaner(stop chan struct{}) {
 	ticker := time.NewTicker(r.CleanInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-r.stop:
+		case <-stop:
 			return
 		case <-ticker.C:
 			r.clean()

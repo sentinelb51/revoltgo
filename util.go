@@ -3,6 +3,7 @@ package revoltgo
 import (
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -46,6 +47,16 @@ func sliceRemoveIndex[T any](slice []T, index int) []T {
 
 	// Exclude last element, effectively removing it
 	return slice[:size]
+}
+
+// sliceAppendUnique appends value if it is not already in slice.
+// O(n) scan; intended for small slices such as channel or recipient IDs.
+func sliceAppendUnique[T comparable](slice []T, value T) []T {
+	if slices.Contains(slice, value) {
+		return slice
+	}
+
+	return append(slice, value)
 }
 
 func mustParseURL(raw string) *url.URL {
