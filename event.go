@@ -1,7 +1,6 @@
 package revoltgo
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/tinylib/msgp/msgp"
@@ -10,20 +9,20 @@ import (
 //go:generate msgp -tests=false -io=false
 
 const (
-	jsonSkipAheadKeyType = len(`{"type":"`)
-	msgpTypeValueOffset  = len(`"type"`)
+	// jsonSkipAheadKeyType = len(`{"type":"`)
+	msgpTypeValueOffset = len(`"type"`)
 )
 
-// eventTypeFromJSON uses heuristics to quickly extract the event type from JSON data
-func eventTypeFromJSON(data []byte) (string, error) {
-	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
-	if closingTagIndex < 0 {
-		return "", fmt.Errorf("closing quote of type field not found")
-	}
-
-	result := data[jsonSkipAheadKeyType : jsonSkipAheadKeyType+closingTagIndex]
-	return string(result), nil
-}
+//// eventTypeFromJSON uses heuristics to quickly extract the event type from JSON data
+//func eventTypeFromJSON(data []byte) (string, error) {
+//	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
+//	if closingTagIndex < 0 {
+//		return "", fmt.Errorf("closing quote of type field not found")
+//	}
+//
+//	result := data[jsonSkipAheadKeyType : jsonSkipAheadKeyType+closingTagIndex]
+//	return string(result), nil
+//}
 
 // eventTypeFromMSGP uses heuristics to quickly extract the event type from MessagePack data.
 func eventTypeFromMSGP(data []byte) ([]byte, error) {
