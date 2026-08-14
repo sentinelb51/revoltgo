@@ -982,10 +982,18 @@ func (z *BotEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendString(o, z.Name)
 	// string "public"
 	o = append(o, 0xa6, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63)
-	o = msgp.AppendBool(o, z.Public)
+	if z.Public == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.Public)
+	}
 	// string "analytics"
 	o = append(o, 0xa9, 0x61, 0x6e, 0x61, 0x6c, 0x79, 0x74, 0x69, 0x63, 0x73)
-	o = msgp.AppendBool(o, z.Analytics)
+	if z.Analytics == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.Analytics)
+	}
 	// string "interactions_url"
 	o = append(o, 0xb0, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x5f, 0x75, 0x72, 0x6c)
 	o = msgp.AppendString(o, z.InteractionsURL)
@@ -1023,16 +1031,38 @@ func (z *BotEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "public":
-			z.Public, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Public")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Public = nil
+			} else {
+				if z.Public == nil {
+					z.Public = new(bool)
+				}
+				*z.Public, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Public")
+					return
+				}
 			}
 		case "analytics":
-			z.Analytics, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Analytics")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Analytics = nil
+			} else {
+				if z.Analytics == nil {
+					z.Analytics = new(bool)
+				}
+				*z.Analytics, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Analytics")
+					return
+				}
 			}
 		case "interactions_url":
 			z.InteractionsURL, bts, err = msgp.ReadStringBytes(bts)
@@ -1073,7 +1103,19 @@ func (z *BotEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *BotEditParams) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 7 + msgp.BoolSize + 10 + msgp.BoolSize + 17 + msgp.StringPrefixSize + len(z.InteractionsURL) + 7 + msgp.ArrayHeaderSize
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 7
+	if z.Public == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 10
+	if z.Analytics == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 17 + msgp.StringPrefixSize + len(z.InteractionsURL) + 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
 		s += msgp.StringPrefixSize + len(z.Remove[za0001])
 	}
@@ -1768,10 +1810,18 @@ func (z *ChannelEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendString(o, z.Icon)
 	// string "nsfw"
 	o = append(o, 0xa4, 0x6e, 0x73, 0x66, 0x77)
-	o = msgp.AppendBool(o, z.NSFW)
+	if z.NSFW == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.NSFW)
+	}
 	// string "archived"
 	o = append(o, 0xa8, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Archived)
+	if z.Archived == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.Archived)
+	}
 	// string "remove"
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
@@ -1824,16 +1874,38 @@ func (z *ChannelEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "nsfw":
-			z.NSFW, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "NSFW")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.NSFW = nil
+			} else {
+				if z.NSFW == nil {
+					z.NSFW = new(bool)
+				}
+				*z.NSFW, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "NSFW")
+					return
+				}
 			}
 		case "archived":
-			z.Archived, bts, err = msgp.ReadBoolBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Archived")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Archived = nil
+			} else {
+				if z.Archived == nil {
+					z.Archived = new(bool)
+				}
+				*z.Archived, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Archived")
+					return
+				}
 			}
 		case "remove":
 			var zb0002 uint32
@@ -1868,7 +1940,19 @@ func (z *ChannelEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *ChannelEditParams) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 12 + msgp.StringPrefixSize + len(z.Description) + 6 + msgp.StringPrefixSize + len(z.Owner) + 5 + msgp.StringPrefixSize + len(z.Icon) + 5 + msgp.BoolSize + 9 + msgp.BoolSize + 7 + msgp.ArrayHeaderSize
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 12 + msgp.StringPrefixSize + len(z.Description) + 6 + msgp.StringPrefixSize + len(z.Owner) + 5 + msgp.StringPrefixSize + len(z.Icon) + 5
+	if z.NSFW == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 9
+	if z.Archived == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
 		s += msgp.StringPrefixSize + len(z.Remove[za0001])
 	}
@@ -18001,7 +18085,11 @@ func (z *ServerEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "flags"
 	o = append(o, 0xa5, 0x66, 0x6c, 0x61, 0x67, 0x73)
-	o = msgp.AppendInt(o, z.Flags)
+	if z.Flags == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendInt(o, *z.Flags)
+	}
 	// string "discoverable"
 	o = append(o, 0xac, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x61, 0x62, 0x6c, 0x65)
 	if z.Discoverable == nil {
@@ -18115,10 +18203,21 @@ func (z *ServerEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "flags":
-			z.Flags, bts, err = msgp.ReadIntBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Flags")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Flags = nil
+			} else {
+				if z.Flags == nil {
+					z.Flags = new(int)
+				}
+				*z.Flags, bts, err = msgp.ReadIntBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Flags")
+					return
+				}
 			}
 		case "discoverable":
 			if msgp.IsNil(bts) {
@@ -18205,7 +18304,13 @@ func (z *ServerEditParams) Msgsize() (s int) {
 	} else {
 		s += z.SystemMessages.Msgsize()
 	}
-	s += 6 + msgp.IntSize + 13
+	s += 6
+	if z.Flags == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.IntSize
+	}
+	s += 13
 	if z.Discoverable == nil {
 		s += msgp.NilSize
 	} else {
@@ -18634,7 +18739,11 @@ func (z *ServerMemberEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "timeout"
 	o = append(o, 0xa7, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74)
-	o = msgp.AppendInt64(o, timeToMs(z.Timeout))
+	if z.Timeout == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendInt64(o, timeToMs(*z.Timeout))
+	}
 	// string "remove"
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
@@ -18694,14 +18803,25 @@ func (z *ServerMemberEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) 
 				}
 			}
 		case "timeout":
-			{
-				var zb0003 int64
-				zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
 				if err != nil {
-					err = msgp.WrapError(err, "Timeout")
 					return
 				}
-				z.Timeout = msToTime(zb0003)
+				z.Timeout = nil
+			} else {
+				if z.Timeout == nil {
+					z.Timeout = new(time.Time)
+				}
+				{
+					var zb0003 int64
+					zb0003, bts, err = msgp.ReadInt64Bytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Timeout")
+						return
+					}
+					*z.Timeout = msToTime(zb0003)
+				}
 			}
 		case "remove":
 			var zb0004 uint32
@@ -18740,7 +18860,13 @@ func (z *ServerMemberEditParams) Msgsize() (s int) {
 	for za0001 := range z.Roles {
 		s += msgp.StringPrefixSize + len(z.Roles[za0001])
 	}
-	s += 8 + msgp.Int64Size + 7 + msgp.ArrayHeaderSize
+	s += 8
+	if z.Timeout == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.Int64Size
+	}
+	s += 7 + msgp.ArrayHeaderSize
 	for za0002 := range z.Remove {
 		s += msgp.StringPrefixSize + len(z.Remove[za0002])
 	}
@@ -19081,7 +19207,7 @@ func (z *ServerRole) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z ServerRoleCreateParams) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *ServerRoleCreateParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 2
 	// string "name"
@@ -19089,7 +19215,11 @@ func (z ServerRoleCreateParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendString(o, z.Name)
 	// string "rank"
 	o = append(o, 0xa4, 0x72, 0x61, 0x6e, 0x6b)
-	o = msgp.AppendInt(o, z.Rank)
+	if z.Rank == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendInt(o, *z.Rank)
+	}
 	return
 }
 
@@ -19118,10 +19248,21 @@ func (z *ServerRoleCreateParams) UnmarshalMsg(bts []byte) (o []byte, err error) 
 				return
 			}
 		case "rank":
-			z.Rank, bts, err = msgp.ReadIntBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Rank")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Rank = nil
+			} else {
+				if z.Rank == nil {
+					z.Rank = new(int)
+				}
+				*z.Rank, bts, err = msgp.ReadIntBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Rank")
+					return
+				}
 			}
 		default:
 			bts, err = msgp.Skip(bts)
@@ -19136,8 +19277,13 @@ func (z *ServerRoleCreateParams) UnmarshalMsg(bts []byte) (o []byte, err error) 
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
-func (z ServerRoleCreateParams) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 5 + msgp.IntSize
+func (z *ServerRoleCreateParams) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 5
+	if z.Rank == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.IntSize
+	}
 	return
 }
 
@@ -21209,13 +21355,25 @@ func (z *WebhookEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	// map header, size 4
 	// string "name"
 	o = append(o, 0x84, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-	o = msgp.AppendString(o, z.Name)
+	if z.Name == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendString(o, *z.Name)
+	}
 	// string "avatar"
 	o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
-	o = msgp.AppendString(o, z.Avatar)
+	if z.Avatar == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendString(o, *z.Avatar)
+	}
 	// string "permissions"
 	o = append(o, 0xab, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73)
-	o = msgp.AppendString(o, z.Permissions)
+	if z.Permissions == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendInt64(o, *z.Permissions)
+	}
 	// string "remove"
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
@@ -21244,22 +21402,55 @@ func (z *WebhookEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "name":
-			z.Name, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Name")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Name = nil
+			} else {
+				if z.Name == nil {
+					z.Name = new(string)
+				}
+				*z.Name, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Name")
+					return
+				}
 			}
 		case "avatar":
-			z.Avatar, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Avatar")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Avatar = nil
+			} else {
+				if z.Avatar == nil {
+					z.Avatar = new(string)
+				}
+				*z.Avatar, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Avatar")
+					return
+				}
 			}
 		case "permissions":
-			z.Permissions, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Permissions")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Permissions = nil
+			} else {
+				if z.Permissions == nil {
+					z.Permissions = new(int64)
+				}
+				*z.Permissions, bts, err = msgp.ReadInt64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Permissions")
+					return
+				}
 			}
 		case "remove":
 			var zb0002 uint32
@@ -21298,7 +21489,25 @@ func (z *WebhookEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *WebhookEditParams) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 7 + msgp.StringPrefixSize + len(z.Avatar) + 12 + msgp.StringPrefixSize + len(z.Permissions) + 7 + msgp.ArrayHeaderSize
+	s = 1 + 5
+	if z.Name == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.StringPrefixSize + len(*z.Name)
+	}
+	s += 7
+	if z.Avatar == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.StringPrefixSize + len(*z.Avatar)
+	}
+	s += 12
+	if z.Permissions == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.Int64Size
+	}
+	s += 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
 		s += msgp.StringPrefixSize + len(string(z.Remove[za0001]))
 	}

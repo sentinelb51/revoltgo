@@ -337,8 +337,8 @@ type LoginParams struct {
 
 type BotEditParams struct {
 	Name            string   `msg:"name" json:"name,omitempty"`
-	Public          bool     `msg:"public" json:"public,omitempty"`
-	Analytics       bool     `msg:"analytics" json:"analytics,omitempty"`
+	Public          *bool    `msg:"public" json:"public,omitempty"`
+	Analytics       *bool    `msg:"analytics" json:"analytics,omitempty"`
 	InteractionsURL string   `msg:"interactions_url" json:"interactions_url,omitempty"`
 	Remove          []string `msg:"remove" json:"remove,omitempty"`
 }
@@ -437,7 +437,7 @@ type ServerEditParams struct {
 	Banner         string                   `msg:"banner" json:"banner,omitempty"`
 	Categories     []*ServerCategory        `msg:"categories" json:"categories,omitempty"`
 	SystemMessages *ServerSystemMessages    `msg:"system_messages" json:"system_messages,omitempty"`
-	Flags          int                      `msg:"flags" json:"flags,omitempty"`
+	Flags          *int                     `msg:"flags" json:"flags,omitempty"`
 	Discoverable   *bool                    `msg:"discoverable" json:"discoverable,omitempty"`
 	Analytics      *bool                    `msg:"analytics" json:"analytics,omitempty"`
 	Remove         []ServerEditParamsRemove `msg:"remove" json:"remove,omitempty"`
@@ -458,11 +458,11 @@ type ServerChannelCreateParams struct {
 }
 
 type ServerMemberEditParams struct {
-	Nickname string    `msg:"nickname" json:"nickname,omitempty"`
-	Avatar   string    `msg:"avatar" json:"avatar,omitempty"`
-	Roles    []string  `msg:"roles" json:"roles,omitempty"`
-	Timeout  time.Time `msg:"timeout" json:"timeout,omitempty"`
-	Remove   []string  `msg:"remove" json:"remove,omitempty"`
+	Nickname string     `msg:"nickname" json:"nickname,omitempty"`
+	Avatar   string     `msg:"avatar" json:"avatar,omitempty"`
+	Roles    []string   `msg:"roles" json:"roles,omitempty"`
+	Timeout  *time.Time `msg:"timeout" json:"timeout,omitempty"`
+	Remove   []string   `msg:"remove" json:"remove,omitempty"`
 }
 
 // ServerMemberBanParams derived from:
@@ -575,11 +575,12 @@ type ServerRoleEditParams struct {
 
 type ServerRoleCreateParams struct {
 	Name string `msg:"name" json:"name,omitempty"`
-	Rank int    `msg:"rank" json:"rank,omitempty"`
+	Rank *int   `msg:"rank" json:"rank,omitempty"` // nil lets the API assign a rank
 }
 
 type PermissionsSetDefaultParams struct {
-	Permissions uint `msg:"permissions" json:"permissions,omitempty"`
+	// Always sent; 0 is a valid value that denies everything
+	Permissions uint `msg:"permissions" json:"permissions"`
 }
 
 type ChannelMessageBulkDeleteParams struct {
@@ -591,8 +592,8 @@ type ChannelEditParams struct {
 	Description string   `msg:"description" json:"description,omitempty"`
 	Owner       string   `msg:"owner" json:"owner,omitempty"`
 	Icon        string   `msg:"icon" json:"icon,omitempty"`
-	NSFW        bool     `msg:"nsfw" json:"nsfw,omitempty"`
-	Archived    bool     `msg:"archived" json:"archived,omitempty"`
+	NSFW        *bool    `msg:"nsfw" json:"nsfw,omitempty"`
+	Archived    *bool    `msg:"archived" json:"archived,omitempty"`
 	Remove      []string `msg:"remove" json:"remove,omitempty"`
 }
 
@@ -615,9 +616,9 @@ type WebhookCreateParams struct {
 type WebhookExecuteParams Message
 
 type WebhookEditParams struct {
-	Name        string               `msg:"name" json:"name,omitempty"`
-	Avatar      string               `msg:"avatar" json:"avatar,omitempty"`
-	Permissions string               `msg:"permissions" json:"permissions,omitempty"`
+	Name        *string              `msg:"name" json:"name,omitempty"`
+	Avatar      *string              `msg:"avatar" json:"avatar,omitempty"`
+	Permissions *int64               `msg:"permissions" json:"permissions,omitempty"`
 	Remove      []WebhookRemoveField `msg:"remove" json:"remove,omitempty"`
 }
 
