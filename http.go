@@ -39,15 +39,19 @@ type HTTPClient struct {
 
 	mu          sync.RWMutex
 	client      *http.Client
+	transport   *h3Transport
 	session     *Session
 	ratelimiter *Ratelimiter
 	headers     map[string]string
 }
 
 func newHTTPClient(session *Session) *HTTPClient {
+	transport := newH3Transport()
+
 	return &HTTPClient{
 		session:     session,
-		client:      &http.Client{Timeout: 10 * time.Second},
+		transport:   transport,
+		client:      &http.Client{Transport: transport, Timeout: 10 * time.Second},
 		ratelimiter: newRatelimiter(),
 		headers: map[string]string{
 			"User-Agent":      fmt.Sprintf("RevoltGo/%s (github.com/sentinelb51/revoltgo)", VERSION),
@@ -232,14 +236,14 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 	}
 
 	if err = rl.update(response.Header); err != nil {
-		response.Body.Close()
+		_ = response.Body.Close()
 		return err
 	}
 
 	// Retry once on 429; rl.update already absorbed the reset window from the response.
 	// Requests without GetBody (file uploads stream from a pipe) cannot be replayed.
 	if response.StatusCode == http.StatusTooManyRequests && request.GetBody != nil {
-		response.Body.Close()
+		_ = response.Body.Close()
 
 		if wait := rl.delay(); wait > 0 {
 			if c.Debug {
@@ -258,12 +262,12 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 		}
 
 		if err = rl.update(response.Header); err != nil {
-			response.Body.Close()
+			_ = response.Body.Close()
 			return err
 		}
 	}
 
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	body := io.Reader(response.Body)
 

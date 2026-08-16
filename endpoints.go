@@ -291,11 +291,11 @@ func EndpointChannelMessage(cID, mID string) string {
 }
 
 func EndpointChannelMessageReactions(cID, mID string) string {
-	return EndpointChannelMessage(cID, mID) + "/reactions"
+	return "/channels/" + cID + "/messages/" + mID + "/reactions"
 }
 
 func EndpointChannelMessageReaction(cID, mID, rID string) string {
-	return EndpointChannelMessageReactions(cID, mID) + "/" + rID
+	return "/channels/" + cID + "/messages/" + mID + "/reactions/" + rID
 }
 
 func EndpointChannelMessagePin(cID, mID string) string {
