@@ -492,6 +492,7 @@ func (s *Session) Close() error {
 
 	if s.HTTP != nil {
 		s.HTTP.ratelimiter.Close()
+		_ = s.HTTP.transport.Close()
 	}
 
 	if s.WS != nil {
