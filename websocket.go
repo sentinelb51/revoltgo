@@ -31,7 +31,7 @@ type Websocket struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	heartbeatCount    int64
+	heartbeatCount    atomic.Int64
 	heartbeatLastSent time.Time
 	heartbeatLastAck  time.Time
 
@@ -87,8 +87,7 @@ func (ws *Websocket) Latency() time.Duration {
 
 // Uptime approximates the duration the Websocket has been connected for
 func (ws *Websocket) Uptime() time.Duration {
-	// Use atomic load because heartbeatCount is updated atomically elsewhere
-	count := atomic.LoadInt64(&ws.heartbeatCount)
+	count := ws.heartbeatCount.Load()
 
 	ws.mu.RLock()
 	lastSent := ws.heartbeatLastSent
@@ -181,7 +180,7 @@ func (ws *Websocket) heartbeatLoop(original *gws.Conn) {
 				return
 			}
 
-			count := atomic.LoadInt64(&ws.heartbeatCount)
+			count := ws.heartbeatCount.Load()
 			payload := make([]byte, 8)
 			binary.LittleEndian.PutUint64(payload, uint64(count))
 
@@ -200,7 +199,7 @@ func (ws *Websocket) heartbeatLoop(original *gws.Conn) {
 
 func (ws *Websocket) OnOpen(socket *gws.Conn) {
 	log.Printf("Resolved: %s\n", socket.RemoteAddr())
-	atomic.StoreInt64(&ws.heartbeatCount, 0)
+	ws.heartbeatCount.Store(0)
 
 	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
 		log.Printf("Set deadline failed: %s\n", err)
@@ -243,7 +242,7 @@ func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
 	}
 
 	count := int64(binary.LittleEndian.Uint64(payload))
-	current := atomic.LoadInt64(&ws.heartbeatCount)
+	current := ws.heartbeatCount.Load()
 
 	if count != current {
 		log.Printf("Heartbeat mismatch: %d != %d\n", count, current)
@@ -254,7 +253,7 @@ func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
 	ws.heartbeatLastAck = time.Now()
 	ws.mu.Unlock()
 
-	atomic.AddInt64(&ws.heartbeatCount, 1)
+	ws.heartbeatCount.Add(1)
 	_ = socket.SetDeadline(time.Now().Add(ws.HeartbeatInterval * 2))
 }
 

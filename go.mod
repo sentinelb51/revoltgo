@@ -1,9 +1,8 @@
 module github.com/sentinelb51/revoltgo
 
-go 1.26.4
+go 1.27
 
 require (
-	github.com/goccy/go-json v0.10.6
 	github.com/klauspost/compress v1.19.2
 	github.com/lxzan/gws v1.10.1
 	github.com/oklog/ulid/v2 v2.1.2

@@ -2,6 +2,8 @@ package revoltgo
 
 import (
 	"bytes"
+	jsonv1 "encoding/json"
+	json "encoding/json/v2"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/klauspost/compress/zstd"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -33,6 +34,14 @@ var zstdPool = sync.Pool{
 		return d
 	},
 }
+
+// jsonOptions keeps encoding/json's v1 semantics on top of the v2 engine that
+// now backs it. Two of the differences are load-bearing here: v2 matches struct
+// fields case-sensitively, and its `omitempty` omits only what encodes as null
+// or an empty string, object or array -- a false or a zero would start being
+// sent, which on a PATCH route means setting the field rather than leaving it
+// alone.
+var jsonOptions = jsonv1.DefaultOptionsV1()
 
 type HTTPClient struct {
 	Debug bool
@@ -156,7 +165,7 @@ func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 		if _, ok := data.(*FileParams); ok {
 			payload = "[Multipart File]"
 		} else {
-			if b, err := json.Marshal(data); err == nil {
+			if b, err := json.Marshal(data, jsonOptions); err == nil {
 				payload = string(b)
 			}
 		}
@@ -328,7 +337,7 @@ func (c *HTTPClient) prepareFileUpload(file *FileParams) (io.Reader, string, err
 
 // prepareJSONBody encodes data as JSON
 func (c *HTTPClient) prepareJSONBody(body any) (io.Reader, string, error) {
-	data, err := json.Marshal(body)
+	data, err := json.Marshal(body, jsonOptions)
 	if err != nil {
 		return nil, "", fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -352,7 +361,7 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 			}
 			*result = data
 		default:
-			if err := json.NewDecoder(body).Decode(result); err != nil {
+			if err := json.UnmarshalRead(body, result, jsonOptions); err != nil {
 				return fmt.Errorf("handleResponse: %w", err)
 			}
 		}

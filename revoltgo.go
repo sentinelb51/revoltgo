@@ -13,11 +13,10 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 package revoltgo
 
 import (
+	json "encoding/json/v2"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/goccy/go-json"
 )
 
 const (
@@ -28,7 +27,7 @@ const (
 
 /* Logic related to the update checker */
 
-var COMMIT = "5731150cc5e883ccd9dd87b0ba3352b3f8b11b25"
+var COMMIT = "3c4653b652b9c2749a874a9b0d1d9eb7c7480b4f"
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
@@ -56,7 +55,7 @@ func HasUpdate() bool {
 	defer response.Body.Close()
 
 	var repo GithubRepos
-	err = json.NewDecoder(response.Body).Decode(&repo)
+	err = json.UnmarshalRead(response.Body, &repo, jsonOptions)
 	if err != nil {
 		log.Printf("Update check failed whilst decoding: %v", err)
 		return false

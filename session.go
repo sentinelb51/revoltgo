@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	json "encoding/json/v2"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/goccy/go-json"
 	"github.com/lxzan/gws"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -504,7 +504,7 @@ func (s *Session) Close() error {
 
 // WriteSocketJSON writes data to the websocket in JSON
 func (s *Session) WriteSocketJSON(data any) error {
-	payload, err := json.Marshal(data)
+	payload, err := json.Marshal(data, jsonOptions)
 	if err == nil {
 		err = s.WS.WriteMessage(gws.OpcodeText, payload)
 	}

@@ -15,11 +15,10 @@ import (
 const probeTimeout = 10 * time.Second
 
 /*
-		h3Transport sends over HTTP/3 where it works and TCP everywhere else.
-
-		We start on TCP. If Alt-Svc advertises "h3", background probe verifies that UDP actually works;
-	    then the connection is upgraded to QUIC. This way we don't waste an entire probe than a single message.
-		Decisions are per-host and persistent, since the CDN does not advertise h3.
+h3Transport sends over HTTP/3 where it works and TCP everywhere else.
+We start on TCP. If Alt-Svc advertises "h3", background probe verifies that UDP actually works;
+then the connection is upgraded to QUIC. This way we don't waste an entire probe than a single message.
+Decisions are per-host and persistent, since the CDN does not advertise h3.
 */
 type h3Transport struct {
 	tcp  *http.Transport
