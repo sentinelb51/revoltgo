@@ -333,40 +333,59 @@ type EventWebhookDelete struct {
 	ID    string `msg:"id" json:"id,omitzero"`
 }
 
+// EventVoiceChannelJoin is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/events/client.rs#L352
 type EventVoiceChannelJoin struct {
 	Event `msg:",flatten"`
-	ID    string         `msg:"id" json:"id,omitzero"`
+	// Channel.ID
+	ID string `msg:"id" json:"id,omitzero"`
+	// State.ID -> User.ID
 	State UserVoiceState `msg:"state" json:"state,omitzero"`
 }
 
+// EventVoiceChannelLeave is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/events/client.rs#L356
 type EventVoiceChannelLeave struct {
 	Event `msg:",flatten"`
-	ID    string `msg:"id" json:"id,omitzero"`
-	User  string `msg:"user" json:"user"`
+	// Channel.ID
+	ID   string `msg:"id" json:"id,omitzero"`
+	User string `msg:"user" json:"user"`
 }
 
+// EventVoiceChannelMove is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/events/client.rs#L360
+// Sent instead of a leave/join pair
 type EventVoiceChannelMove struct {
 	Event `msg:",flatten"`
-	User  string         `msg:"user" json:"user,omitzero"`
-	From  string         `msg:"from" json:"from,omitzero"`
+	User  string `msg:"user" json:"user,omitzero"`
+	// Channel.ID
+	From string `msg:"from" json:"from,omitzero"`
+	// Channel.ID
 	To    string         `msg:"to" json:"to,omitzero"`
 	State UserVoiceState `msg:"state" json:"state,omitzero"`
 }
 
+// EventUserVoiceStateUpdate is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/events/client.rs#L366
 type EventUserVoiceStateUpdate struct {
-	Event     `msg:",flatten"`
+	Event `msg:",flatten"`
+	// User.ID
 	ID        string                `msg:"id" json:"id,omitzero"`
 	ChannelID string                `msg:"channel_id" json:"channel_id,omitzero"`
 	Data      PartialUserVoiceState `msg:"data" json:"data,omitzero"`
 }
 
-// EventUserMoveVoiceChannel is sent when we are moved to another voice node;
-// From and To are channel IDs, and Token authenticates against Node.
+// EventUserMoveVoiceChannel is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/events/client.rs#L371
+// Sent only to the user a moderator moved; everyone else sees EventVoiceChannelMove.
 type EventUserMoveVoiceChannel struct {
 	Event `msg:",flatten"`
 	Node  string `msg:"node" json:"node,omitzero"`
-	From  string `msg:"from" json:"from,omitzero"`
-	To    string `msg:"to" json:"to,omitzero"`
+	// Channel.ID
+	From string `msg:"from" json:"from,omitzero"`
+	// Channel.ID
+	To string `msg:"to" json:"to,omitzero"`
+	// Authenticates against Node
 	Token string `msg:"token" json:"token,omitzero"`
 }
 
