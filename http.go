@@ -2,7 +2,6 @@ package revoltgo
 
 import (
 	"bytes"
-	jsonv1 "encoding/json"
 	json "encoding/json/v2"
 	"fmt"
 	"io"
@@ -34,14 +33,6 @@ var zstdPool = sync.Pool{
 		return d
 	},
 }
-
-// jsonOptions keeps encoding/json's v1 semantics on top of the v2 engine that
-// now backs it. Two of the differences are load-bearing here: v2 matches struct
-// fields case-sensitively, and its `omitempty` omits only what encodes as null
-// or an empty string, object or array -- a false or a zero would start being
-// sent, which on a PATCH route means setting the field rather than leaving it
-// alone.
-var jsonOptions = jsonv1.DefaultOptionsV1()
 
 type HTTPClient struct {
 	Debug bool
@@ -165,7 +156,7 @@ func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 		if _, ok := data.(*FileParams); ok {
 			payload = "[Multipart File]"
 		} else {
-			if b, err := json.Marshal(data, jsonOptions); err == nil {
+			if b, err := json.Marshal(data); err == nil {
 				payload = string(b)
 			}
 		}
@@ -337,7 +328,7 @@ func (c *HTTPClient) prepareFileUpload(file *FileParams) (io.Reader, string, err
 
 // prepareJSONBody encodes data as JSON
 func (c *HTTPClient) prepareJSONBody(body any) (io.Reader, string, error) {
-	data, err := json.Marshal(body, jsonOptions)
+	data, err := json.Marshal(body)
 	if err != nil {
 		return nil, "", fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -361,7 +352,7 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 			}
 			*result = data
 		default:
-			if err := json.UnmarshalRead(body, result, jsonOptions); err != nil {
+			if err := json.UnmarshalRead(body, result); err != nil {
 				return fmt.Errorf("handleResponse: %w", err)
 			}
 		}
@@ -377,94 +368,94 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 /* HTTP data that can be sent to the REST API */
 
 type LoginParams struct {
-	Email        string `msg:"email" json:"email,omitempty"`
-	Password     string `msg:"password" json:"password,omitempty"`
-	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitempty"`
+	Email        string `msg:"email" json:"email,omitzero"`
+	Password     string `msg:"password" json:"password,omitzero"`
+	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitzero"`
 }
 
 type BotEditParams struct {
-	Name            string   `msg:"name" json:"name,omitempty"`
-	Public          *bool    `msg:"public" json:"public,omitempty"`
-	Analytics       *bool    `msg:"analytics" json:"analytics,omitempty"`
-	InteractionsURL string   `msg:"interactions_url" json:"interactions_url,omitempty"`
-	Remove          []string `msg:"remove" json:"remove,omitempty"`
+	Name            string   `msg:"name" json:"name,omitzero"`
+	Public          *bool    `msg:"public" json:"public,omitzero"`
+	Analytics       *bool    `msg:"analytics" json:"analytics,omitzero"`
+	InteractionsURL string   `msg:"interactions_url" json:"interactions_url,omitzero"`
+	Remove          []string `msg:"remove" json:"remove,omitzero"`
 }
 
 type BotInviteParams struct {
-	Server string `msg:"server" json:"server,omitempty"`
-	Group  string `msg:"group" json:"group,omitempty"`
+	Server string `msg:"server" json:"server,omitzero"`
+	Group  string `msg:"group" json:"group,omitzero"`
 }
 
 type BotCreateParams struct {
-	Name string `msg:"name" json:"name,omitempty"`
+	Name string `msg:"name" json:"name,omitzero"`
 }
 
 type AccountCreateParams struct {
-	Email    string `msg:"email" json:"email,omitempty"`
-	Password string `msg:"password" json:"password,omitempty"`
-	Invite   string `msg:"invite" json:"invite,omitempty"`
-	Captcha  string `msg:"captcha" json:"captcha,omitempty"`
+	Email    string `msg:"email" json:"email,omitzero"`
+	Password string `msg:"password" json:"password,omitzero"`
+	Invite   string `msg:"invite" json:"invite,omitzero"`
+	Captcha  string `msg:"captcha" json:"captcha,omitzero"`
 }
 
 type AccountReverifyParams struct {
-	Email   string `msg:"email" json:"email,omitempty"`
-	Captcha string `msg:"captcha" json:"captcha,omitempty"`
+	Email   string `msg:"email" json:"email,omitzero"`
+	Captcha string `msg:"captcha" json:"captcha,omitzero"`
 }
 
 type OnboardingCompleteParams struct {
-	Username string `msg:"username" json:"username,omitempty"`
+	Username string `msg:"username" json:"username,omitzero"`
 }
 
 type SessionEditParams struct {
-	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitempty"`
+	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitzero"`
 }
 
 type PasswordResetConfirmParams struct {
-	Token          string `msg:"token" json:"token,omitempty"`
-	Password       string `msg:"password" json:"password,omitempty"`
-	RemoveSessions bool   `msg:"remove_sessions" json:"remove_sessions,omitempty"` // Whether to log out of all sessions
+	Token          string `msg:"token" json:"token,omitzero"`
+	Password       string `msg:"password" json:"password,omitzero"`
+	RemoveSessions bool   `msg:"remove_sessions" json:"remove_sessions,omitzero"` // Whether to log out of all sessions
 }
 
 type AccountChangePasswordParams struct {
-	Password        string `msg:"password" json:"password,omitempty"`
-	CurrentPassword string `msg:"current_password" json:"current_password,omitempty"`
+	Password        string `msg:"password" json:"password,omitzero"`
+	CurrentPassword string `msg:"current_password" json:"current_password,omitzero"`
 }
 
 type AccountChangeEmailParams struct {
-	Email           string `msg:"email" json:"email,omitempty"`
-	CurrentPassword string `msg:"current_password" json:"current_password,omitempty"`
+	Email           string `msg:"email" json:"email,omitzero"`
+	CurrentPassword string `msg:"current_password" json:"current_password,omitzero"`
 }
 
 type AccountDeleteConfirmParams struct {
-	Token string `msg:"token" json:"token,omitempty"`
+	Token string `msg:"token" json:"token,omitzero"`
 }
 
 type UserEditParams struct {
-	DisplayName string       `msg:"display_name" json:"display_name,omitempty"`
-	Avatar      string       `msg:"avatar" json:"avatar,omitempty"`
-	Status      *UserStatus  `msg:"status" json:"status,omitempty"`
-	Profile     *UserProfile `msg:"profile" json:"profile,omitempty"`
-	Badges      *uint32      `msg:"badges" json:"badges,omitempty"`
-	Flags       *uint32      `msg:"flags" json:"flags,omitempty"`
-	Remove      []string     `msg:"remove" json:"remove,omitempty"`
+	DisplayName string       `msg:"display_name" json:"display_name,omitzero"`
+	Avatar      string       `msg:"avatar" json:"avatar,omitzero"`
+	Status      *UserStatus  `msg:"status" json:"status,omitzero"`
+	Profile     *UserProfile `msg:"profile" json:"profile,omitzero"`
+	Badges      *uint32      `msg:"badges" json:"badges,omitzero"`
+	Flags       *uint32      `msg:"flags" json:"flags,omitzero"`
+	Remove      []string     `msg:"remove" json:"remove,omitzero"`
 }
 
 type UsernameParams struct {
-	Username string `msg:"username" json:"username,omitempty"`
-	Password string `msg:"password" json:"password,omitempty"`
+	Username string `msg:"username" json:"username,omitzero"`
+	Password string `msg:"password" json:"password,omitzero"`
 }
 
 // GroupCreateParams describes how a group should be created
 type GroupCreateParams struct {
-	Name        string   `msg:"name" json:"name,omitempty"`
-	Description string   `msg:"description" json:"description,omitempty"`
-	Users       []string `msg:"users" json:"users,omitempty"`
-	NSFW        bool     `msg:"nsfw" json:"nsfw,omitempty"`
+	Name        string   `msg:"name" json:"name,omitzero"`
+	Description string   `msg:"description" json:"description,omitzero"`
+	Users       []string `msg:"users" json:"users,omitzero"`
+	NSFW        bool     `msg:"nsfw" json:"nsfw,omitzero"`
 }
 
 type ServerCreateParams struct {
-	Name        string `msg:"name" json:"name,omitempty"`
-	Description string `msg:"description" json:"description,omitempty"`
+	Name        string `msg:"name" json:"name,omitzero"`
+	Description string `msg:"description" json:"description,omitzero"`
 }
 
 type ServerEditParamsRemove string
@@ -478,16 +469,16 @@ const (
 )
 
 type ServerEditParams struct {
-	Name           string                   `msg:"name" json:"name,omitempty"`
-	Description    string                   `msg:"description" json:"description,omitempty"`
-	Icon           string                   `msg:"icon" json:"icon,omitempty"`
-	Banner         string                   `msg:"banner" json:"banner,omitempty"`
-	Categories     []*ServerCategory        `msg:"categories" json:"categories,omitempty"`
-	SystemMessages *ServerSystemMessages    `msg:"system_messages" json:"system_messages,omitempty"`
-	Flags          *uint32                  `msg:"flags" json:"flags,omitempty"`
-	Discoverable   *bool                    `msg:"discoverable" json:"discoverable,omitempty"`
-	Analytics      *bool                    `msg:"analytics" json:"analytics,omitempty"`
-	Remove         []ServerEditParamsRemove `msg:"remove" json:"remove,omitempty"`
+	Name           string                   `msg:"name" json:"name,omitzero"`
+	Description    string                   `msg:"description" json:"description,omitzero"`
+	Icon           string                   `msg:"icon" json:"icon,omitzero"`
+	Banner         string                   `msg:"banner" json:"banner,omitzero"`
+	Categories     []*ServerCategory        `msg:"categories" json:"categories,omitzero"`
+	SystemMessages *ServerSystemMessages    `msg:"system_messages" json:"system_messages,omitzero"`
+	Flags          *uint32                  `msg:"flags" json:"flags,omitzero"`
+	Discoverable   *bool                    `msg:"discoverable" json:"discoverable,omitzero"`
+	Analytics      *bool                    `msg:"analytics" json:"analytics,omitzero"`
+	Remove         []ServerEditParamsRemove `msg:"remove" json:"remove,omitzero"`
 }
 
 type ServerChannelCreateParamsType string
@@ -498,48 +489,48 @@ const (
 )
 
 type ServerChannelCreateParams struct {
-	Type        ServerChannelCreateParamsType `msg:"type" json:"type,omitempty"`
-	Name        string                        `msg:"name" json:"name,omitempty"`
-	Description string                        `msg:"description" json:"description,omitempty"`
-	NSFW        bool                          `msg:"nsfw" json:"nsfw,omitempty"`
+	Type        ServerChannelCreateParamsType `msg:"type" json:"type,omitzero"`
+	Name        string                        `msg:"name" json:"name,omitzero"`
+	Description string                        `msg:"description" json:"description,omitzero"`
+	NSFW        bool                          `msg:"nsfw" json:"nsfw,omitzero"`
 }
 
 type ServerMemberEditParams struct {
-	Nickname string     `msg:"nickname" json:"nickname,omitempty"`
-	Avatar   string     `msg:"avatar" json:"avatar,omitempty"`
-	Roles    []string   `msg:"roles" json:"roles,omitempty"`
-	Timeout  *time.Time `msg:"timeout" json:"timeout,omitempty"`
-	Remove   []string   `msg:"remove" json:"remove,omitempty"`
+	Nickname string     `msg:"nickname" json:"nickname,omitzero"`
+	Avatar   string     `msg:"avatar" json:"avatar,omitzero"`
+	Roles    []string   `msg:"roles" json:"roles,omitzero"`
+	Timeout  *time.Time `msg:"timeout" json:"timeout,omitzero"`
+	Remove   []string   `msg:"remove" json:"remove,omitzero"`
 }
 
 // ServerMemberBanParams derived from:
 // https://developers.stoat.chat/api-reference/#tag/server-members/PUT/servers/{server}/bans/{target}
 type ServerMemberBanParams struct {
-	DeleteMessageSeconds int64  `msg:"delete_message_seconds" json:"delete_message_seconds,omitempty"`
-	Reason               string `msg:"reason" json:"reason,omitempty"`
+	DeleteMessageSeconds int64  `msg:"delete_message_seconds" json:"delete_message_seconds,omitzero"`
+	Reason               string `msg:"reason" json:"reason,omitzero"`
 }
 
 type MessageEditParams struct {
-	Content string          `msg:"content" json:"content,omitempty"`
-	Embeds  []*MessageEmbed `msg:"embeds" json:"embeds,omitempty"`
+	Content string          `msg:"content" json:"content,omitzero"`
+	Embeds  []*MessageEmbed `msg:"embeds" json:"embeds,omitzero"`
 }
 
 type EmojiCreateParams struct {
-	Name   string       `msg:"name" json:"name,omitempty"`
-	Parent *EmojiParent `msg:"parent" json:"parent,omitempty"`
-	NSFW   bool         `msg:"nsfw" json:"nsfw,omitempty"`
+	Name   string       `msg:"name" json:"name,omitzero"`
+	Parent *EmojiParent `msg:"parent" json:"parent,omitzero"`
+	NSFW   bool         `msg:"nsfw" json:"nsfw,omitzero"`
 }
 
 type ChannelJoinCallParams struct {
-	Node string `msg:"node" json:"node,omitempty"` // Name of the node to join
+	Node string `msg:"node" json:"node,omitzero"` // Name of the node to join
 
 	// Whether to force disconnect any other existing voice connections
 	// Useful for disconnecting on another device and joining on a new one
-	ForceDisconnect bool `msg:"force_disconnect" json:"force_disconnect,omitempty"`
+	ForceDisconnect bool `msg:"force_disconnect" json:"force_disconnect,omitzero"`
 
 	// Users which should be notified of the call starting
 	// Only used when the user is the first one connected.
-	Recipients []string `msg:"recipients" json:"recipients,omitempty"`
+	Recipients []string `msg:"recipients" json:"recipients,omitzero"`
 }
 
 type ChannelMessagesParamsSortType string
@@ -553,22 +544,22 @@ const (
 // ChannelMessagesParams is for /channels/{target}/messages
 type ChannelMessagesParams struct {
 	// Maximum number of messages to fetch. For nearby messages, this is (limit + 2)
-	Limit int `msg:"limit" json:"limit,omitempty"`
+	Limit int `msg:"limit" json:"limit,omitzero"`
 
 	// Message ID before which messages should be fetched
-	Before string `msg:"before" json:"before,omitempty"`
+	Before string `msg:"before" json:"before,omitzero"`
 
 	// Message ID after which messages should be fetched
-	After string `msg:"after" json:"after,omitempty"`
+	After string `msg:"after" json:"after,omitzero"`
 
 	// Message sort direction
-	Sort ChannelMessagesParamsSortType `msg:"sort" json:"sort,omitempty"`
+	Sort ChannelMessagesParamsSortType `msg:"sort" json:"sort,omitzero"`
 
 	// Message ID to search around. Specifying this ignores Before, After, and Sort
-	Nearby string `msg:"nearby" json:"nearby,omitempty"`
+	Nearby string `msg:"nearby" json:"nearby,omitzero"`
 
 	// Whether to include user (and member, if server channel) objects
-	IncludeUsers bool `msg:"include_users" json:"include_users,omitempty"`
+	IncludeUsers bool `msg:"include_users" json:"include_users,omitzero"`
 }
 
 // ChannelSearchParams is for /channels/{target}/search
@@ -576,10 +567,10 @@ type ChannelSearchParams struct {
 	ChannelMessagesParams `msg:",inline"`
 
 	// Whether to only search for pinned messages; cannot be sent with query.
-	Pinned bool `msg:"pinned" json:"pinned,omitempty"`
+	Pinned bool `msg:"pinned" json:"pinned,omitzero"`
 
 	// Full-text search query. See https://www.mongodb.com/docs/manual/text-search/#-text-operator
-	Query string `msg:"query" json:"query,omitempty"`
+	Query string `msg:"query" json:"query,omitzero"`
 }
 
 func (p ChannelMessagesParams) Encode() string {
@@ -613,16 +604,16 @@ func (p ChannelMessagesParams) Encode() string {
 }
 
 type ServerRoleEditParams struct {
-	Name   string   `msg:"name" json:"name,omitempty"`
-	Colour string   `msg:"colour" json:"colour,omitempty"`
-	Hoist  *bool    `msg:"hoist" json:"hoist,omitempty"`
-	Rank   *int     `msg:"rank" json:"rank,omitempty"`
-	Remove []string `msg:"remove" json:"remove,omitempty"`
+	Name   string   `msg:"name" json:"name,omitzero"`
+	Colour string   `msg:"colour" json:"colour,omitzero"`
+	Hoist  *bool    `msg:"hoist" json:"hoist,omitzero"`
+	Rank   *int     `msg:"rank" json:"rank,omitzero"`
+	Remove []string `msg:"remove" json:"remove,omitzero"`
 }
 
 type ServerRoleCreateParams struct {
-	Name string `msg:"name" json:"name,omitempty"`
-	Rank *int   `msg:"rank" json:"rank,omitempty"` // nil lets the API assign a rank
+	Name string `msg:"name" json:"name,omitzero"`
+	Rank *int   `msg:"rank" json:"rank,omitzero"` // nil lets the API assign a rank
 }
 
 type PermissionsSetDefaultParams struct {
@@ -631,53 +622,53 @@ type PermissionsSetDefaultParams struct {
 }
 
 type ChannelMessageBulkDeleteParams struct {
-	IDs []string `msg:"ids" json:"ids,omitempty"`
+	IDs []string `msg:"ids" json:"ids,omitzero"`
 }
 
 type ChannelEditParams struct {
-	Name        string `msg:"name" json:"name,omitempty"`
-	Description string `msg:"description" json:"description,omitempty"`
-	Owner       string `msg:"owner" json:"owner,omitempty"`
-	Icon        string `msg:"icon" json:"icon,omitempty"`
-	NSFW        *bool  `msg:"nsfw" json:"nsfw,omitempty"`
-	Archived    *bool  `msg:"archived" json:"archived,omitempty"`
+	Name        string `msg:"name" json:"name,omitzero"`
+	Description string `msg:"description" json:"description,omitzero"`
+	Owner       string `msg:"owner" json:"owner,omitzero"`
+	Icon        string `msg:"icon" json:"icon,omitzero"`
+	NSFW        *bool  `msg:"nsfw" json:"nsfw,omitzero"`
+	Archived    *bool  `msg:"archived" json:"archived,omitzero"`
 
-	Voice    *ChannelVoiceInformation `msg:"voice" json:"voice,omitempty"`
-	Slowmode *int                     `msg:"slowmode" json:"slowmode,omitempty"`
+	Voice    *ChannelVoiceInformation `msg:"voice" json:"voice,omitzero"`
+	Slowmode *int                     `msg:"slowmode" json:"slowmode,omitzero"`
 
-	Remove []string `msg:"remove" json:"remove,omitempty"`
+	Remove []string `msg:"remove" json:"remove,omitzero"`
 }
 
 type SyncSettingsParamsTuple struct {
-	Timestamp time.Time `msg:"0" json:"0,omitempty"`
-	Value     msgp.Raw  `msg:"1" json:"1,omitempty"` // Enjoy using this.
+	Timestamp time.Time `msg:"0" json:"0,omitzero"`
+	Value     msgp.Raw  `msg:"1" json:"1,omitzero"` // Enjoy using this.
 }
 
 type SyncSettingsParams map[string]SyncSettingsParamsTuple
 
 type SyncSettingsFetchParams struct {
-	Keys []string `msg:"keys" json:"keys,omitempty"`
+	Keys []string `msg:"keys" json:"keys,omitzero"`
 }
 
 type WebhookCreateParams struct {
-	Name   string `msg:"name" json:"name,omitempty"`
-	Avatar string `msg:"avatar" json:"avatar,omitempty"`
+	Name   string `msg:"name" json:"name,omitzero"`
+	Avatar string `msg:"avatar" json:"avatar,omitzero"`
 }
 
 type WebhookExecuteParams Message
 
 type WebhookEditParams struct {
-	Name        *string              `msg:"name" json:"name,omitempty"`
-	Avatar      *string              `msg:"avatar" json:"avatar,omitempty"`
-	Permissions *int64               `msg:"permissions" json:"permissions,omitempty"`
-	Remove      []WebhookRemoveField `msg:"remove" json:"remove,omitempty"`
+	Name        *string              `msg:"name" json:"name,omitzero"`
+	Avatar      *string              `msg:"avatar" json:"avatar,omitzero"`
+	Permissions *int64               `msg:"permissions" json:"permissions,omitzero"`
+	Remove      []WebhookRemoveField `msg:"remove" json:"remove,omitzero"`
 }
 
 // AuthMFAParams should only have one of its fields set, and is used for various MFA methods
 type AuthMFAParams struct {
-	Password     string `msg:"password" json:"password,omitempty"`
-	RecoveryCode string `msg:"recovery_code" json:"recovery_code,omitempty"`
-	TOTPCode     string `msg:"totp_code" json:"totp_code,omitempty"`
+	Password     string `msg:"password" json:"password,omitzero"`
+	RecoveryCode string `msg:"recovery_code" json:"recovery_code,omitzero"`
+	TOTPCode     string `msg:"totp_code" json:"totp_code,omitzero"`
 }
 
 // FileParams is used to upload files to the API. For dealing with files, see: File
@@ -694,7 +685,7 @@ type FileParams struct {
 // FileParamsData is the response from the API when uploading a file.
 // To upload a file, you must reference this ID in MessageSend.Attachments.
 type FileParamsData struct {
-	ID string `msg:"id" json:"id,omitempty"`
+	ID string `msg:"id" json:"id,omitzero"`
 }
 
 /*

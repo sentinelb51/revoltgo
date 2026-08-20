@@ -25,20 +25,20 @@ const (
 // User is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/users.rs#L24
 type User struct {
-	ID            string               `msg:"_id" json:"_id,omitempty"`
-	Username      string               `msg:"username" json:"username,omitempty"`
-	Discriminator string               `msg:"discriminator" json:"discriminator,omitempty"`
-	Flags         uint32               `msg:"flags" json:"flags,omitempty"`
-	Privileged    bool                 `msg:"privileged" json:"privileged,omitempty"`
-	Badges        uint32               `msg:"badges" json:"badges,omitempty"`
-	Online        bool                 `msg:"online" json:"online,omitempty"`
-	Relations     []UserRelationship   `msg:"relations" json:"relations,omitempty"`
-	Relationship  UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
-	DisplayName   *string              `msg:"display_name" json:"display_name,omitempty"`
-	Avatar        *File                `msg:"avatar" json:"avatar,omitempty"`
-	Status        *UserStatus          `msg:"status" json:"status,omitempty"`
-	Profile       *UserProfile         `msg:"profile" json:"profile,omitempty"` // todo: deprecated? not present in src
-	Bot           *Bot                 `msg:"bot" json:"bot,omitempty"`
+	ID            string               `msg:"_id" json:"_id,omitzero"`
+	Username      string               `msg:"username" json:"username,omitzero"`
+	Discriminator string               `msg:"discriminator" json:"discriminator,omitzero"`
+	Flags         uint32               `msg:"flags" json:"flags,omitzero"`
+	Privileged    bool                 `msg:"privileged" json:"privileged,omitzero"`
+	Badges        uint32               `msg:"badges" json:"badges,omitzero"`
+	Online        bool                 `msg:"online" json:"online,omitzero"`
+	Relations     []UserRelationship   `msg:"relations" json:"relations,omitzero"`
+	Relationship  UserRelationshipType `msg:"relationship" json:"relationship,omitzero"`
+	DisplayName   *string              `msg:"display_name" json:"display_name,omitzero"`
+	Avatar        *File                `msg:"avatar" json:"avatar,omitzero"`
+	Status        *UserStatus          `msg:"status" json:"status,omitzero"`
+	Profile       *UserProfile         `msg:"profile" json:"profile,omitzero"` // todo: deprecated? not present in src
+	Bot           *Bot                 `msg:"bot" json:"bot,omitzero"`
 }
 
 func (u *User) AvatarURL(size string) string {
@@ -125,20 +125,20 @@ func (u *User) clear(fields []string) {
 }
 
 type PartialUser struct {
-	ID            *string               `msg:"_id" json:"_id,omitempty"`
-	Username      *string               `msg:"username" json:"username,omitempty"`
-	Discriminator *string               `msg:"discriminator" json:"discriminator,omitempty"`
-	Flags         *uint32               `msg:"flags" json:"flags,omitempty"`
-	Privileged    *bool                 `msg:"privileged" json:"privileged,omitempty"`
-	Badges        *uint32               `msg:"badges" json:"badges,omitempty"`
-	Online        *bool                 `msg:"online" json:"online,omitempty"`
-	Relations     *[]UserRelationship   `msg:"relations" json:"relations,omitempty"`
-	Relationship  *UserRelationshipType `msg:"relationship" json:"relationship,omitempty"`
-	DisplayName   *string               `msg:"display_name" json:"display_name,omitempty"`
-	Avatar        *File                 `msg:"avatar" json:"avatar,omitempty"`
-	Status        *UserStatus           `msg:"status" json:"status,omitempty"`
-	Profile       *UserProfile          `msg:"profile" json:"profile,omitempty"` // todo: deprecated? not present in src
-	Bot           *Bot                  `msg:"bot" json:"bot,omitempty"`
+	ID            *string               `msg:"_id" json:"_id,omitzero"`
+	Username      *string               `msg:"username" json:"username,omitzero"`
+	Discriminator *string               `msg:"discriminator" json:"discriminator,omitzero"`
+	Flags         *uint32               `msg:"flags" json:"flags,omitzero"`
+	Privileged    *bool                 `msg:"privileged" json:"privileged,omitzero"`
+	Badges        *uint32               `msg:"badges" json:"badges,omitzero"`
+	Online        *bool                 `msg:"online" json:"online,omitzero"`
+	Relations     *[]UserRelationship   `msg:"relations" json:"relations,omitzero"`
+	Relationship  *UserRelationshipType `msg:"relationship" json:"relationship,omitzero"`
+	DisplayName   *string               `msg:"display_name" json:"display_name,omitzero"`
+	Avatar        *File                 `msg:"avatar" json:"avatar,omitzero"`
+	Status        *UserStatus           `msg:"status" json:"status,omitzero"`
+	Profile       *UserProfile          `msg:"profile" json:"profile,omitzero"` // todo: deprecated? not present in src
+	Bot           *Bot                  `msg:"bot" json:"bot,omitzero"`
 }
 
 func (u *User) Mention() string {
@@ -146,13 +146,13 @@ func (u *User) Mention() string {
 }
 
 type UserProfile struct {
-	Content    string `msg:"content" json:"content,omitempty"`
-	Background *File  `msg:"background" json:"background,omitempty"`
+	Content    string `msg:"content" json:"content,omitzero"`
+	Background *File  `msg:"background" json:"background,omitzero"`
 }
 
 type UserRelationship struct {
-	ID     string               `msg:"_id" json:"_id,omitempty"`
-	Status UserRelationshipType `msg:"status" json:"status,omitempty"`
+	ID     string               `msg:"_id" json:"_id,omitzero"`
+	Status UserRelationshipType `msg:"status" json:"status,omitzero"`
 }
 
 type UserStatusPresence string
@@ -166,18 +166,18 @@ const (
 )
 
 type UserStatus struct {
-	Text     string             `msg:"text" json:"text,omitempty"`
-	Presence UserStatusPresence `msg:"presence" json:"presence,omitempty"`
+	Text     string             `msg:"text" json:"text,omitzero"`
+	Presence UserStatusPresence `msg:"presence" json:"presence,omitzero"`
 }
 
 type BotInformation struct {
-	Owner string `msg:"owner" json:"owner,omitempty"`
+	Owner string `msg:"owner" json:"owner,omitzero"`
 }
 
 type MutualFriendsAndServersResponse struct {
-	Users    []string `msg:"users" json:"users,omitempty"`
-	Servers  []string `msg:"servers" json:"servers,omitempty"`
-	Channels []string `msg:"channels" json:"channels,omitempty"`
+	Users    []string `msg:"users" json:"users,omitzero"`
+	Servers  []string `msg:"servers" json:"servers,omitzero"`
+	Channels []string `msg:"channels" json:"channels,omitzero"`
 }
 
 // UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason
@@ -187,19 +187,19 @@ type UserSettings struct {
 }
 
 type UserVoiceState struct {
-	ID            string     `msg:"_id" json:"_id,omitempty"`
-	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitempty"`
-	IsReceiving   bool       `msg:"is_receiving" json:"is_receiving,omitempty"`
-	IsPublishing  bool       `msg:"is_publishing" json:"is_publishing,omitempty"`
-	Screensharing bool       `msg:"screensharing" json:"screensharing,omitempty"`
-	Camera        bool       `msg:"camera" json:"camera,omitempty"`
+	ID            string     `msg:"_id" json:"_id,omitzero"`
+	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitzero"`
+	IsReceiving   bool       `msg:"is_receiving" json:"is_receiving,omitzero"`
+	IsPublishing  bool       `msg:"is_publishing" json:"is_publishing,omitzero"`
+	Screensharing bool       `msg:"screensharing" json:"screensharing,omitzero"`
+	Camera        bool       `msg:"camera" json:"camera,omitzero"`
 }
 
 type PartialUserVoiceState struct {
-	ID            *string    `msg:"_id" json:"_id,omitempty"`
-	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitempty"`
-	IsReceiving   *bool      `msg:"is_receiving" json:"is_receiving,omitempty"`
-	IsPublishing  *bool      `msg:"is_publishing" json:"is_publishing,omitempty"`
-	Screensharing *bool      `msg:"screensharing" json:"screensharing,omitempty"`
-	Camera        *bool      `msg:"camera" json:"camera,omitempty"`
+	ID            *string    `msg:"_id" json:"_id,omitzero"`
+	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitzero"`
+	IsReceiving   *bool      `msg:"is_receiving" json:"is_receiving,omitzero"`
+	IsPublishing  *bool      `msg:"is_publishing" json:"is_publishing,omitzero"`
+	Screensharing *bool      `msg:"screensharing" json:"screensharing,omitzero"`
+	Camera        *bool      `msg:"camera" json:"camera,omitzero"`
 }

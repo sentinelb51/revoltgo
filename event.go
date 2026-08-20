@@ -45,7 +45,7 @@ func eventTypeFromMSGP(data []byte) ([]byte, error) {
 }
 
 type Event struct {
-	Type string `msg:"type" json:"type,omitempty"`
+	Type string `msg:"type" json:"type,omitzero"`
 }
 
 func (e *Event) String() string {

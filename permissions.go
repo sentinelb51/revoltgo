@@ -10,8 +10,8 @@ import (
 // PermissionOverwrite is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/permissions/src/models/server.rs#L52.
 type PermissionOverwrite struct {
-	Allow int64 `msg:"a" json:"a,omitempty"`
-	Deny  int64 `msg:"d" json:"d,omitempty"`
+	Allow int64 `msg:"a" json:"a,omitzero"`
+	Deny  int64 `msg:"d" json:"d,omitzero"`
 }
 
 const (

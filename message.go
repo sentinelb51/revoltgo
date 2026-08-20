@@ -51,39 +51,39 @@ const (
 
 // Message contains information about a message.
 type Message struct {
-	ID           string               `msg:"_id" json:"_id,omitempty"`
-	Author       string               `msg:"author" json:"author,omitempty"`
-	Channel      string               `msg:"channel" json:"channel,omitempty"`
-	Attachments  []*File              `msg:"attachments" json:"attachments,omitempty"`
-	Content      string               `msg:"content" json:"content,omitempty"`
-	Edited       *time.Time           `msg:"edited" json:"edited,omitempty"`
-	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
-	Flags        MessageFlagsType     `msg:"flags" json:"flags,omitempty"`
-	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
-	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
-	Member       *ServerMember        `msg:"member" json:"member,omitempty"`
-	Mentions     []string             `msg:"mentions" json:"mentions,omitempty"`
-	Nonce        string               `msg:"nonce" json:"nonce,omitempty"`
-	Pinned       bool                 `msg:"pinned" json:"pinned,omitempty"`
+	ID           string               `msg:"_id" json:"_id,omitzero"`
+	Author       string               `msg:"author" json:"author,omitzero"`
+	Channel      string               `msg:"channel" json:"channel,omitzero"`
+	Attachments  []*File              `msg:"attachments" json:"attachments,omitzero"`
+	Content      string               `msg:"content" json:"content,omitzero"`
+	Edited       *time.Time           `msg:"edited" json:"edited,omitzero"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitzero"`
+	Flags        MessageFlagsType     `msg:"flags" json:"flags,omitzero"`
+	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitzero"`
+	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitzero"`
+	Member       *ServerMember        `msg:"member" json:"member,omitzero"`
+	Mentions     []string             `msg:"mentions" json:"mentions,omitzero"`
+	Nonce        string               `msg:"nonce" json:"nonce,omitzero"`
+	Pinned       bool                 `msg:"pinned" json:"pinned,omitzero"`
 
 	// Emoji.ID -> []User.ID
-	Reactions map[string][]string `msg:"reactions" json:"reactions,omitempty"`
+	Reactions map[string][]string `msg:"reactions" json:"reactions,omitzero"`
 
 	// []Message.ID's that this message replies to
-	Replies []string `msg:"replies" json:"replies,omitempty"`
+	Replies []string `msg:"replies" json:"replies,omitzero"`
 
 	// Server that were mentioned
-	RoleMentions []string        `msg:"role_mentions" json:"role-mentions,omitempty"`
-	System       *MessageSystem  `msg:"system" json:"system,omitempty"`
-	User         *User           `msg:"user" json:"user,omitempty"`
-	Webhook      *MessageWebhook `msg:"webhook" json:"webhook,omitempty"`
+	RoleMentions []string        `msg:"role_mentions" json:"role-mentions,omitzero"`
+	System       *MessageSystem  `msg:"system" json:"system,omitzero"`
+	User         *User           `msg:"user" json:"user,omitzero"`
+	Webhook      *MessageWebhook `msg:"webhook" json:"webhook,omitzero"`
 }
 
 // MessageWebhook is derived from:
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channel_webhooks.rs#L36
 type MessageWebhook struct {
-	Name   string  `msg:"name" json:"name,omitempty"`
-	Avatar *string `msg:"avatar" json:"avatar,omitempty"`
+	Name   string  `msg:"name" json:"name,omitzero"`
+	Avatar *string `msg:"avatar" json:"avatar,omitzero"`
 }
 
 func (ms *MessageWebhook) AvatarURL(size string) string {
@@ -95,45 +95,45 @@ func (ms *MessageWebhook) AvatarURL(size string) string {
 }
 
 type MessageInteractions struct {
-	Reactions []string `msg:"reactions" json:"reactions,omitempty"`
+	Reactions []string `msg:"reactions" json:"reactions,omitzero"`
 
 	// Whether reactions should be restricted to the given list
-	RestrictReactions bool `msg:"restrict_reactions" json:"restrict_reactions,omitempty"`
+	RestrictReactions bool `msg:"restrict_reactions" json:"restrict_reactions,omitzero"`
 }
 
 type MessageSystem struct {
-	Type MessageSystemType `msg:"type" json:"type,omitempty"`
-	ID   string            `msg:"id" json:"id,omitempty"`
+	Type MessageSystemType `msg:"type" json:"type,omitzero"`
+	ID   string            `msg:"id" json:"id,omitzero"`
 }
 
 type MessageEdited struct {
-	Date int `msg:"$date" json:"$date,omitempty"`
+	Date int `msg:"$date" json:"$date,omitzero"`
 }
 
 // MessageEmbed is derived from:
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/embeds.rs#L158
 type MessageEmbed struct {
-	Type        string               `msg:"type" json:"type,omitempty"`
-	URL         string               `msg:"url" json:"url,omitempty"`
-	OriginalURL string               `msg:"original_url" json:"original_url,omitempty"`
-	Special     *MessageEmbedSpecial `msg:"special" json:"special,omitempty"`
-	Title       string               `msg:"title" json:"title,omitempty"`
-	Description string               `msg:"description" json:"description,omitempty"`
-	Image       *MessageEmbedImage   `msg:"image" json:"image,omitempty"`
-	Video       *MessageEmbedVideo   `msg:"video" json:"video,omitempty"`
-	SiteName    string               `msg:"site_name" json:"site_name,omitempty"`
-	IconURL     string               `msg:"icon_url" json:"icon_url,omitempty"`
-	Colour      string               `msg:"colour" json:"colour,omitempty"`
-	Media       *File                `msg:"media" json:"media,omitempty"`
+	Type        string               `msg:"type" json:"type,omitzero"`
+	URL         string               `msg:"url" json:"url,omitzero"`
+	OriginalURL string               `msg:"original_url" json:"original_url,omitzero"`
+	Special     *MessageEmbedSpecial `msg:"special" json:"special,omitzero"`
+	Title       string               `msg:"title" json:"title,omitzero"`
+	Description string               `msg:"description" json:"description,omitzero"`
+	Image       *MessageEmbedImage   `msg:"image" json:"image,omitzero"`
+	Video       *MessageEmbedVideo   `msg:"video" json:"video,omitzero"`
+	SiteName    string               `msg:"site_name" json:"site_name,omitzero"`
+	IconURL     string               `msg:"icon_url" json:"icon_url,omitzero"`
+	Colour      string               `msg:"colour" json:"colour,omitzero"`
+	Media       *File                `msg:"media" json:"media,omitzero"`
 }
 
 type MessageEmbedSpecial struct {
-	Type        MessageEmbedSpecialType `msg:"type" json:"type,omitempty"`
-	ID          string                  `msg:"id" json:"id,omitempty"`
-	Timestamp   string                  `msg:"timestamp" json:"timestamp,omitempty"`
-	ContentType string                  `msg:"content_type" json:"content_type,omitempty"`
-	AlbumID     string                  `msg:"album_id" json:"album_id,omitempty"`
-	TrackID     string                  `msg:"track_id" json:"track_id,omitempty"`
+	Type        MessageEmbedSpecialType `msg:"type" json:"type,omitzero"`
+	ID          string                  `msg:"id" json:"id,omitzero"`
+	Timestamp   string                  `msg:"timestamp" json:"timestamp,omitzero"`
+	ContentType string                  `msg:"content_type" json:"content_type,omitzero"`
+	AlbumID     string                  `msg:"album_id" json:"album_id,omitzero"`
+	TrackID     string                  `msg:"track_id" json:"track_id,omitzero"`
 }
 
 const (
@@ -142,36 +142,36 @@ const (
 )
 
 type MessageEmbedImage struct {
-	Size   MessageEmbedImageSizeType `msg:"size" json:"size,omitempty"`
-	URL    string                    `msg:"url" json:"url,omitempty"`
-	Width  int                       `msg:"width" json:"width,omitempty"`
-	Height int                       `msg:"height" json:"height,omitempty"`
+	Size   MessageEmbedImageSizeType `msg:"size" json:"size,omitzero"`
+	URL    string                    `msg:"url" json:"url,omitzero"`
+	Width  int                       `msg:"width" json:"width,omitzero"`
+	Height int                       `msg:"height" json:"height,omitzero"`
 }
 
 type MessageEmbedVideo struct {
-	URL    string `msg:"url" json:"url,omitempty"`
-	Width  int    `msg:"width" json:"width,omitempty"`
-	Height int    `msg:"height" json:"height,omitempty"`
+	URL    string `msg:"url" json:"url,omitzero"`
+	Width  int    `msg:"width" json:"width,omitzero"`
+	Height int    `msg:"height" json:"height,omitzero"`
 }
 
 // MessageSend is used for sending messages to channels
 // todo: move to http since this is a sendable request body
 type MessageSend struct {
-	Content      string               `msg:"content" json:"content,omitempty"`
-	Attachments  []string             `msg:"attachments" json:"attachments,omitempty"`
-	Replies      []*MessageReplies    `msg:"replies" json:"replies,omitempty"`
-	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitempty"`
-	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitempty"`
-	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitempty"`
+	Content      string               `msg:"content" json:"content,omitzero"`
+	Attachments  []string             `msg:"attachments" json:"attachments,omitzero"`
+	Replies      []*MessageReplies    `msg:"replies" json:"replies,omitzero"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitzero"`
+	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitzero"`
+	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitzero"`
 }
 
 type MessageMasquerade struct {
-	Name   string `msg:"name" json:"name,omitempty"`
-	Avatar string `msg:"avatar" json:"avatar,omitempty"`
-	Colour string `msg:"colour" json:"colour,omitempty"`
+	Name   string `msg:"name" json:"name,omitzero"`
+	Avatar string `msg:"avatar" json:"avatar,omitzero"`
+	Colour string `msg:"colour" json:"colour,omitzero"`
 }
 
 type MessageReplies struct {
-	ID      string `msg:"id" json:"id,omitempty"`
+	ID      string `msg:"id" json:"id,omitzero"`
 	Mention bool   `msg:"mention" json:"mention"`
 }

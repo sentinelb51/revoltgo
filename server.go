@@ -11,21 +11,21 @@ import (
 // Server is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/servers.rs#L14
 type Server struct {
-	ID                 string                 `msg:"_id" json:"_id,omitempty"`
-	Owner              string                 `msg:"owner" json:"owner,omitempty"`
-	Name               string                 `msg:"name" json:"name,omitempty"`
-	Description        string                 `msg:"description" json:"description,omitempty"`
-	Channels           []string               `msg:"channels" json:"channels,omitempty"`
-	Categories         []*ServerCategory      `msg:"categories" json:"categories,omitempty"`
-	SystemMessages     ServerSystemMessages   `msg:"system_messages" json:"system_messages,omitempty"`
-	Roles              map[string]*ServerRole `msg:"roles" json:"roles,omitempty"` // Roles is a map of role ID to ServerRole structs.
-	DefaultPermissions int64                  `msg:"default_permissions" json:"default_permissions,omitempty"`
-	Flags              uint32                 `msg:"flags" json:"flags,omitempty"`
-	NSFW               bool                   `msg:"nsfw" json:"nsfw,omitempty"`
-	Analytics          bool                   `msg:"analytics" json:"analytics,omitempty"`
-	Discoverable       bool                   `msg:"discoverable" json:"discoverable,omitempty"`
-	Icon               *File                  `msg:"icon" json:"icon,omitempty"`
-	Banner             *File                  `msg:"banner" json:"banner,omitempty"`
+	ID                 string                 `msg:"_id" json:"_id,omitzero"`
+	Owner              string                 `msg:"owner" json:"owner,omitzero"`
+	Name               string                 `msg:"name" json:"name,omitzero"`
+	Description        string                 `msg:"description" json:"description,omitzero"`
+	Channels           []string               `msg:"channels" json:"channels,omitzero"`
+	Categories         []*ServerCategory      `msg:"categories" json:"categories,omitzero"`
+	SystemMessages     ServerSystemMessages   `msg:"system_messages" json:"system_messages,omitzero"`
+	Roles              map[string]*ServerRole `msg:"roles" json:"roles,omitzero"` // Roles is a map of role ID to ServerRole structs.
+	DefaultPermissions int64                  `msg:"default_permissions" json:"default_permissions,omitzero"`
+	Flags              uint32                 `msg:"flags" json:"flags,omitzero"`
+	NSFW               bool                   `msg:"nsfw" json:"nsfw,omitzero"`
+	Analytics          bool                   `msg:"analytics" json:"analytics,omitzero"`
+	Discoverable       bool                   `msg:"discoverable" json:"discoverable,omitzero"`
+	Icon               *File                  `msg:"icon" json:"icon,omitzero"`
+	Banner             *File                  `msg:"banner" json:"banner,omitzero"`
 }
 
 func (s *Server) update(data PartialServer) {
@@ -104,32 +104,32 @@ func (s *Server) clear(fields []string) {
 
 // PartialServer is only found within EventServerUpdate and used to update the state.
 type PartialServer struct {
-	Owner              *string                `msg:"owner" json:"owner,omitempty"`
-	Name               *string                `msg:"name" json:"name,omitempty"`
-	Description        *string                `msg:"description" json:"description,omitempty"`
-	Channels           *[]string              `msg:"channels" json:"channels,omitempty"`
-	Categories         *[]*ServerCategory     `msg:"categories" json:"categories,omitempty"`
-	SystemMessages     *ServerSystemMessages  `msg:"system_messages" json:"system_messages,omitempty"`
-	Roles              map[string]*ServerRole `msg:"roles" json:"roles,omitempty"`
-	DefaultPermissions *int64                 `msg:"default_permissions" json:"default_permissions,omitempty"`
-	Icon               *File                  `msg:"icon" json:"icon,omitempty"`
-	Banner             *File                  `msg:"banner" json:"banner,omitempty"`
-	Flags              *uint32                `msg:"flags" json:"flags,omitempty"`
-	NSFW               *bool                  `msg:"nsfw" json:"nsfw,omitempty"`
-	Analytics          *bool                  `msg:"analytics" json:"analytics,omitempty"`
-	Discoverable       *bool                  `msg:"discoverable" json:"discoverable,omitempty"`
+	Owner              *string                `msg:"owner" json:"owner,omitzero"`
+	Name               *string                `msg:"name" json:"name,omitzero"`
+	Description        *string                `msg:"description" json:"description,omitzero"`
+	Channels           *[]string              `msg:"channels" json:"channels,omitzero"`
+	Categories         *[]*ServerCategory     `msg:"categories" json:"categories,omitzero"`
+	SystemMessages     *ServerSystemMessages  `msg:"system_messages" json:"system_messages,omitzero"`
+	Roles              map[string]*ServerRole `msg:"roles" json:"roles,omitzero"`
+	DefaultPermissions *int64                 `msg:"default_permissions" json:"default_permissions,omitzero"`
+	Icon               *File                  `msg:"icon" json:"icon,omitzero"`
+	Banner             *File                  `msg:"banner" json:"banner,omitzero"`
+	Flags              *uint32                `msg:"flags" json:"flags,omitzero"`
+	NSFW               *bool                  `msg:"nsfw" json:"nsfw,omitzero"`
+	Analytics          *bool                  `msg:"analytics" json:"analytics,omitzero"`
+	Discoverable       *bool                  `msg:"discoverable" json:"discoverable,omitzero"`
 }
 
 // ServerRole is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/servers/model.rs#L70
 type ServerRole struct {
-	ID          string              `msg:"_id" json:"_id,omitempty"`
-	Name        string              `msg:"name" json:"name,omitempty"`
-	Permissions PermissionOverwrite `msg:"permissions" json:"permissions,omitempty"`
-	Colour      *string             `msg:"colour" json:"colour,omitempty"`
-	Hoist       bool                `msg:"hoist" json:"hoist,omitempty"`
-	Icon        *File               `msg:"icon" json:"icon,omitempty"`
-	Rank        int64               `msg:"rank" json:"rank,omitempty"`
+	ID          string              `msg:"_id" json:"_id,omitzero"`
+	Name        string              `msg:"name" json:"name,omitzero"`
+	Permissions PermissionOverwrite `msg:"permissions" json:"permissions,omitzero"`
+	Colour      *string             `msg:"colour" json:"colour,omitzero"`
+	Hoist       bool                `msg:"hoist" json:"hoist,omitzero"`
+	Icon        *File               `msg:"icon" json:"icon,omitzero"`
+	Rank        int64               `msg:"rank" json:"rank,omitzero"`
 }
 
 func (r *ServerRole) update(data PartialServerRole) {
@@ -166,46 +166,46 @@ func (r *ServerRole) clear(fields []string) {
 }
 
 type PartialServerRole struct {
-	Name        *string              `msg:"name" json:"name,omitempty"`
-	Permissions *PermissionOverwrite `msg:"permissions" json:"permissions,omitempty"`
-	Colour      *string              `msg:"colour" json:"colour,omitempty"`
-	Hoist       *bool                `msg:"hoist" json:"hoist,omitempty"`
-	Rank        *int64               `msg:"rank" json:"rank,omitempty"`
+	Name        *string              `msg:"name" json:"name,omitzero"`
+	Permissions *PermissionOverwrite `msg:"permissions" json:"permissions,omitzero"`
+	Colour      *string              `msg:"colour" json:"colour,omitzero"`
+	Hoist       *bool                `msg:"hoist" json:"hoist,omitzero"`
+	Rank        *int64               `msg:"rank" json:"rank,omitzero"`
 }
 
 // ServerCategory Server categories struct.
 type ServerCategory struct {
-	ID       string   `msg:"id" json:"id,omitempty"`
-	Title    string   `msg:"title" json:"title,omitempty"`
-	Channels []string `msg:"channels" json:"channels,omitempty"`
+	ID       string   `msg:"id" json:"id,omitzero"`
+	Title    string   `msg:"title" json:"title,omitzero"`
+	Channels []string `msg:"channels" json:"channels,omitzero"`
 }
 
 // ServerSystemMessages System messages struct.
 type ServerSystemMessages struct {
-	UserJoined string `msg:"user_joined" json:"user_joined,omitempty"`
-	UserLeft   string `msg:"user_left" json:"user_left,omitempty"`
-	UserKicked string `msg:"user_kicked" json:"user_kicked,omitempty"`
-	UserBanned string `msg:"user_banned" json:"user_banned,omitempty"`
+	UserJoined string `msg:"user_joined" json:"user_joined,omitzero"`
+	UserLeft   string `msg:"user_left" json:"user_left,omitzero"`
+	UserKicked string `msg:"user_kicked" json:"user_kicked,omitzero"`
+	UserBanned string `msg:"user_banned" json:"user_banned,omitzero"`
 }
 
 // ServerMember is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/server_members.rs#L44
 type ServerMember struct {
-	ID       MemberCompositeID `msg:"_id" json:"_id,omitempty"`
-	JoinedAt time.Time         `msg:"joined_at" json:"joined_at,omitempty"`
+	ID       MemberCompositeID `msg:"_id" json:"_id,omitzero"`
+	JoinedAt time.Time         `msg:"joined_at" json:"joined_at,omitzero"`
 
-	Nickname *string  `msg:"nickname" json:"nickname,omitempty"`
-	Pronouns *string  `msg:"pronouns" json:"pronouns,omitempty"`
-	Avatar   *File    `msg:"avatar" json:"avatar,omitempty"`
-	Roles    []string `msg:"roles" json:"roles,omitempty"`
+	Nickname *string  `msg:"nickname" json:"nickname,omitzero"`
+	Pronouns *string  `msg:"pronouns" json:"pronouns,omitzero"`
+	Avatar   *File    `msg:"avatar" json:"avatar,omitzero"`
+	Roles    []string `msg:"roles" json:"roles,omitzero"`
 
-	Timeout *time.Time `msg:"timeout" json:"timeout,omitempty"`
+	Timeout *time.Time `msg:"timeout" json:"timeout,omitzero"`
 
 	// False means server-wide voice-muted; nil if unset
-	CanPublish *bool `msg:"can_publish" json:"can_publish,omitempty"`
+	CanPublish *bool `msg:"can_publish" json:"can_publish,omitzero"`
 
 	// False means server-wide voice-deafened; nil if unset
-	CanReceive *bool `msg:"can_receive" json:"can_receive,omitempty"`
+	CanReceive *bool `msg:"can_receive" json:"can_receive,omitzero"`
 }
 
 func (m *ServerMember) update(data PartialServerMember) {
@@ -292,12 +292,12 @@ func (m *ServerMember) clear(fields []string) {
 }
 
 type PartialServerMember struct {
-	Nickname   *string    `msg:"nickname" json:"nickname,omitempty"`
-	Avatar     *File      `msg:"avatar" json:"avatar,omitempty"`
-	Roles      *[]string  `msg:"roles" json:"roles,omitempty"`
-	Timeout    *time.Time `msg:"timeout" json:"timeout,omitempty"`
-	CanPublish *bool      `msg:"can_publish" json:"can_publish,omitempty"`
-	CanReceive *bool      `msg:"can_receive" json:"can_receive,omitempty"`
+	Nickname   *string    `msg:"nickname" json:"nickname,omitzero"`
+	Avatar     *File      `msg:"avatar" json:"avatar,omitzero"`
+	Roles      *[]string  `msg:"roles" json:"roles,omitzero"`
+	Timeout    *time.Time `msg:"timeout" json:"timeout,omitzero"`
+	CanPublish *bool      `msg:"can_publish" json:"can_publish,omitzero"`
+	CanReceive *bool      `msg:"can_receive" json:"can_receive,omitzero"`
 }
 
 // Mention is a proxy function that calls ServerMember.ID.Mention().
@@ -306,8 +306,8 @@ func (m *ServerMember) Mention() string {
 }
 
 type MemberCompositeID struct {
-	User   string `msg:"user" json:"user,omitempty"`
-	Server string `msg:"server" json:"server,omitempty"`
+	User   string `msg:"user" json:"user,omitzero"`
+	Server string `msg:"server" json:"server,omitzero"`
 }
 
 func (m MemberCompositeID) Mention() string {
@@ -315,21 +315,21 @@ func (m MemberCompositeID) Mention() string {
 }
 
 type ServerCreateResponse struct {
-	Server   *Server    `msg:"server" json:"server,omitempty"`
-	Channels []*Channel `msg:"channels" json:"channels,omitempty"`
+	Server   *Server    `msg:"server" json:"server,omitzero"`
+	Channels []*Channel `msg:"channels" json:"channels,omitzero"`
 }
 
 type ServerMembers struct {
-	Members []*ServerMember `msg:"members" json:"members,omitempty"`
-	Users   []*User         `msg:"users" json:"users,omitempty"`
+	Members []*ServerMember `msg:"members" json:"members,omitzero"`
+	Users   []*User         `msg:"users" json:"users,omitzero"`
 }
 
 type ServerBans struct {
-	Users []*User      `msg:"users" json:"users,omitempty"`
-	Bans  []*ServerBan `msg:"bans" json:"bans,omitempty"`
+	Users []*User      `msg:"users" json:"users,omitzero"`
+	Bans  []*ServerBan `msg:"bans" json:"bans,omitzero"`
 }
 
 type ServerBan struct {
-	ID     MemberCompositeID `msg:"_id" json:"_id,omitempty"`
-	Reason string            `msg:"reason" json:"reason,omitempty"`
+	ID     MemberCompositeID `msg:"_id" json:"_id,omitzero"`
+	Reason string            `msg:"reason" json:"reason,omitzero"`
 }

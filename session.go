@@ -508,7 +508,7 @@ func (s *Session) WriteSocketJSON(data any) error {
 		return gws.ErrConnClosed
 	}
 
-	payload, err := json.Marshal(data, jsonOptions)
+	payload, err := json.Marshal(data)
 	if err == nil {
 		err = s.WS.WriteMessage(gws.OpcodeText, payload)
 	}

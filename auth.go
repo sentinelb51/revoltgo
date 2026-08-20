@@ -24,55 +24,55 @@ type AuthMFATicketResponse struct {
 }
 
 type AuthMFATOTPSecretResponse struct {
-	Secret string `msg:"secret" json:"secret,omitempty"`
+	Secret string `msg:"secret" json:"secret,omitzero"`
 }
 
 type LoginResponse struct {
-	Result       string              `msg:"result" json:"result,omitempty"`
-	ID           string              `msg:"_id" json:"_id,omitempty"`
-	UserID       string              `msg:"user_id" json:"user_id,omitempty"`
-	Token        string              `msg:"token" json:"token,omitempty"`
-	Name         string              `msg:"name" json:"name,omitempty"`
-	Subscription WebpushSubscription `msg:"subscription" json:"subscription,omitempty"`
+	Result       string              `msg:"result" json:"result,omitzero"`
+	ID           string              `msg:"_id" json:"_id,omitzero"`
+	UserID       string              `msg:"user_id" json:"user_id,omitzero"`
+	Token        string              `msg:"token" json:"token,omitzero"`
+	Name         string              `msg:"name" json:"name,omitzero"`
+	Subscription WebpushSubscription `msg:"subscription" json:"subscription,omitzero"`
 }
 
 type Sessions struct {
-	ID   string `msg:"_id" json:"_id,omitempty"`
-	Name string `msg:"name" json:"name,omitempty"`
+	ID   string `msg:"_id" json:"_id,omitzero"`
+	Name string `msg:"name" json:"name,omitzero"`
 }
 type Account struct {
-	ID    string `msg:"_id" json:"_id,omitempty"`
-	Email string `msg:"email" json:"email,omitempty"`
+	ID    string `msg:"_id" json:"_id,omitzero"`
+	Email string `msg:"email" json:"email,omitzero"`
 }
 
 type Onboarding struct {
-	Onboarding bool `msg:"onboarding" json:"onboarding,omitempty"`
+	Onboarding bool `msg:"onboarding" json:"onboarding,omitzero"`
 }
 
 type MFA struct {
 	// Unvalidated or authorised MFA ticket; used to resolve the correct account
-	MfaTicket string `msg:"mfa_ticket" json:"mfa_ticket,omitempty"`
+	MfaTicket string `msg:"mfa_ticket" json:"mfa_ticket,omitzero"`
 
 	// MFA response
-	MfaResponse MFAResponse `msg:"mfa_response" json:"mfa_response,omitempty"`
+	MfaResponse MFAResponse `msg:"mfa_response" json:"mfa_response,omitzero"`
 
 	// Friendly name used for the session
-	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitempty"`
+	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitzero"`
 }
 
 type MFAResponse struct {
-	Password string `msg:"password" json:"password,omitempty"`
+	Password string `msg:"password" json:"password,omitzero"`
 }
 
 type ChangeEmail struct {
-	Ticket MFATicket `msg:"ticket" json:"ticket,omitempty"` // Why is this nested (seriously, look at AuthMFATicketResponse)
+	Ticket MFATicket `msg:"ticket" json:"ticket,omitzero"` // Why is this nested (seriously, look at AuthMFATicketResponse)
 }
 
 type MFATicket struct {
-	ID           string `msg:"_id" json:"_id,omitempty"`
-	AccountID    string `msg:"account_id" json:"account_id,omitempty"`
-	Token        string `msg:"token" json:"token,omitempty"`
-	Validated    bool   `msg:"validated" json:"validated,omitempty"`
-	Authorised   bool   `msg:"authorised" json:"authorised,omitempty"`
-	LastTOTPCode string `msg:"last_totp_code" json:"last_totp_code,omitempty"`
+	ID           string `msg:"_id" json:"_id,omitzero"`
+	AccountID    string `msg:"account_id" json:"account_id,omitzero"`
+	Token        string `msg:"token" json:"token,omitzero"`
+	Validated    bool   `msg:"validated" json:"validated,omitzero"`
+	Authorised   bool   `msg:"authorised" json:"authorised,omitzero"`
+	LastTOTPCode string `msg:"last_totp_code" json:"last_totp_code,omitzero"`
 }

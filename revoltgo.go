@@ -55,7 +55,7 @@ func HasUpdate() bool {
 	defer response.Body.Close()
 
 	var repo GithubRepos
-	err = json.UnmarshalRead(response.Body, &repo, jsonOptions)
+	err = json.UnmarshalRead(response.Body, &repo)
 	if err != nil {
 		log.Printf("Update check failed whilst decoding: %v", err)
 		return false
@@ -75,48 +75,48 @@ func HasUpdate() bool {
 /* Data structures for instance configuration, retrieved when you first contact apiURL */
 
 type InstanceConfig struct {
-	WS       string                 `msg:"ws" json:"ws,omitempty"`
-	App      string                 `msg:"app" json:"app,omitempty"`
-	VapID    string                 `msg:"vapid" json:"vapid,omitempty"`
-	Revolt   string                 `msg:"revolt" json:"revolt,omitempty"`
-	Build    InstanceConfigBuild    `msg:"build" json:"build,omitempty"`
-	Features InstanceConfigFeatures `msg:"features" json:"features,omitempty"`
+	WS       string                 `msg:"ws" json:"ws,omitzero"`
+	App      string                 `msg:"app" json:"app,omitzero"`
+	VapID    string                 `msg:"vapid" json:"vapid,omitzero"`
+	Revolt   string                 `msg:"revolt" json:"revolt,omitzero"`
+	Build    InstanceConfigBuild    `msg:"build" json:"build,omitzero"`
+	Features InstanceConfigFeatures `msg:"features" json:"features,omitzero"`
 }
 
 type InstanceConfigFeaturesCaptcha struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	Key     string `msg:"key" json:"key,omitempty"`
+	Enabled bool   `msg:"enabled" json:"enabled,omitzero"`
+	Key     string `msg:"key" json:"key,omitzero"`
 }
 
 type InstanceConfigFeaturesAutumn struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
+	Enabled bool   `msg:"enabled" json:"enabled,omitzero"`
+	URL     string `msg:"url" json:"url,omitzero"`
 }
 
 type InstanceConfigFeaturesJanuary struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
+	Enabled bool   `msg:"enabled" json:"enabled,omitzero"`
+	URL     string `msg:"url" json:"url,omitzero"`
 }
 
 type InstanceConfigFeaturesVoso struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitempty"`
-	URL     string `msg:"url" json:"url,omitempty"`
-	WS      string `msg:"ws" json:"ws,omitempty"`
+	Enabled bool   `msg:"enabled" json:"enabled,omitzero"`
+	URL     string `msg:"url" json:"url,omitzero"`
+	WS      string `msg:"ws" json:"ws,omitzero"`
 }
 
 type InstanceConfigFeatures struct {
-	Captcha    InstanceConfigFeaturesCaptcha `msg:"captcha" json:"captcha,omitempty"`
-	Email      bool                          `msg:"email" json:"email,omitempty"`
-	InviteOnly bool                          `msg:"invite_only" json:"invite_only,omitempty"`
-	Autumn     InstanceConfigFeaturesAutumn  `msg:"autumn" json:"autumn,omitempty"`
-	January    InstanceConfigFeaturesJanuary `msg:"january" json:"january,omitempty"`
-	Voso       InstanceConfigFeaturesVoso    `msg:"voso" json:"voso,omitempty"`
+	Captcha    InstanceConfigFeaturesCaptcha `msg:"captcha" json:"captcha,omitzero"`
+	Email      bool                          `msg:"email" json:"email,omitzero"`
+	InviteOnly bool                          `msg:"invite_only" json:"invite_only,omitzero"`
+	Autumn     InstanceConfigFeaturesAutumn  `msg:"autumn" json:"autumn,omitzero"`
+	January    InstanceConfigFeaturesJanuary `msg:"january" json:"january,omitzero"`
+	Voso       InstanceConfigFeaturesVoso    `msg:"voso" json:"voso,omitzero"`
 }
 
 type InstanceConfigBuild struct {
-	CommitSha       string `msg:"commit_sha" json:"commit_sha,omitempty"`
-	CommitTimestamp string `msg:"commit_timestamp" json:"commit_timestamp,omitempty"`
-	SemVer          string `msg:"semver" json:"semver,omitempty"`
-	OriginURL       string `msg:"origin_url" json:"origin_url,omitempty"`
-	Timestamp       string `msg:"timestamp" json:"timestamp,omitempty"`
+	CommitSha       string `msg:"commit_sha" json:"commit_sha,omitzero"`
+	CommitTimestamp string `msg:"commit_timestamp" json:"commit_timestamp,omitzero"`
+	SemVer          string `msg:"semver" json:"semver,omitzero"`
+	OriginURL       string `msg:"origin_url" json:"origin_url,omitzero"`
+	Timestamp       string `msg:"timestamp" json:"timestamp,omitzero"`
 }

@@ -16,26 +16,26 @@ const (
 // Channel is derived from
 // https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channels.rs#L13
 type Channel struct {
-	ID          string      `msg:"_id" json:"_id,omitempty"`
-	ChannelType ChannelType `msg:"channel_type" json:"channel_type,omitempty"`
+	ID          string      `msg:"_id" json:"_id,omitzero"`
+	ChannelType ChannelType `msg:"channel_type" json:"channel_type,omitzero"`
 
-	Name        string  `msg:"name" json:"name,omitempty"`
-	Description *string `msg:"description" json:"description,omitempty"`
-	Icon        *File   `msg:"icon" json:"icon,omitempty"`
-	NSFW        bool    `msg:"nsfw" json:"nsfw,omitempty"`
-	Active      bool    `msg:"active" json:"active,omitempty"`
+	Name        string  `msg:"name" json:"name,omitzero"`
+	Description *string `msg:"description" json:"description,omitzero"`
+	Icon        *File   `msg:"icon" json:"icon,omitzero"`
+	NSFW        bool    `msg:"nsfw" json:"nsfw,omitzero"`
+	Active      bool    `msg:"active" json:"active,omitzero"`
 
-	Server          *string                        `msg:"server" json:"server,omitempty"` // Server channels only
-	Voice           *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`   // Server channels only
-	Slowmode        *int                           `msg:"slowmode" json:"slowmode,omitempty"`
-	RolePermissions map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitempty"` // Server channel only
+	Server          *string                        `msg:"server" json:"server,omitzero"` // Server channels only
+	Voice           *ChannelVoiceInformation       `msg:"voice" json:"voice,omitzero"`   // Server channels only
+	Slowmode        *int                           `msg:"slowmode" json:"slowmode,omitzero"`
+	RolePermissions map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitzero"` // Server channel only
 
-	Recipients  []string `msg:"recipients" json:"recipients,omitempty"`   // DM or Group
-	Permissions *int64   `msg:"permissions" json:"permissions,omitempty"` // Group only
-	Owner       string   `msg:"owner" json:"owner,omitempty"`             // Group or SavedMessages ("user" in SavedMessages)
+	Recipients  []string `msg:"recipients" json:"recipients,omitzero"`   // DM or Group
+	Permissions *int64   `msg:"permissions" json:"permissions,omitzero"` // Group only
+	Owner       string   `msg:"owner" json:"owner,omitzero"`             // Group or SavedMessages ("user" in SavedMessages)
 
-	LastMessageID      *string              `msg:"last_message_id" json:"last_message_id,omitempty"`
-	DefaultPermissions *PermissionOverwrite `msg:"default_permissions" json:"default_permissions,omitempty"`
+	LastMessageID      *string              `msg:"last_message_id" json:"last_message_id,omitzero"`
+	DefaultPermissions *PermissionOverwrite `msg:"default_permissions" json:"default_permissions,omitzero"`
 }
 
 func (c *Channel) update(data PartialChannel) {
@@ -108,48 +108,48 @@ func (c *Channel) clear(fields []string) {
 }
 
 type PartialChannel struct {
-	Name        *string `msg:"name" json:"name,omitempty"`
-	Owner       *string `msg:"owner" json:"owner,omitempty"`
-	Description *string `msg:"description" json:"description,omitempty"`
-	Icon        *File   `msg:"icon" json:"icon,omitempty"`
-	NSFW        *bool   `msg:"nsfw" json:"nsfw,omitempty"`
+	Name        *string `msg:"name" json:"name,omitzero"`
+	Owner       *string `msg:"owner" json:"owner,omitzero"`
+	Description *string `msg:"description" json:"description,omitzero"`
+	Icon        *File   `msg:"icon" json:"icon,omitzero"`
+	NSFW        *bool   `msg:"nsfw" json:"nsfw,omitzero"`
 
 	// Whether the channel is listed in direct messages. False means hidden; the DM was closed.
-	Active             *bool                          `msg:"active" json:"active,omitempty"`
-	Permissions        *int64                         `msg:"permissions" json:"permissions,omitempty"`
-	RolePermissions    map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitempty"`
-	DefaultPermissions *PermissionOverwrite           `msg:"default_permissions" json:"default_permissions,omitempty"`
-	LastMessageID      *string                        `msg:"last_message_id" json:"last_message_id,omitempty"`
-	Voice              *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`
-	Slowmode           *int                           `msg:"slowmode" json:"slowmode,omitempty"`
+	Active             *bool                          `msg:"active" json:"active,omitzero"`
+	Permissions        *int64                         `msg:"permissions" json:"permissions,omitzero"`
+	RolePermissions    map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitzero"`
+	DefaultPermissions *PermissionOverwrite           `msg:"default_permissions" json:"default_permissions,omitzero"`
+	LastMessageID      *string                        `msg:"last_message_id" json:"last_message_id,omitzero"`
+	Voice              *ChannelVoiceInformation       `msg:"voice" json:"voice,omitzero"`
+	Slowmode           *int                           `msg:"slowmode" json:"slowmode,omitzero"`
 }
 
 type CompositeChannelID struct {
-	Channel string `msg:"channel" json:"channel,omitempty"`
-	User    string `msg:"user" json:"user,omitempty"`
+	Channel string `msg:"channel" json:"channel,omitzero"`
+	User    string `msg:"user" json:"user,omitzero"`
 }
 
 type ChannelFetchedMessages struct {
-	Messages []*Message      `msg:"messages" json:"messages,omitempty"`
-	Users    []*User         `msg:"users" json:"users,omitempty"`
-	Members  []*ServerMember `msg:"members" json:"members,omitempty"`
+	Messages []*Message      `msg:"messages" json:"messages,omitzero"`
+	Users    []*User         `msg:"users" json:"users,omitzero"`
+	Members  []*ServerMember `msg:"members" json:"members,omitzero"`
 }
 
 type ChannelJoinCall struct {
 	// Token for authenticating with the voice server
-	Token string `msg:"token" json:"token,omitempty"`
+	Token string `msg:"token" json:"token,omitzero"`
 
 	// URL of the livekit server to connect to
-	URL string `msg:"url" json:"url,omitempty"`
+	URL string `msg:"url" json:"url,omitzero"`
 }
 
 type ChannelVoiceInformation struct {
-	MaxUsers *int `msg:"max_users" json:"max_users,omitempty"`
+	MaxUsers *int `msg:"max_users" json:"max_users,omitzero"`
 }
 
 type ChannelVoiceState struct {
-	ID           string            `msg:"id" json:"id,omitempty"`
-	Participants []*UserVoiceState `msg:"participants" json:"participants,omitempty"`
+	ID           string            `msg:"id" json:"id,omitzero"`
+	Participants []*UserVoiceState `msg:"participants" json:"participants,omitzero"`
 }
 
 type ChannelUnreadCompositeID struct {
@@ -159,12 +159,12 @@ type ChannelUnreadCompositeID struct {
 
 type ChannelUnread struct {
 	ID            ChannelUnreadCompositeID `msg:"_id" json:"_id"`
-	LastMessageID *string                  `msg:"last_id" json:"last_id,omitempty"`
-	MentionIDs    []string                 `msg:"mentions" json:"mentions,omitempty"`
+	LastMessageID *string                  `msg:"last_id" json:"last_id,omitzero"`
+	MentionIDs    []string                 `msg:"mentions" json:"mentions,omitzero"`
 }
 
 type ChannelMessages struct {
-	Messages []*Message      `msg:"messages" json:"messages,omitempty"`
-	Users    []*User         `msg:"users" json:"users,omitempty"`
-	Members  []*ServerMember `msg:"members" json:"members,omitempty"`
+	Messages []*Message      `msg:"messages" json:"messages,omitzero"`
+	Users    []*User         `msg:"users" json:"users,omitzero"`
+	Members  []*ServerMember `msg:"members" json:"members,omitzero"`
 }
