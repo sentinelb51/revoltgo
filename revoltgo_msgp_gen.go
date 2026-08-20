@@ -1294,9 +1294,9 @@ func (z *ChangeEmail) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *Channel) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 16
+	// map header, size 17
 	// string "_id"
-	o = append(o, 0xde, 0x0, 0x10, 0xa3, 0x5f, 0x69, 0x64)
+	o = append(o, 0xde, 0x0, 0x11, 0xa3, 0x5f, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "channel_type"
 	o = append(o, 0xac, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x5f, 0x74, 0x79, 0x70, 0x65)
@@ -1385,6 +1385,9 @@ func (z *Channel) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "owner"
 	o = append(o, 0xa5, 0x6f, 0x77, 0x6e, 0x65, 0x72)
 	o = msgp.AppendString(o, z.Owner)
+	// string "user"
+	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
+	o = msgp.AppendString(o, z.User)
 	// string "last_message_id"
 	o = append(o, 0xaf, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64)
 	if z.LastMessageID == nil {
@@ -1678,6 +1681,12 @@ func (z *Channel) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Owner")
 				return
 			}
+		case "user":
+			z.User, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "User")
+				return
+			}
 		case "last_message_id":
 			if msgp.IsNil(bts) {
 				bts, err = msgp.ReadNilBytes(bts)
@@ -1807,7 +1816,7 @@ func (z *Channel) Msgsize() (s int) {
 	} else {
 		s += msgp.Int64Size
 	}
-	s += 6 + msgp.StringPrefixSize + len(z.Owner) + 16
+	s += 6 + msgp.StringPrefixSize + len(z.Owner) + 5 + msgp.StringPrefixSize + len(z.User) + 16
 	if z.LastMessageID == nil {
 		s += msgp.NilSize
 	} else {
@@ -4228,9 +4237,9 @@ func (z *EventChannelAck) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *EventChannelCreate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 17
+	// map header, size 18
 	// string "type"
-	o = append(o, 0xde, 0x0, 0x11, 0xa4, 0x74, 0x79, 0x70, 0x65)
+	o = append(o, 0xde, 0x0, 0x12, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
 	// string "_id"
 	o = append(o, 0xa3, 0x5f, 0x69, 0x64)
@@ -4322,6 +4331,9 @@ func (z *EventChannelCreate) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "owner"
 	o = append(o, 0xa5, 0x6f, 0x77, 0x6e, 0x65, 0x72)
 	o = msgp.AppendString(o, z.Owner)
+	// string "user"
+	o = append(o, 0xa4, 0x75, 0x73, 0x65, 0x72)
+	o = msgp.AppendString(o, z.User)
 	// string "last_message_id"
 	o = append(o, 0xaf, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64)
 	if z.LastMessageID == nil {
@@ -4621,6 +4633,12 @@ func (z *EventChannelCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Owner")
 				return
 			}
+		case "user":
+			z.User, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "User")
+				return
+			}
 		case "last_message_id":
 			if msgp.IsNil(bts) {
 				bts, err = msgp.ReadNilBytes(bts)
@@ -4750,7 +4768,7 @@ func (z *EventChannelCreate) Msgsize() (s int) {
 	} else {
 		s += msgp.Int64Size
 	}
-	s += 6 + msgp.StringPrefixSize + len(z.Owner) + 16
+	s += 6 + msgp.StringPrefixSize + len(z.Owner) + 5 + msgp.StringPrefixSize + len(z.User) + 16
 	if z.LastMessageID == nil {
 		s += msgp.NilSize
 	} else {

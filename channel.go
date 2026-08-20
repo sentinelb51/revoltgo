@@ -32,7 +32,8 @@ type Channel struct {
 
 	Recipients  []string `msg:"recipients" json:"recipients,omitzero"`   // DM or Group
 	Permissions *int64   `msg:"permissions" json:"permissions,omitzero"` // Group only
-	Owner       string   `msg:"owner" json:"owner,omitzero"`             // Group or SavedMessages ("user" in SavedMessages)
+	Owner       string   `msg:"owner" json:"owner,omitzero"`             // Group only
+	User        string   `msg:"user" json:"user,omitzero"`               // SavedMessages only; the user it belongs to
 
 	LastMessageID      *string              `msg:"last_message_id" json:"last_message_id,omitzero"`
 	DefaultPermissions *PermissionOverwrite `msg:"default_permissions" json:"default_permissions,omitzero"`
