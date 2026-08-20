@@ -5,7 +5,6 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 		For support, join our revolt server on the GitHub README file
 		To compile correctly, always run beforehand:
 			/tools/msgp_codegen.py  (ensures all msgp code is generated: revoltgo_msgp_gen.go)
-			/tools/build_hash.py    (updates the COMMIT variable in this file)
 
 	   Todo: do we need state.go to track VoiceStates?
 */
@@ -16,18 +15,44 @@ import (
 	json "encoding/json/v2"
 	"log"
 	"net/http"
+	"runtime/debug"
+	"strings"
 	"time"
 )
 
+// VERSION is the module version recorded in the importing build; "(devel)" inside this repo.
+var VERSION = func() string {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "(unknown)"
+	}
+
+	for _, d := range bi.Deps {
+		if d.Path == "github.com/sentinelb51/revoltgo" {
+			return d.Version
+		}
+	}
+
+	return "(dev)"
+}()
+
 const (
-	VERSION        = "v3.0.4"
 	ExpectedAPI    = "0.15.1"
 	MainCommitsURL = "https://api.github.com/repos/sentinelb51/revoltgo/commits/main"
 )
 
 /* Logic related to the update checker */
 
-var COMMIT = "db245cbf2842f8d7a0a13759cf4276b8378b456a"
+// commit is the short hash trailing this module's pseudo-version. Empty when the
+// importing build resolved no version, e.g. inside this repo or behind a replace.
+var commit = func() string {
+	short := VERSION[strings.LastIndex(VERSION, "-")+1:]
+	if len(short) != 12 {
+		return ""
+	}
+
+	return short
+}()
 
 type GithubRepos struct {
 	Sha     string            `json:"sha"`
@@ -46,6 +71,11 @@ type GithubReposCommitUserData struct {
 }
 
 func HasUpdate() bool {
+	if commit == "" {
+		log.Printf("Update check skipped: this build has no resolvable module version")
+		return false
+	}
+
 	response, err := http.Get(MainCommitsURL)
 	if err != nil {
 		log.Printf("Update check failed whilst fetching: %v", err)
@@ -61,9 +91,9 @@ func HasUpdate() bool {
 		return false
 	}
 
-	if repo.Sha != COMMIT {
+	if !strings.HasPrefix(repo.Sha, commit) {
 		days := time.Now().Sub(repo.Commits.Author.Date).Hours() / 24
-		log.Printf("A new nightly update is available (%.0f days ago)", days)
+		log.Printf("A new update is available (%.0f days ago)", days)
 		log.Printf("To update, run: go get -u github.com/sentinelb51/revoltgo")
 		return true
 	}
