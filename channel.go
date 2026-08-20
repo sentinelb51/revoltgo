@@ -9,7 +9,6 @@ type ChannelType string
 const (
 	ChannelTypeSavedMessages ChannelType = "SavedMessages"
 	ChannelTypeText          ChannelType = "TextChannel"
-	ChannelTypeVoice         ChannelType = "VoiceChannel"
 	ChannelTypeDM            ChannelType = "DirectMessage"
 	ChannelTypeGroup         ChannelType = "Group"
 )
@@ -26,8 +25,9 @@ type Channel struct {
 	NSFW        bool    `msg:"nsfw" json:"nsfw,omitempty"`
 	Active      bool    `msg:"active" json:"active,omitempty"`
 
-	Server          *string                        `msg:"server" json:"server,omitempty"`                     // Server channels only
-	Voice           *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`                       // Server channels only
+	Server          *string                        `msg:"server" json:"server,omitempty"` // Server channels only
+	Voice           *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`   // Server channels only
+	Slowmode        *int                           `msg:"slowmode" json:"slowmode,omitempty"`
 	RolePermissions map[string]PermissionOverwrite `msg:"role_permissions" json:"role_permissions,omitempty"` // Server channel only
 
 	Recipients  []string `msg:"recipients" json:"recipients,omitempty"`   // DM or Group
@@ -82,6 +82,10 @@ func (c *Channel) update(data PartialChannel) {
 	if data.Voice != nil {
 		c.Voice = data.Voice
 	}
+
+	if data.Slowmode != nil {
+		c.Slowmode = data.Slowmode
+	}
 }
 
 func (c *Channel) clear(fields []string) {
@@ -91,6 +95,12 @@ func (c *Channel) clear(fields []string) {
 			c.Icon = nil
 		case "Description":
 			c.Description = nil
+		case "DefaultPermissions":
+			c.DefaultPermissions = nil
+		case "Voice":
+			c.Voice = nil
+		case "Slowmode":
+			c.Slowmode = nil
 		default:
 			log.Printf("Channel.clear(): unknown field %s", field)
 		}
@@ -111,6 +121,7 @@ type PartialChannel struct {
 	DefaultPermissions *PermissionOverwrite           `msg:"default_permissions" json:"default_permissions,omitempty"`
 	LastMessageID      *string                        `msg:"last_message_id" json:"last_message_id,omitempty"`
 	Voice              *ChannelVoiceInformation       `msg:"voice" json:"voice,omitempty"`
+	Slowmode           *int                           `msg:"slowmode" json:"slowmode,omitempty"`
 }
 
 type CompositeChannelID struct {

@@ -314,6 +314,11 @@ func (m MemberCompositeID) Mention() string {
 	return fmt.Sprintf("<@%s>", m.User)
 }
 
+type ServerCreateResponse struct {
+	Server   *Server    `msg:"server" json:"server,omitempty"`
+	Channels []*Channel `msg:"channels" json:"channels,omitempty"`
+}
+
 type ServerMembers struct {
 	Members []*ServerMember `msg:"members" json:"members,omitempty"`
 	Users   []*User         `msg:"users" json:"users,omitempty"`

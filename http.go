@@ -635,13 +635,17 @@ type ChannelMessageBulkDeleteParams struct {
 }
 
 type ChannelEditParams struct {
-	Name        string   `msg:"name" json:"name,omitempty"`
-	Description string   `msg:"description" json:"description,omitempty"`
-	Owner       string   `msg:"owner" json:"owner,omitempty"`
-	Icon        string   `msg:"icon" json:"icon,omitempty"`
-	NSFW        *bool    `msg:"nsfw" json:"nsfw,omitempty"`
-	Archived    *bool    `msg:"archived" json:"archived,omitempty"`
-	Remove      []string `msg:"remove" json:"remove,omitempty"`
+	Name        string `msg:"name" json:"name,omitempty"`
+	Description string `msg:"description" json:"description,omitempty"`
+	Owner       string `msg:"owner" json:"owner,omitempty"`
+	Icon        string `msg:"icon" json:"icon,omitempty"`
+	NSFW        *bool  `msg:"nsfw" json:"nsfw,omitempty"`
+	Archived    *bool  `msg:"archived" json:"archived,omitempty"`
+
+	Voice    *ChannelVoiceInformation `msg:"voice" json:"voice,omitempty"`
+	Slowmode *int                     `msg:"slowmode" json:"slowmode,omitempty"`
+
+	Remove []string `msg:"remove" json:"remove,omitempty"`
 }
 
 type SyncSettingsParamsTuple struct {

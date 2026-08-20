@@ -54,6 +54,8 @@ const (
 	PermissionListen              = 1 << 36
 	PermissionMentionEveryone     = 1 << 37
 	PermissionMentionRoles        = 1 << 38
+	PermissionBypassSlowmode      = 1 << 39
+	PermissionViewAuditLogs       = 1 << 40
 	PermissionGrantAllSafe        = 0x000F_FFFF_FFFF_FFFF
 )
 
@@ -121,7 +123,7 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (int64, error) 
 		}
 
 		return PermissionPresetDM, nil
-	case ChannelTypeText, ChannelTypeVoice:
+	case ChannelTypeText:
 		server := s.Server(*channel.Server)
 		if server == nil {
 			return 0, fmt.Errorf("server %s not found", *channel.Server)

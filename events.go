@@ -204,7 +204,9 @@ type EventChannelStartTyping struct {
 
 // EventChannelStopTyping is sent when a user stops typing in a channel.
 type EventChannelStopTyping struct {
-	EventChannelStartTyping `msg:",flatten"`
+	Event `msg:",flatten"`
+	ID    string `msg:"id" json:"id,omitempty"`
+	User  string `msg:"user" json:"user,omitempty"`
 }
 
 type EventChannelAck struct {

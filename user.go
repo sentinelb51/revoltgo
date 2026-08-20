@@ -175,8 +175,9 @@ type BotInformation struct {
 }
 
 type MutualFriendsAndServersResponse struct {
-	Users   []string `msg:"users" json:"users,omitempty"`
-	Servers []string `msg:"servers" json:"servers,omitempty"`
+	Users    []string `msg:"users" json:"users,omitempty"`
+	Servers  []string `msg:"servers" json:"servers,omitempty"`
+	Channels []string `msg:"channels" json:"channels,omitempty"`
 }
 
 // UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason

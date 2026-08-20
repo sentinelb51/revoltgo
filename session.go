@@ -504,6 +504,10 @@ func (s *Session) Close() error {
 
 // WriteSocketJSON writes data to the websocket in JSON
 func (s *Session) WriteSocketJSON(data any) error {
+	if s.WS == nil {
+		return gws.ErrConnClosed
+	}
+
 	payload, err := json.Marshal(data, jsonOptions)
 	if err == nil {
 		err = s.WS.WriteMessage(gws.OpcodeText, payload)
@@ -514,6 +518,10 @@ func (s *Session) WriteSocketJSON(data any) error {
 
 // WriteSocketMSGP writes data to the Websocket in MessagePack
 func (s *Session) WriteSocketMSGP(data any) error {
+	if s.WS == nil {
+		return gws.ErrConnClosed
+	}
+
 	marshaler, ok := data.(msgp.Marshaler)
 	if !ok {
 		err := fmt.Errorf("%T doesn't implement msgp.Marshaler", data)
@@ -645,9 +653,9 @@ func (s *Session) ServerEdit(id string, data ServerEditParams) (server *Server, 
 }
 
 // ServerCreate creates a server based on the data provided
-func (s *Session) ServerCreate(data ServerCreateParams) (server *Server, err error) {
+func (s *Session) ServerCreate(data ServerCreateParams) (response *ServerCreateResponse, err error) {
 	endpoint := EndpointServer("create")
-	err = s.HTTP.Request(http.MethodPost, endpoint, data, &server)
+	err = s.HTTP.Request(http.MethodPost, endpoint, data, &response)
 	return
 }
 
@@ -657,9 +665,22 @@ func (s *Session) ChannelBeginTyping(cID string) (err error) {
 	return s.WriteSocketMSGP(data)
 }
 
-func (s *Session) ChannelSearch(cID string, query ChannelSearchParams) (messages []*Message, err error) {
+func (s *Session) ChannelSearch(cID string, query ChannelSearchParams) (data ChannelMessages, err error) {
 	endpoint := EndpointChannelSearch(cID)
-	err = s.HTTP.Request(http.MethodPost, endpoint, query, &messages)
+
+	if query.IncludeUsers {
+		if err = s.HTTP.Request(http.MethodPost, endpoint, query, &data); err == nil {
+			s.State.addServerMembersAndUsers(data.Users, data.Members)
+		}
+
+		return
+	}
+
+	var messages []*Message
+	if err = s.HTTP.Request(http.MethodPost, endpoint, query, &messages); err == nil {
+		data.Messages = messages
+	}
+
 	return
 }
 
@@ -814,7 +835,7 @@ func (s *Session) Invite(iID string) (invite *Invite, err error) {
 	return
 }
 
-func (s *Session) InviteJoin(iID string) (invite *Invite, err error) {
+func (s *Session) InviteJoin(iID string) (invite *InviteJoin, err error) {
 	endpoint := EndpointInvite(iID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &invite)
 	return
@@ -1154,7 +1175,7 @@ func (s *Session) Logout() error {
 	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
 }
 
-func (s *Session) UserMutual(uID string) (mutual []*MutualFriendsAndServersResponse, err error) {
+func (s *Session) UserMutual(uID string) (mutual *MutualFriendsAndServersResponse, err error) {
 	endpoint := EndpointUserMutual(uID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &mutual)
 	return

@@ -25,9 +25,13 @@ type Invite struct {
 }
 
 type InviteJoin struct {
-	Type     InviteType `msg:"type" json:"type,omitempty"`
-	Channels []*Channel
-	Server   *Server `msg:"server" json:"server,omitempty"`
+	Type InviteType `msg:"type" json:"type,omitempty"`
+
+	Channels []*Channel `msg:"channels" json:"channels,omitempty"`
+	Server   *Server    `msg:"server" json:"server,omitempty"`
+
+	Channel *Channel `msg:"channel" json:"channel,omitempty"`
+	Users   []*User  `msg:"users" json:"users,omitempty"`
 }
 
 // InviteCreate seems deprecated/no longer documented
