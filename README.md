@@ -55,7 +55,7 @@ go get -u github.com/sentinelb51/revoltgo
 ```
 
 The library ships from `main`, so that command always fetches the newest commit.
-Releases are tagged `YYYY.MM` and exist only to carry a changelog: see the
+Releases are tagged `YY.M.N` and exist only to carry a changelog: see the
 **[releases page](https://github.com/sentinelb51/revoltgo/releases)** for what changed, and when.
 
 ## Usage
@@ -116,6 +116,7 @@ type StateConfig struct {
     TrackChannels     bool
     TrackMembers      bool
     TrackEmojis       bool
+    TrackVoice        bool
     TrackAPICalls     bool
     TrackBulkAPICalls bool
 }

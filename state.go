@@ -102,6 +102,103 @@ func (sm stateMembers) upsert(id MemberCompositeID) *ServerMember {
 	return member
 }
 
+type uIDtoVoiceState map[string]*UserVoiceState
+
+// stateVoice maps a Channel.ID -> [ User.ID -> UserVoiceState ]
+type stateVoice map[string]uIDtoVoiceState
+
+// add adds a singular participant to a channel
+func (sv stateVoice) add(cID string, state *UserVoiceState) {
+	// Get the participants for a particular channel
+	states := sv[cID]
+
+	// If the channel's participants are not allocated, allocate them
+	if states == nil {
+		states = make(uIDtoVoiceState)
+		sv[cID] = states
+	}
+
+	states[state.ID] = state
+}
+
+// addMany adds the participants of multiple channels
+// Note that this does not lock the state; the caller must handle this
+func (sv stateVoice) addMany(voiceStates []*ChannelVoiceState) {
+	// The wire already groups participants by channel, so no grouping pass is needed
+	for _, voiceState := range voiceStates {
+		if voiceState == nil || len(voiceState.Participants) == 0 {
+			continue
+		}
+
+		// Get the participants for a particular channel
+		states := sv[voiceState.ID]
+
+		// If the channel's participants are not allocated, allocate them
+		if states == nil {
+			states = make(uIDtoVoiceState, len(voiceState.Participants))
+			sv[voiceState.ID] = states
+		}
+
+		for _, participant := range voiceState.Participants {
+			states[participant.ID] = participant
+		}
+	}
+}
+
+// get returns a channel participant's voice state, or nil if the channel or user is not cached.
+// Indexing a nil map is safe, so no nil check is needed.
+func (sv stateVoice) get(cID, uID string) *UserVoiceState {
+	return sv[cID][uID]
+}
+
+// countInChannel returns how many participants are cached for a channel.
+func (sv stateVoice) countInChannel(cID string) int {
+	return len(sv[cID])
+}
+
+// remove drops a participant from a channel, and the channel once it is empty.
+func (sv stateVoice) remove(cID, uID string) {
+	states := sv[cID]
+	delete(states, uID)
+
+	if len(states) == 0 {
+		delete(sv, cID)
+	}
+}
+
+// removeChannel drops a channel's entire participant cache.
+func (sv stateVoice) removeChannel(cID string) {
+	delete(sv, cID)
+}
+
+// removeUser drops a user from every channel they are cached in.
+func (sv stateVoice) removeUser(uID string) {
+	for cID, states := range sv {
+		delete(states, uID)
+
+		if len(states) == 0 {
+			delete(sv, cID)
+		}
+	}
+}
+
+// upsert returns the cached voice state for a participant, creating an empty one if absent.
+func (sv stateVoice) upsert(cID, uID string) *UserVoiceState {
+	states := sv[cID]
+	if states == nil {
+		states = make(uIDtoVoiceState)
+		sv[cID] = states
+	}
+
+	state := states[uID]
+	if state == nil {
+		state = &UserVoiceState{ID: uID}
+		states[uID] = state
+	}
+
+	return state
+}
+
 type State struct {
 	self atomic.Pointer[User] // The current user, also present in users
 
@@ -111,6 +208,7 @@ type State struct {
 	channels map[string]*Channel // Channel.ID -> Channel
 	emojis   map[string]*Emoji   // Emoji.ID   -> Emoji.
 	members  stateMembers        // Server.ID  -> [ User.ID -> Member.ID ]
+	voice    stateVoice          // Channel.ID -> [ User.ID -> UserVoiceState ]
 
 	/* Mutexes for caches */
 	usersMu    sync.RWMutex
@@ -118,6 +216,7 @@ type State struct {
 	channelsMu sync.RWMutex
 	membersMu  sync.RWMutex
 	emojisMu   sync.RWMutex
+	voiceMu    sync.RWMutex
 
 	/* tracking options */
 
@@ -126,6 +225,7 @@ type State struct {
 	trackChannels bool
 	trackMembers  bool
 	trackEmojis   bool
+	trackVoice    bool
 
 	// trackAPICalls additionally updates the state from API calls
 	// This concept may future-proof against any de-syncs, but may use more CPU time
@@ -167,6 +267,10 @@ func (s *State) TrackMembers() bool {
 
 func (s *State) TrackEmojis() bool {
 	return s.trackEmojis
+}
+
+func (s *State) TrackVoice() bool {
+	return s.trackVoice
 }
 
 func (s *State) TrackAPICalls() bool {
@@ -416,6 +520,54 @@ func (s *State) Emojis() []*Emoji {
 	return emojis
 }
 
+// VoiceState returns a participant's voice state in a channel, or nil if they are not in the call
+func (s *State) VoiceState(cID, uID string) *UserVoiceState {
+	s.voiceMu.RLock()
+	defer s.voiceMu.RUnlock()
+
+	return s.voice.get(cID, uID)
+}
+
+// VoiceStates returns a snapshot slice of a channel's participants. The same
+// allocation trade-off as Members applies; prefer VoiceStatesSeq for a quick,
+// read-only pass.
+func (s *State) VoiceStates(cID string) []*UserVoiceState {
+	s.voiceMu.RLock()
+	defer s.voiceMu.RUnlock()
+
+	channelStates := s.voice[cID]
+
+	states := make([]*UserVoiceState, 0, len(channelStates))
+	for _, state := range channelStates {
+		states = append(states, state)
+	}
+
+	return states
+}
+
+// VoiceStateCount is a helper function to avoid costly len(s.VoiceStates(cID)) calls; avoid allocating a whole slice just to count
+func (s *State) VoiceStateCount(cID string) int {
+	s.voiceMu.RLock()
+	defer s.voiceMu.RUnlock()
+	return s.voice.countInChannel(cID)
+}
+
+// VoiceStatesSeq iterates a channel's participants without allocating a slice. The same
+// loop-body rules as MembersSeq apply: keep it quick and don't call other State methods
+// from inside it. Use VoiceStates if you need a snapshot.
+func (s *State) VoiceStatesSeq(cID string) iter.Seq[*UserVoiceState] {
+	return func(yield func(*UserVoiceState) bool) {
+		s.voiceMu.RLock()
+		defer s.voiceMu.RUnlock()
+
+		for _, state := range s.voice[cID] {
+			if !yield(state) {
+				return
+			}
+		}
+	}
+}
+
 /*
 	API call updates
 	Used when (State.trackAPICalls or State.trackBulkAPICalls) is enabled
@@ -539,6 +691,10 @@ type StateConfig struct {
 	TrackMembers  bool
 	TrackEmojis   bool
 
+	// TrackVoice caches who is connected to each voice channel.
+	// It also asks for the voice states in the ready event; see Session.buildOpenQueryParams
+	TrackVoice bool
+
 	// TrackAPICalls additionally updates the state from single API calls
 	TrackAPICalls bool
 
@@ -554,6 +710,7 @@ func DefaultStateConfig() StateConfig {
 		TrackChannels:     true,
 		TrackMembers:      true,
 		TrackEmojis:       true,
+		TrackVoice:        true,
 		TrackAPICalls:     true,
 		TrackBulkAPICalls: true,
 	}
@@ -565,6 +722,7 @@ func (s *State) applyConfig(c StateConfig) {
 	s.trackChannels = c.TrackChannels
 	s.trackMembers = c.TrackMembers
 	s.trackEmojis = c.TrackEmojis
+	s.trackVoice = c.TrackVoice
 	s.trackAPICalls = c.TrackAPICalls
 	s.trackBulkAPICalls = c.TrackBulkAPICalls
 }
@@ -577,6 +735,7 @@ func newState() *State {
 		channels: make(map[string]*Channel),
 		members:  make(stateMembers),
 		emojis:   make(map[string]*Emoji),
+		voice:    make(stateVoice),
 	}
 
 	s.applyConfig(DefaultStateConfig())
@@ -641,6 +800,13 @@ func (s *State) populate(ready *EventReady) {
 		}
 		s.emojisMu.Unlock()
 	}
+
+	if s.trackVoice {
+		s.voiceMu.Lock()
+		s.voice = make(stateVoice, len(ready.VoiceStates))
+		s.voice.addMany(ready.VoiceStates)
+		s.voiceMu.Unlock()
+	}
 }
 
 // platformWipe removes a user from users, channels (dms and groups), and servers member lists.
@@ -669,6 +835,11 @@ func (s *State) platformWipe(event *EventUserPlatformWipe) {
 	s.membersMu.Lock()
 	s.members.removeUser(event.UserID)
 	s.membersMu.Unlock()
+
+	// Remove them from any call they were in
+	s.voiceMu.Lock()
+	s.voice.removeUser(event.UserID)
+	s.voiceMu.Unlock()
 }
 
 func (s *State) updateServerRoleRanks(event *EventServerRoleRanksUpdate) {
@@ -889,6 +1060,12 @@ func (s *State) updateChannel(event *EventChannelUpdate) {
 
 func (s *State) deleteChannel(event *EventChannelDelete) {
 
+	if s.trackVoice {
+		s.voiceMu.Lock()
+		s.voice.removeChannel(event.ID)
+		s.voiceMu.Unlock()
+	}
+
 	if !s.trackChannels {
 		return
 	}
@@ -932,18 +1109,16 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 
 func (s *State) createServer(event *EventServerCreate) {
 
-	if !s.trackServers {
-		return
-	}
-
 	if event.Server == nil {
 		log.Printf("State.createServer: server %s has no server data\n", event.ID)
 		return
 	}
 
-	s.serversMu.Lock()
-	s.servers[event.ID] = event.Server
-	s.serversMu.Unlock()
+	if s.trackServers {
+		s.serversMu.Lock()
+		s.servers[event.ID] = event.Server
+		s.serversMu.Unlock()
+	}
 
 	// If there's something you'll be first at in life, it's being a member in your own server.
 	if s.trackMembers {
@@ -988,6 +1163,12 @@ func (s *State) createServer(event *EventServerCreate) {
 		}
 		s.emojisMu.Unlock()
 	}
+
+	if s.trackVoice && len(event.VoiceStates) > 0 {
+		s.voiceMu.Lock()
+		s.voice.addMany(event.VoiceStates)
+		s.voiceMu.Unlock()
+	}
 }
 
 func (s *State) updateServer(event *EventServerUpdate) {
@@ -1013,8 +1194,18 @@ func (s *State) deleteServer(event *EventServerDelete) {
 
 	if s.trackServers {
 		s.serversMu.Lock()
+		server := s.servers[event.ID]
 		delete(s.servers, event.ID)
 		s.serversMu.Unlock()
+
+		// The server we just dropped is the only way to find its channels
+		if s.trackVoice && server != nil {
+			s.voiceMu.Lock()
+			for _, cID := range server.Channels {
+				s.voice.removeChannel(cID)
+			}
+			s.voiceMu.Unlock()
+		}
 	}
 
 	if s.trackMembers {
@@ -1066,4 +1257,57 @@ func (s *State) deleteEmoji(event *EventEmojiDelete) {
 	defer s.emojisMu.Unlock()
 
 	delete(s.emojis, event.ID)
+}
+
+func (s *State) joinVoiceChannel(event *EventVoiceChannelJoin) {
+
+	if !s.trackVoice {
+		return
+	}
+
+	s.voiceMu.Lock()
+	defer s.voiceMu.Unlock()
+
+	s.voice.add(event.ID, &event.State)
+}
+
+func (s *State) leaveVoiceChannel(event *EventVoiceChannelLeave) {
+
+	if !s.trackVoice {
+		return
+	}
+
+	s.voiceMu.Lock()
+	defer s.voiceMu.Unlock()
+
+	s.voice.remove(event.ID, event.User)
+}
+
+// moveVoiceChannel handles a participant being moved between two channels;
+// the server sends this instead of a leave/join pair.
+func (s *State) moveVoiceChannel(event *EventVoiceChannelMove) {
+
+	if !s.trackVoice {
+		return
+	}
+
+	s.voiceMu.Lock()
+	defer s.voiceMu.Unlock()
+
+	s.voice.remove(event.From, event.User)
+	s.voice.add(event.To, &event.State)
+}
+
+func (s *State) updateVoiceState(event *EventUserVoiceStateUpdate) {
+
+	if !s.trackVoice {
+		return
+	}
+
+	s.voiceMu.Lock()
+	defer s.voiceMu.Unlock()
+
+	// Upserting keeps us in sync if we somehow missed the join
+	state := s.voice.upsert(event.ChannelID, event.ID)
+	state.update(event.Data)
 }

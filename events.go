@@ -239,11 +239,12 @@ type EventServerMemberLeave struct {
 
 // EventServerCreate is sent when a server is created (joined).
 type EventServerCreate struct {
-	Event    `msg:",flatten"`
-	ID       string     `msg:"id" json:"id,omitzero"`
-	Server   *Server    `msg:"server" json:"server,omitzero"`
-	Channels []*Channel `msg:"channels" json:"channels,omitzero"`
-	Emojis   []*Emoji   `msg:"emojis" json:"emojis,omitzero"`
+	Event       `msg:",flatten"`
+	ID          string               `msg:"id" json:"id,omitzero"`
+	Server      *Server              `msg:"server" json:"server,omitzero"`
+	Channels    []*Channel           `msg:"channels" json:"channels,omitzero"`
+	Emojis      []*Emoji             `msg:"emojis" json:"emojis,omitzero"`
+	VoiceStates []*ChannelVoiceState `msg:"voice_states" json:"voice_states,omitzero"`
 }
 
 type EventServerRoleDelete struct {
@@ -359,10 +360,13 @@ type EventUserVoiceStateUpdate struct {
 	Data      PartialUserVoiceState `msg:"data" json:"data,omitzero"`
 }
 
+// EventUserMoveVoiceChannel is sent when we are moved to another voice node;
+// From and To are channel IDs, and Token authenticates against Node.
 type EventUserMoveVoiceChannel struct {
 	Event `msg:",flatten"`
 	Node  string `msg:"node" json:"node,omitzero"`
 	From  string `msg:"from" json:"from,omitzero"`
+	To    string `msg:"to" json:"to,omitzero"`
 	Token string `msg:"token" json:"token,omitzero"`
 }
 

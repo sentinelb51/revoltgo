@@ -186,17 +186,42 @@ type UserSettings struct {
 	Data    msgp.Raw
 }
 
+// UserVoiceState is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/users.rs#L292
 type UserVoiceState struct {
-	ID            string     `msg:"_id" json:"_id,omitzero"`
-	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitzero"`
-	IsReceiving   bool       `msg:"is_receiving" json:"is_receiving,omitzero"`
-	IsPublishing  bool       `msg:"is_publishing" json:"is_publishing,omitzero"`
-	Screensharing bool       `msg:"screensharing" json:"screensharing,omitzero"`
-	Camera        bool       `msg:"camera" json:"camera,omitzero"`
+	ID            string    `msg:"id" json:"id,omitzero"`
+	JoinedAt      time.Time `msg:"joined_at" json:"joined_at,omitzero"`
+	IsReceiving   bool      `msg:"is_receiving" json:"is_receiving,omitzero"`
+	IsPublishing  bool      `msg:"is_publishing" json:"is_publishing,omitzero"`
+	Screensharing bool      `msg:"screensharing" json:"screensharing,omitzero"`
+	Camera        bool      `msg:"camera" json:"camera,omitzero"`
+}
+
+// update applies a partial voice state; ID is skipped, as the voice cache keys on it
+func (v *UserVoiceState) update(data PartialUserVoiceState) {
+	if data.JoinedAt != nil {
+		v.JoinedAt = *data.JoinedAt
+	}
+
+	if data.IsReceiving != nil {
+		v.IsReceiving = *data.IsReceiving
+	}
+
+	if data.IsPublishing != nil {
+		v.IsPublishing = *data.IsPublishing
+	}
+
+	if data.Screensharing != nil {
+		v.Screensharing = *data.Screensharing
+	}
+
+	if data.Camera != nil {
+		v.Camera = *data.Camera
+	}
 }
 
 type PartialUserVoiceState struct {
-	ID            *string    `msg:"_id" json:"_id,omitzero"`
+	ID            *string    `msg:"id" json:"id,omitzero"`
 	JoinedAt      *time.Time `msg:"joined_at" json:"joined_at,omitzero"`
 	IsReceiving   *bool      `msg:"is_receiving" json:"is_receiving,omitzero"`
 	IsPublishing  *bool      `msg:"is_publishing" json:"is_publishing,omitzero"`

@@ -5,8 +5,6 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 		For support, join our revolt server on the GitHub README file
 		To compile correctly, always run beforehand:
 			/tools/msgp_codegen.py  (ensures all msgp code is generated: revoltgo_msgp_gen.go)
-
-	   Todo: do we need state.go to track VoiceStates?
 */
 
 package revoltgo

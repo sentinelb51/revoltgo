@@ -227,10 +227,6 @@ func (s *Session) addDefaultHandlers() {
 			s.State.createChannel(e)
 		})
 
-		addDefaultHandler(s, func(s *Session, e *EventChannelDelete) {
-			s.State.deleteChannel(e)
-		})
-
 		addDefaultHandler(s, func(s *Session, e *EventChannelUpdate) {
 			s.State.updateChannel(e)
 		})
@@ -245,10 +241,6 @@ func (s *Session) addDefaultHandlers() {
 	}
 
 	if s.State.TrackServers() {
-		addDefaultHandler(s, func(s *Session, e *EventServerCreate) {
-			s.State.createServer(e)
-		})
-
 		addDefaultHandler(s, func(s *Session, e *EventServerUpdate) {
 			s.State.updateServer(e)
 		})
@@ -296,6 +288,39 @@ func (s *Session) addDefaultHandlers() {
 
 		addDefaultHandler(s, func(s *Session, e *EventEmojiDelete) {
 			s.State.deleteEmoji(e)
+		})
+	}
+
+	// A deleted channel takes its call with it, and a joined server carries the voice
+	// states of its channels, so the voice cache needs these two events even when
+	// channels or servers aren't tracked. Both state methods self-guard each branch.
+	if s.State.TrackChannels() || s.State.TrackVoice() {
+		addDefaultHandler(s, func(s *Session, e *EventChannelDelete) {
+			s.State.deleteChannel(e)
+		})
+	}
+
+	if s.State.TrackServers() || s.State.TrackVoice() {
+		addDefaultHandler(s, func(s *Session, e *EventServerCreate) {
+			s.State.createServer(e)
+		})
+	}
+
+	if s.State.TrackVoice() {
+		addDefaultHandler(s, func(s *Session, e *EventVoiceChannelJoin) {
+			s.State.joinVoiceChannel(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventVoiceChannelLeave) {
+			s.State.leaveVoiceChannel(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventVoiceChannelMove) {
+			s.State.moveVoiceChannel(e)
+		})
+
+		addDefaultHandler(s, func(s *Session, e *EventUserVoiceStateUpdate) {
+			s.State.updateVoiceState(e)
 		})
 	}
 }
@@ -426,6 +451,10 @@ func (s *Session) buildOpenQueryParams() url.Values {
 
 	if s.State.trackEmojis {
 		parameters.Add("ready", "emojis")
+	}
+
+	if s.State.trackVoice {
+		parameters.Add("ready", "voice_states")
 	}
 
 	parameters.Add("ready", "channel_unreads")
