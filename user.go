@@ -43,7 +43,7 @@ type User struct {
 
 func (u *User) AvatarURL(size string) string {
 	if u.Avatar == nil {
-		return EndpointUserDefaultAvatar(u.ID)
+		return apiURL + EndpointUserDefaultAvatar(u.ID)
 	}
 
 	return u.Avatar.URL(size)

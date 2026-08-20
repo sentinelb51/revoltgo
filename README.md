@@ -47,20 +47,16 @@ Of course, you can always create an issue or a PR.
 # Getting started
 
 ## Installation
-Assuming that you have a working Go environment ready, run one of the following commands to install the library.
+Assuming that you have a working Go environment ready, run the following command to install the library.
 If you do not have a Go environment ready, **[see how to set it up here](https://go.dev/doc/install)**
 
-### Stable release
-
 ```bash
-go get github.com/sentinelb51/revoltgo
+go get -u github.com/sentinelb51/revoltgo
 ```
 
-### Latest release
-
-```bash
-go get github.com/sentinelb51/revoltgo@latest
-```
+The library ships from `main`, so that command always fetches the newest commit.
+Releases are tagged `YYYY.MM` and exist only to carry a changelog: see the
+**[releases page](https://github.com/sentinelb51/revoltgo/releases)** for what changed, and when.
 
 ## Usage
 Now that the package is installed, you will have to import it
