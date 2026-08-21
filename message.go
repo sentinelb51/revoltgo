@@ -72,11 +72,46 @@ type Message struct {
 	// []Message.ID's that this message replies to
 	Replies []string `msg:"replies" json:"replies,omitzero"`
 
-	// Server that were mentioned
-	RoleMentions []string        `msg:"role_mentions" json:"role-mentions,omitzero"`
+	// Roles that were mentioned
+	RoleMentions []string        `msg:"role_mentions" json:"role_mentions,omitzero"`
 	System       *MessageSystem  `msg:"system" json:"system,omitzero"`
 	User         *User           `msg:"user" json:"user,omitzero"`
 	Webhook      *MessageWebhook `msg:"webhook" json:"webhook,omitzero"`
+}
+
+// PartialMessage is derived from:
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/messages.rs#L17
+type PartialMessage struct {
+	ID           *string              `msg:"_id" json:"_id,omitzero"`
+	Author       *string              `msg:"author" json:"author,omitzero"`
+	Channel      *string              `msg:"channel" json:"channel,omitzero"`
+	Attachments  []*File              `msg:"attachments" json:"attachments,omitzero"`
+	Content      *string              `msg:"content" json:"content,omitzero"`
+	Edited       *time.Time           `msg:"edited" json:"edited,omitzero"`
+	Embeds       []*MessageEmbed      `msg:"embeds" json:"embeds,omitzero"`
+	Flags        *MessageFlagsType    `msg:"flags" json:"flags,omitzero"`
+	Interactions *MessageInteractions `msg:"interactions" json:"interactions,omitzero"`
+	Masquerade   *MessageMasquerade   `msg:"masquerade" json:"masquerade,omitzero"`
+	Member       *ServerMember        `msg:"member" json:"member,omitzero"`
+	Mentions     []string             `msg:"mentions" json:"mentions,omitzero"`
+	Nonce        *string              `msg:"nonce" json:"nonce,omitzero"`
+	Pinned       *bool                `msg:"pinned" json:"pinned,omitzero"`
+
+	// Emoji.ID -> []User.ID
+	Reactions map[string][]string `msg:"reactions" json:"reactions,omitzero"`
+
+	// []Message.ID's that this message replies to
+	Replies []string `msg:"replies" json:"replies,omitzero"`
+
+	// Roles that were mentioned
+	RoleMentions []string        `msg:"role_mentions" json:"role_mentions,omitzero"`
+	System       *MessageSystem  `msg:"system" json:"system,omitzero"`
+	User         *User           `msg:"user" json:"user,omitzero"`
+	Webhook      *MessageWebhook `msg:"webhook" json:"webhook,omitzero"`
+}
+
+type MessageAppend struct {
+	Embeds []*MessageEmbed `msg:"embeds" json:"embeds,omitzero"`
 }
 
 // MessageWebhook is derived from:
@@ -91,7 +126,7 @@ func (ms *MessageWebhook) AvatarURL(size string) string {
 		return ""
 	}
 
-	return EndpointAutumnFile("avatars", *ms.Avatar, size)
+	return EndpointAutumnFile(FileTagAvatars, *ms.Avatar, size)
 }
 
 type MessageInteractions struct {

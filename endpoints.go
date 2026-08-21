@@ -369,12 +369,16 @@ func EndpointAuthMFA(action string) string {
 
 /* CDN endpoints */
 
-func EndpointAutumn(tag string) string {
-	return cdnURL + "/" + tag
+// EndpointAutumn is the bucket a file is uploaded to; EndpointAutumnFile is the
+// file served back out of one. Both take the tag typed rather than as a path
+// segment, it being half of what identifies a file — see FileTag. Neither
+// refuses a tag it does not know: check logs one and carries on.
+func EndpointAutumn(tag FileTag) string {
+	return cdnURL + "/" + string(tag.check())
 }
 
-func EndpointAutumnFile(tag, id, size string) (url string) {
-	url = cdnURL + "/" + tag + "/" + id
+func EndpointAutumnFile(tag FileTag, id, size string) (url string) {
+	url = cdnURL + "/" + string(tag.check()) + "/" + id
 	if size != "" {
 		url += "?max_side=" + size
 	}

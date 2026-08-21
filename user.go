@@ -35,9 +35,9 @@ type User struct {
 	Relations     []UserRelationship   `msg:"relations" json:"relations,omitzero"`
 	Relationship  UserRelationshipType `msg:"relationship" json:"relationship,omitzero"`
 	DisplayName   *string              `msg:"display_name" json:"display_name,omitzero"`
+	Pronouns      *string              `msg:"pronouns" json:"pronouns,omitzero"`
 	Avatar        *File                `msg:"avatar" json:"avatar,omitzero"`
 	Status        *UserStatus          `msg:"status" json:"status,omitzero"`
-	Profile       *UserProfile         `msg:"profile" json:"profile,omitzero"` // todo: deprecated? not present in src
 	Bot           *Bot                 `msg:"bot" json:"bot,omitzero"`
 }
 
@@ -60,6 +60,10 @@ func (u *User) update(data PartialUser) {
 
 	if data.DisplayName != nil {
 		u.DisplayName = data.DisplayName
+	}
+
+	if data.Pronouns != nil {
+		u.Pronouns = data.Pronouns
 	}
 
 	if data.Avatar != nil {
@@ -99,27 +103,43 @@ func (u *User) update(data PartialUser) {
 	}
 }
 
+type UserRemoveField string
+
+const (
+	UserRemoveAvatar            UserRemoveField = "Avatar"
+	UserRemoveDisplayName       UserRemoveField = "DisplayName"
+	UserRemovePronouns          UserRemoveField = "Pronouns"
+	UserRemoveStatusText        UserRemoveField = "StatusText"
+	UserRemoveStatusPresence    UserRemoveField = "StatusPresence"
+	UserRemoveProfileContent    UserRemoveField = "ProfileContent"
+	UserRemoveProfileBackground UserRemoveField = "ProfileBackground"
+	UserRemoveInternal          UserRemoveField = "Internal"
+)
+
+// clear covers every UserRemoveField. ProfileContent and ProfileBackground
+// are among them and are no-ops here: a profile is not part of the user record,
+// only of the response to Session.UserProfile, so there is nothing cached to
+// clear. They are still listed, or the default arm would log them as unknown.
 func (u *User) clear(fields []string) {
 	for _, field := range fields {
-		switch field {
-		case "ProfileContent":
-			if u.Profile != nil {
-				u.Profile.Content = ""
-			}
-		case "ProfileBackground":
-			if u.Profile != nil {
-				u.Profile.Background = nil
-			}
-		case "StatusText":
+		switch UserRemoveField(field) {
+		case UserRemoveProfileContent, UserRemoveProfileBackground, UserRemoveInternal:
+		case UserRemoveStatusText:
 			if u.Status != nil {
 				u.Status.Text = ""
 			}
-		case "Avatar":
+		case UserRemoveStatusPresence:
+			if u.Status != nil {
+				u.Status.Presence = ""
+			}
+		case UserRemoveAvatar:
 			u.Avatar = nil
-		case "DisplayName":
+		case UserRemoveDisplayName:
 			u.DisplayName = nil
+		case UserRemovePronouns:
+			u.Pronouns = nil
 		default:
-			log.Printf("User.Clear(): unknown field %s\n", field)
+			log.Printf("User.clear(): unknown field %s\n", field)
 		}
 	}
 }
@@ -135,9 +155,9 @@ type PartialUser struct {
 	Relations     *[]UserRelationship   `msg:"relations" json:"relations,omitzero"`
 	Relationship  *UserRelationshipType `msg:"relationship" json:"relationship,omitzero"`
 	DisplayName   *string               `msg:"display_name" json:"display_name,omitzero"`
+	Pronouns      *string               `msg:"pronouns" json:"pronouns,omitzero"`
 	Avatar        *File                 `msg:"avatar" json:"avatar,omitzero"`
 	Status        *UserStatus           `msg:"status" json:"status,omitzero"`
-	Profile       *UserProfile          `msg:"profile" json:"profile,omitzero"` // todo: deprecated? not present in src
 	Bot           *Bot                  `msg:"bot" json:"bot,omitzero"`
 }
 

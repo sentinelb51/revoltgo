@@ -53,8 +53,8 @@ func (w *Webhook) update(data PartialWebhook) {
 
 func (w *Webhook) clear(fields []string) {
 	for _, field := range fields {
-		switch field {
-		case "Avatar":
+		switch WebhookRemoveField(field) {
+		case WebhookRemoveAvatar:
 			w.Avatar = nil
 		default:
 			log.Printf("Webhook.clear(): unknown field %s", field)

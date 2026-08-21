@@ -9,8 +9,12 @@ const (
 	InviteTypeGroup  InviteType = "Group"
 )
 
+// Invite is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channel_invites.rs
+// InviteTypeGroup lack Invite.ServerID & Invite.MemberCount;
 type Invite struct {
 	Type               InviteType `msg:"type" json:"type,omitzero"`
+	Code               string     `msg:"code" json:"code,omitzero"`
 	ServerID           string     `msg:"server_id" json:"server_id,omitzero"`
 	ServerName         string     `msg:"server_name" json:"server_name,omitzero"`
 	ServerIcon         *File      `msg:"server_icon" json:"server_icon,omitzero"`
@@ -34,9 +38,11 @@ type InviteJoin struct {
 	Users   []*User  `msg:"users" json:"users,omitzero"`
 }
 
-// InviteCreate seems deprecated/no longer documented
-// todo: remove in the future
-type InviteCreate struct {
+// InviteRecord is derived from
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channel_invites.rs
+// This is what the server stores, and what Session.ChannelInviteCreate() and Session.ServerInvites() return
+// InviteRecord.Server will be empty for a group invite.
+type InviteRecord struct {
 	Type InviteType `msg:"type" json:"type,omitzero"`
 
 	// ID is the code of the invite

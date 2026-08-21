@@ -37,7 +37,7 @@ func main() {
 
 		// Upload the attachment to the server to get the attachment ID
 		// This attachment ID will reference the uploaded file when we send it in a message
-		attachment, err := session.AttachmentUpload(payload)
+		attachment, err := session.UploadAttachment(payload)
 		if err != nil {
 			fmt.Printf("Failed to upload attachment: %s\n", err)
 			return

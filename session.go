@@ -566,15 +566,21 @@ func (s *Session) WriteSocketMSGP(data any) error {
 	return err
 }
 
-func (s *Session) AttachmentUpload(file *FileParams) (attachment *FileParamsData, err error) {
+// Upload uploads a file in one of Autumn's buckets and answers with the ID for it
+func (s *Session) Upload(tag FileTag, file *FileParams) (attachment *FileParamsData, err error) {
 
 	if file.Name == "" {
 		log.Printf("Warning: uploading files without names may cause the media to not load on the client")
 	}
 
-	endpoint := EndpointAutumn("attachments")
+	endpoint := EndpointAutumn(tag)
 	err = s.HTTP.Request(http.MethodPost, endpoint, file, &attachment)
 	return
+}
+
+// UploadAttachment is a helper Upload for MessageSend.Attachments.
+func (s *Session) UploadAttachment(file *FileParams) (attachment *FileParamsData, err error) {
+	return s.Upload(FileTagAttachments, file)
 }
 
 func (s *Session) Emoji(eID string) (emoji *Emoji, err error) {
@@ -816,7 +822,7 @@ func (s *Session) GroupMembers(cID string) (users []*User, err error) {
 	return
 }
 
-func (s *Session) ChannelInviteCreate(cID string) (invite *InviteCreate, err error) {
+func (s *Session) ChannelInviteCreate(cID string) (invite *InviteRecord, err error) {
 	endpoint := EndpointChannelInvites(cID)
 	err = s.HTTP.Request(http.MethodPost, endpoint, nil, &invite)
 	return
@@ -834,7 +840,10 @@ func (s *Session) MessageAck(channelID, messageID string) (err error) {
 	return
 }
 
-func (s *Session) ServerBans(sID string) (bans []*ServerBans, err error) {
+// ServerBans lists a server's bans. The route answers one {users, bans} object,
+// not an array: the two halves are joined on the composite {user, server} ID a
+// ban carries, and a ban naming somebody users left out is still a ban.
+func (s *Session) ServerBans(sID string) (bans *ServerBans, err error) {
 	endpoint := EndpointServerBans(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &bans)
 	return
@@ -846,7 +855,7 @@ func (s *Session) ServerAck(serverID string) (err error) {
 	return
 }
 
-func (s *Session) ServerInvites(sID string) (invites []*Invite, err error) {
+func (s *Session) ServerInvites(sID string) (invites []*InviteRecord, err error) {
 	endpoint := EndpointServerInvites(sID)
 	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &invites)
 	return
@@ -896,31 +905,50 @@ func (s *Session) ServerEmojis(sID string) (emojis []*Emoji, err error) {
 
 func (s *Session) ServersRoleRanksEdit(sID string, ranks []string) (err error) {
 	endpoint := EndpointServerRolesRanks(sID)
-	err = s.HTTP.Request(http.MethodPatch, endpoint, ranks, nil)
+	err = s.HTTP.Request(http.MethodPatch, endpoint, ServerRoleRanksParams{Ranks: ranks}, nil)
 	return
 }
 
+// ServersRoleCreate creates a role, answering with it and with the ID it was filed
+// under — the role object itself carries no ID, per the NewRoleResponse schema of
+// https://developers.stoat.chat/api-reference/#tag/server-permissions/POST/servers/{target}/roles
 func (s *Session) ServersRoleCreate(sID string, data ServerRoleCreateParams) (role *ServerRole, err error) {
 	endpoint := EndpointServerRoles(sID)
-	err = s.HTTP.Request(http.MethodPost, endpoint, data, &role)
+
+	var response ServerRoleCreateResponse
+	if err = s.HTTP.Request(http.MethodPost, endpoint, data, &response); err != nil {
+		return nil, err
+	}
+
+	role = &response.Role
+	role.ID = response.ID
+
 	return
 }
 
 func (s *Session) PermissionsSet(sID, rID string, data PermissionOverwrite) (err error) {
 	endpoint := EndpointServerPermissions(sID, rID)
-	err = s.HTTP.Request(http.MethodPut, endpoint, data, nil)
+	err = s.HTTP.Request(http.MethodPut, endpoint, PermissionsSetParams{Permissions: PermissionOverwriteParams(data)}, nil)
 	return
 }
 
 // ChannelPermissionsSet sets permissions for the specified role in this channel.
 func (s *Session) ChannelPermissionsSet(cID, rID string, data PermissionOverwrite) (err error) {
 	endpoint := EndpointChannelPermission(cID, rID)
-	return s.HTTP.Request(http.MethodPut, endpoint, data, nil)
+	return s.HTTP.Request(http.MethodPut, endpoint, PermissionsSetParams{Permissions: PermissionOverwriteParams(data)}, nil)
 }
 
 // ChannelPermissionsSetDefault sets permissions for the default role in this channel.
+// A group takes a plain value instead (see GroupPermissionsSetDefault):
+// https://developers.stoat.chat/api-reference/#tag/channel-permissions/PUT/channels/{target}/permissions/default
 func (s *Session) ChannelPermissionsSetDefault(cID string, data PermissionOverwrite) (err error) {
 	return s.ChannelPermissionsSet(cID, "default", data)
+}
+
+// GroupPermissionsSetDefault sets the permissions of everybody in a group.
+func (s *Session) GroupPermissionsSetDefault(cID string, data PermissionsSetDefaultParams) (err error) {
+	endpoint := EndpointChannelPermission(cID, "default")
+	return s.HTTP.Request(http.MethodPut, endpoint, data, nil)
 }
 
 // PermissionsSetDefault sets the permissions of a role in a server

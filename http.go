@@ -431,13 +431,20 @@ type AccountDeleteConfirmParams struct {
 }
 
 type UserEditParams struct {
-	DisplayName string       `msg:"display_name" json:"display_name,omitzero"`
-	Avatar      string       `msg:"avatar" json:"avatar,omitzero"`
-	Status      *UserStatus  `msg:"status" json:"status,omitzero"`
-	Profile     *UserProfile `msg:"profile" json:"profile,omitzero"`
-	Badges      *uint32      `msg:"badges" json:"badges,omitzero"`
-	Flags       *uint32      `msg:"flags" json:"flags,omitzero"`
-	Remove      []string     `msg:"remove" json:"remove,omitzero"`
+	DisplayName string             `msg:"display_name" json:"display_name,omitzero"`
+	Pronouns    string             `msg:"pronouns" json:"pronouns,omitzero"`
+	Avatar      string             `msg:"avatar" json:"avatar,omitzero"`
+	Status      *UserStatus        `msg:"status" json:"status,omitzero"`
+	Profile     *UserProfileParams `msg:"profile" json:"profile,omitzero"`
+	Badges      *uint32            `msg:"badges" json:"badges,omitzero"`
+	Flags       *uint32            `msg:"flags" json:"flags,omitzero"`
+
+	Remove []UserRemoveField `msg:"remove" json:"remove,omitzero"`
+}
+
+type UserProfileParams struct {
+	Content    *string `msg:"content" json:"content,omitzero"`
+	Background string  `msg:"background" json:"background,omitzero"`
 }
 
 type UsernameParams struct {
@@ -496,11 +503,11 @@ type ServerChannelCreateParams struct {
 }
 
 type ServerMemberEditParams struct {
-	Nickname string     `msg:"nickname" json:"nickname,omitzero"`
-	Avatar   string     `msg:"avatar" json:"avatar,omitzero"`
-	Roles    []string   `msg:"roles" json:"roles,omitzero"`
-	Timeout  *time.Time `msg:"timeout" json:"timeout,omitzero"`
-	Remove   []string   `msg:"remove" json:"remove,omitzero"`
+	Nickname string                  `msg:"nickname" json:"nickname,omitzero"`
+	Avatar   string                  `msg:"avatar" json:"avatar,omitzero"`
+	Roles    []string                `msg:"roles" json:"roles,omitzero"`
+	Timeout  *time.Time              `msg:"timeout" json:"timeout,omitzero"`
+	Remove   []ServerMemberClearType `msg:"remove" json:"remove,omitzero"`
 }
 
 // ServerMemberBanParams derived from:
@@ -616,9 +623,28 @@ type ServerRoleCreateParams struct {
 	Rank *int   `msg:"rank" json:"rank,omitzero"` // nil lets the API assign a rank
 }
 
+// ServerRoleCreateResponse is derived from
+// https://developers.stoat.chat/api-reference/#tag/server-permissions/POST/servers/{target}/roles
+type ServerRoleCreateResponse struct {
+	ID   string     `msg:"id" json:"id,omitzero"`
+	Role ServerRole `msg:"role" json:"role,omitzero"`
+}
+
 type PermissionsSetDefaultParams struct {
 	// Always sent; 0 is a valid value that denies everything
 	Permissions int64 `msg:"permissions" json:"permissions"`
+}
+
+// PermissionsSetParams is DataSetServerRolePermission and DataSetRolePermissions:
+// https://developers.stoat.chat/api-reference/#tag/server-permissions/PUT/servers/{target}/permissions/{role_id}
+type PermissionsSetParams struct {
+	Permissions PermissionOverwriteParams `msg:"permissions" json:"permissions"`
+}
+
+// ServerRoleRanksParams is DataEditRoleRanks:
+// https://developers.stoat.chat/api-reference/#tag/server-permissions/PATCH/servers/{target}/roles/ranks
+type ServerRoleRanksParams struct {
+	Ranks []string `msg:"ranks" json:"ranks"`
 }
 
 type ChannelMessageBulkDeleteParams struct {
@@ -686,6 +712,13 @@ type FileParams struct {
 // To upload a file, you must reference this ID in MessageSend.Attachments.
 type FileParamsData struct {
 	ID string `msg:"id" json:"id,omitzero"`
+}
+
+// PermissionOverwriteParams is derived from
+// https://developers.stoat.chat/api-reference/#tag/server-permissions/PUT/servers/{target}/permissions/{role_id}.
+type PermissionOverwriteParams struct {
+	Allow int64 `msg:"allow" json:"allow"`
+	Deny  int64 `msg:"deny" json:"deny"`
 }
 
 /*

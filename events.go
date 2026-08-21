@@ -171,16 +171,17 @@ type EventWebhookUpdate struct {
 
 type EventMessageUpdate struct {
 	Event   `msg:",flatten"`
-	ID      string  `msg:"id" json:"id,omitzero"`
-	Channel string  `msg:"channel" json:"channel,omitzero"`
-	Data    Message `msg:"data" json:"data,omitzero"`
+	ID      string         `msg:"id" json:"id,omitzero"`
+	Channel string         `msg:"channel" json:"channel,omitzero"`
+	Data    PartialMessage `msg:"data" json:"data,omitzero"`
+	Clear   []string       `msg:"clear" json:"clear,omitzero"`
 }
 
 type EventMessageAppend struct {
 	Event   `msg:",flatten"`
-	ID      string  `msg:"id" json:"id,omitzero"`
-	Channel string  `msg:"channel" json:"channel,omitzero"`
-	Append  Message `msg:"append" json:"append,omitzero"`
+	ID      string        `msg:"id" json:"id,omitzero"`
+	Channel string        `msg:"channel" json:"channel,omitzero"`
+	Append  MessageAppend `msg:"append" json:"append,omitzero"`
 }
 
 type EventMessageDelete struct {

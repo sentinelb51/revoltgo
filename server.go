@@ -235,36 +235,24 @@ func (m *ServerMember) update(data PartialServerMember) {
 	}
 }
 
-/*
-		ServerMemberClearNickname,
-        ServerMemberClearPronouns,
-        ServerMemberClearAvatar,
-        ServerMemberClearRoles,
-        ServerMemberClearTimeout,
-        ServerMemberClearCanReceive,
-        ServerMemberClearCanPublish,
-        ServerMemberClearJoinedAt,
-        ServerMemberClearVoiceChannel,
-*/
-
 type ServerMemberClearType string
 
 const (
-	ServerMemberClearNickname     = "Nickname"
-	ServerMemberClearPronouns     = "Pronouns"
-	ServerMemberClearAvatar       = "Avatar"
-	ServerMemberClearRoles        = "Roles"
-	ServerMemberClearTimeout      = "Timeout"
-	ServerMemberClearCanReceive   = "CanReceive"
-	ServerMemberClearCanPublish   = "CanPublish"
-	ServerMemberClearJoinedAt     = "JoinedAt"
-	ServerMemberClearVoiceChannel = "VoiceChannel"
+	ServerMemberClearNickname     ServerMemberClearType = "Nickname"
+	ServerMemberClearPronouns     ServerMemberClearType = "Pronouns"
+	ServerMemberClearAvatar       ServerMemberClearType = "Avatar"
+	ServerMemberClearRoles        ServerMemberClearType = "Roles"
+	ServerMemberClearTimeout      ServerMemberClearType = "Timeout"
+	ServerMemberClearCanReceive   ServerMemberClearType = "CanReceive"
+	ServerMemberClearCanPublish   ServerMemberClearType = "CanPublish"
+	ServerMemberClearJoinedAt     ServerMemberClearType = "JoinedAt"
+	ServerMemberClearVoiceChannel ServerMemberClearType = "VoiceChannel"
 )
 
 // Clear resets nullable fields to nil based on the JSON key name.
 func (m *ServerMember) clear(fields []string) {
 	for _, field := range fields {
-		switch field {
+		switch ServerMemberClearType(field) {
 		case ServerMemberClearNickname:
 			m.Nickname = nil
 		case ServerMemberClearPronouns:
