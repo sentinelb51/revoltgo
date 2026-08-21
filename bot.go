@@ -2,6 +2,13 @@ package revoltgo
 
 //go:generate msgp -tests=false -io=false
 
+type BotRemoveField string
+
+const (
+	BotRemoveToken           BotRemoveField = "Token"
+	BotRemoveInteractionsURL BotRemoveField = "InteractionsURL"
+)
+
 type Bot struct {
 	ID string `msg:"_id" json:"_id,omitzero"`
 

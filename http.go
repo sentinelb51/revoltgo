@@ -374,11 +374,11 @@ type LoginParams struct {
 }
 
 type BotEditParams struct {
-	Name            string   `msg:"name" json:"name,omitzero"`
-	Public          *bool    `msg:"public" json:"public,omitzero"`
-	Analytics       *bool    `msg:"analytics" json:"analytics,omitzero"`
-	InteractionsURL string   `msg:"interactions_url" json:"interactions_url,omitzero"`
-	Remove          []string `msg:"remove" json:"remove,omitzero"`
+	Name            string           `msg:"name" json:"name,omitzero"`
+	Public          *bool            `msg:"public" json:"public,omitzero"`
+	Analytics       *bool            `msg:"analytics" json:"analytics,omitzero"`
+	InteractionsURL string           `msg:"interactions_url" json:"interactions_url,omitzero"`
+	Remove          []BotRemoveField `msg:"remove" json:"remove,omitzero"`
 }
 
 type BotInviteParams struct {
@@ -611,11 +611,11 @@ func (p ChannelMessagesParams) Encode() string {
 }
 
 type ServerRoleEditParams struct {
-	Name   string   `msg:"name" json:"name,omitzero"`
-	Colour string   `msg:"colour" json:"colour,omitzero"`
-	Hoist  *bool    `msg:"hoist" json:"hoist,omitzero"`
-	Rank   *int     `msg:"rank" json:"rank,omitzero"`
-	Remove []string `msg:"remove" json:"remove,omitzero"`
+	Name   string                `msg:"name" json:"name,omitzero"`
+	Colour string                `msg:"colour" json:"colour,omitzero"`
+	Hoist  *bool                 `msg:"hoist" json:"hoist,omitzero"`
+	Rank   *int                  `msg:"rank" json:"rank,omitzero"`
+	Remove []ServerRoleClearType `msg:"remove" json:"remove,omitzero"`
 }
 
 type ServerRoleCreateParams struct {
@@ -662,7 +662,7 @@ type ChannelEditParams struct {
 	Voice    *ChannelVoiceInformation `msg:"voice" json:"voice,omitzero"`
 	Slowmode *int                     `msg:"slowmode" json:"slowmode,omitzero"`
 
-	Remove []string `msg:"remove" json:"remove,omitzero"`
+	Remove []ChannelClearType `msg:"remove" json:"remove,omitzero"`
 }
 
 type SyncSettingsParamsTuple struct {

@@ -9,7 +9,12 @@ type (
 	MessageEmbedSpecialType   string
 	MessageEmbedImageSizeType string
 	MessageFlagsType          uint32
+	MessageClearType          string
 )
+
+// MessageClearPinned is the only field an update clears. An unpin carries it
+// and an empty partial, there being no field that can carry false.
+const MessageClearPinned MessageClearType = "Pinned"
 
 const (
 	MessageSystemText                      MessageSystemType = "text"

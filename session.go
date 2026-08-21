@@ -16,6 +16,8 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
+//msgp:ignore Session
+
 // todo: consider more methods which can create an API resource which don't get automatically cached by State
 
 const ExpressLoginFile string = ".auth_token"

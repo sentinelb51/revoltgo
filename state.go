@@ -1,5 +1,7 @@
 package revoltgo
 
+//msgp:ignore State
+
 import (
 	"iter"
 	"log"

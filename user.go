@@ -120,9 +120,9 @@ const (
 // are among them and are no-ops here: a profile is not part of the user record,
 // only of the response to Session.UserProfile, so there is nothing cached to
 // clear. They are still listed, or the default arm would log them as unknown.
-func (u *User) clear(fields []string) {
+func (u *User) clear(fields []UserRemoveField) {
 	for _, field := range fields {
-		switch UserRemoveField(field) {
+		switch field {
 		case UserRemoveProfileContent, UserRemoveProfileBackground, UserRemoveInternal:
 		case UserRemoveStatusText:
 			if u.Status != nil {

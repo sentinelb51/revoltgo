@@ -16,6 +16,8 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
+//msgp:ignore Websocket
+
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetPrefix("[R-GO] ")

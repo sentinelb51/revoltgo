@@ -87,15 +87,19 @@ func (s *Server) update(data PartialServer) {
 	}
 }
 
-func (s *Server) clear(fields []string) {
+func (s *Server) clear(fields []ServerEditParamsRemove) {
 	for _, field := range fields {
 		switch field {
-		case "Icon":
+		case ServerEditDataRemoveIcon:
 			s.Icon = nil
-		case "Banner":
+		case ServerEditDataRemoveBanner:
 			s.Banner = nil
-		case "Description":
+		case ServerEditDataRemoveDescription:
 			s.Description = ""
+		case ServerEditDataRemoveCategories:
+			s.Categories = nil
+		case ServerEditDataRemoveSystemMessages:
+			s.SystemMessages = ServerSystemMessages{}
 		default:
 			log.Printf("Server.clear(): unknown field %s\n", field)
 		}
@@ -154,11 +158,20 @@ func (r *ServerRole) update(data PartialServerRole) {
 	}
 }
 
-func (r *ServerRole) clear(fields []string) {
+type ServerRoleClearType string
+
+const (
+	ServerRoleClearColour ServerRoleClearType = "Colour"
+	ServerRoleClearIcon   ServerRoleClearType = "Icon"
+)
+
+func (r *ServerRole) clear(fields []ServerRoleClearType) {
 	for _, field := range fields {
 		switch field {
-		case "Colour":
+		case ServerRoleClearColour:
 			r.Colour = nil
+		case ServerRoleClearIcon:
+			r.Icon = nil
 		default:
 			log.Printf("ServerRole.clear(): unknown field %s\n", field)
 		}
@@ -214,6 +227,10 @@ func (m *ServerMember) update(data PartialServerMember) {
 		m.Nickname = data.Nickname
 	}
 
+	if data.Pronouns != nil {
+		m.Pronouns = data.Pronouns
+	}
+
 	if data.Avatar != nil {
 		m.Avatar = data.Avatar
 	}
@@ -250,9 +267,9 @@ const (
 )
 
 // Clear resets nullable fields to nil based on the JSON key name.
-func (m *ServerMember) clear(fields []string) {
+func (m *ServerMember) clear(fields []ServerMemberClearType) {
 	for _, field := range fields {
-		switch ServerMemberClearType(field) {
+		switch field {
 		case ServerMemberClearNickname:
 			m.Nickname = nil
 		case ServerMemberClearPronouns:
@@ -264,15 +281,19 @@ func (m *ServerMember) clear(fields []string) {
 		case ServerMemberClearTimeout:
 			m.Timeout = nil
 		case ServerMemberClearCanReceive:
-			m.CanReceive = nil
+			// Not nullable server-side: clearing resets to true, un-deafened.
+			allowed := true
+			m.CanReceive = &allowed
 		case ServerMemberClearCanPublish:
-			m.CanPublish = nil
-		case ServerMemberClearJoinedAt:
-			// todo: investigate wtf?
-			fallthrough
-		case ServerMemberClearVoiceChannel:
-			// todo: wtf?
-			fallthrough
+			allowed := true
+			m.CanPublish = &allowed
+		case ServerMemberClearJoinedAt, ServerMemberClearVoiceChannel:
+			// Neither names a nullable field, and the backend's own
+			// remove_field no-ops both. joined_at is required on a live member;
+			// the variant exists to $unset it on the tombstone a timed-out
+			// member leaves. VoiceChannel is not a member field at all: in an
+			// edit it disconnects the member from voice, and the event echoes
+			// the request's remove list back verbatim.
 		default:
 			log.Printf("ServerMember.clear(): unhandled field %s\n", field)
 		}
@@ -281,6 +302,7 @@ func (m *ServerMember) clear(fields []string) {
 
 type PartialServerMember struct {
 	Nickname   *string    `msg:"nickname" json:"nickname,omitzero"`
+	Pronouns   *string    `msg:"pronouns" json:"pronouns,omitzero"`
 	Avatar     *File      `msg:"avatar" json:"avatar,omitzero"`
 	Roles      *[]string  `msg:"roles" json:"roles,omitzero"`
 	Timeout    *time.Time `msg:"timeout" json:"timeout,omitzero"`

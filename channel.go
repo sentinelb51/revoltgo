@@ -89,18 +89,28 @@ func (c *Channel) update(data PartialChannel) {
 	}
 }
 
-func (c *Channel) clear(fields []string) {
+type ChannelClearType string
+
+const (
+	ChannelClearDescription        ChannelClearType = "Description"
+	ChannelClearIcon               ChannelClearType = "Icon"
+	ChannelClearDefaultPermissions ChannelClearType = "DefaultPermissions"
+	ChannelClearVoice              ChannelClearType = "Voice"
+	ChannelClearSlowmode           ChannelClearType = "Slowmode"
+)
+
+func (c *Channel) clear(fields []ChannelClearType) {
 	for _, field := range fields {
 		switch field {
-		case "Icon":
+		case ChannelClearIcon:
 			c.Icon = nil
-		case "Description":
+		case ChannelClearDescription:
 			c.Description = nil
-		case "DefaultPermissions":
+		case ChannelClearDefaultPermissions:
 			c.DefaultPermissions = nil
-		case "Voice":
+		case ChannelClearVoice:
 			c.Voice = nil
-		case "Slowmode":
+		case ChannelClearSlowmode:
 			c.Slowmode = nil
 		default:
 			log.Printf("Channel.clear(): unknown field %s", field)

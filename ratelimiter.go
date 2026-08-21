@@ -25,6 +25,8 @@ type ratelimitBucket struct {
 	resetAfter time.Time
 }
 
+//msgp:ignore Ratelimiter
+
 // Ratelimiter manages ratelimit buckets for different API endpoints.
 type Ratelimiter struct {
 	mu        sync.RWMutex

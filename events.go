@@ -124,57 +124,57 @@ type EventMessage struct {
 // EventServerUpdate is sent when a server is updated. Data will only contain fields that were modified.
 type EventServerUpdate struct {
 	Event `msg:",flatten"`
-	ID    string        `msg:"id" json:"id,omitzero"`
-	Data  PartialServer `msg:"data" json:"data,omitzero"`
-	Clear []string      `msg:"clear" json:"clear,omitzero"`
+	ID    string                   `msg:"id" json:"id,omitzero"`
+	Data  PartialServer            `msg:"data" json:"data,omitzero"`
+	Clear []ServerEditParamsRemove `msg:"clear" json:"clear,omitzero"`
 }
 
 // EventChannelUpdate is sent when a channel is updated. Data will only contain fields that were modified.
 type EventChannelUpdate struct {
 	Event `msg:",flatten"`
-	ID    string         `msg:"id" json:"id,omitzero"`
-	Data  PartialChannel `msg:"data" json:"data,omitzero"`
-	Clear []string       `msg:"clear" json:"clear,omitzero"`
+	ID    string             `msg:"id" json:"id,omitzero"`
+	Data  PartialChannel     `msg:"data" json:"data,omitzero"`
+	Clear []ChannelClearType `msg:"clear" json:"clear,omitzero"`
 }
 
 // EventServerRoleUpdate is sent when a role is updated. Data will only contain fields that were modified.
 type EventServerRoleUpdate struct {
 	Event  `msg:",flatten"`
-	ID     string            `msg:"id" json:"id,omitzero"`
-	RoleID string            `msg:"role_id" json:"role_id,omitzero"`
-	Data   PartialServerRole `msg:"data" json:"data,omitzero"`
-	Clear  []string          `msg:"clear" json:"clear,omitzero"`
+	ID     string                `msg:"id" json:"id,omitzero"`
+	RoleID string                `msg:"role_id" json:"role_id,omitzero"`
+	Data   PartialServerRole     `msg:"data" json:"data,omitzero"`
+	Clear  []ServerRoleClearType `msg:"clear" json:"clear,omitzero"`
 }
 
 // EventServerMemberUpdate is sent when a member is updated. Data will only contain fields that were modified.
 type EventServerMemberUpdate struct {
 	Event `msg:",flatten"`
-	ID    MemberCompositeID   `msg:"id" json:"id,omitzero"`
-	Data  PartialServerMember `msg:"data" json:"data,omitzero"`
-	Clear []string            `msg:"clear" json:"clear,omitzero"`
+	ID    MemberCompositeID       `msg:"id" json:"id,omitzero"`
+	Data  PartialServerMember     `msg:"data" json:"data,omitzero"`
+	Clear []ServerMemberClearType `msg:"clear" json:"clear,omitzero"`
 }
 
 type EventUserUpdate struct {
 	Event   `msg:",flatten"`
-	ID      string      `msg:"id" json:"id,omitzero"`
-	Data    PartialUser `msg:"data" json:"data,omitzero"`
-	Clear   []string    `msg:"clear" json:"clear,omitzero"`
-	EventID *string     `msg:"event_id" json:"event_id,omitzero"`
+	ID      string            `msg:"id" json:"id,omitzero"`
+	Data    PartialUser       `msg:"data" json:"data,omitzero"`
+	Clear   []UserRemoveField `msg:"clear" json:"clear,omitzero"`
+	EventID *string           `msg:"event_id" json:"event_id,omitzero"`
 }
 
 type EventWebhookUpdate struct {
 	Event  `msg:",flatten"`
-	ID     string         `msg:"id" json:"id,omitzero"`
-	Data   PartialWebhook `msg:"data" json:"data,omitzero"`
-	Remove []string       `msg:"remove" json:"remove,omitzero"` // todo: why is this "remove" and not "clear"?
+	ID     string               `msg:"id" json:"id,omitzero"`
+	Data   PartialWebhook       `msg:"data" json:"data,omitzero"`
+	Remove []WebhookRemoveField `msg:"remove" json:"remove,omitzero"` // todo: why is this "remove" and not "clear"?
 }
 
 type EventMessageUpdate struct {
 	Event   `msg:",flatten"`
-	ID      string         `msg:"id" json:"id,omitzero"`
-	Channel string         `msg:"channel" json:"channel,omitzero"`
-	Data    PartialMessage `msg:"data" json:"data,omitzero"`
-	Clear   []string       `msg:"clear" json:"clear,omitzero"`
+	ID      string             `msg:"id" json:"id,omitzero"`
+	Channel string             `msg:"channel" json:"channel,omitzero"`
+	Data    PartialMessage     `msg:"data" json:"data,omitzero"`
+	Clear   []MessageClearType `msg:"clear" json:"clear,omitzero"`
 }
 
 type EventMessageAppend struct {

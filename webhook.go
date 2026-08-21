@@ -6,8 +6,6 @@ import "log"
 
 type WebhookRemoveField string
 
-// todo: why aren't we using this?
-
 const (
 	WebhookRemoveNickname WebhookRemoveField = "Nickname"
 	WebhookRemoveAvatar   WebhookRemoveField = "Avatar"
@@ -51,9 +49,9 @@ func (w *Webhook) update(data PartialWebhook) {
 	}
 }
 
-func (w *Webhook) clear(fields []string) {
+func (w *Webhook) clear(fields []WebhookRemoveField) {
 	for _, field := range fields {
-		switch WebhookRemoveField(field) {
+		switch field {
 		case WebhookRemoveAvatar:
 			w.Avatar = nil
 		default:

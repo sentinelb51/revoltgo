@@ -1001,7 +1001,7 @@ func (z *BotEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
 	for za0001 := range z.Remove {
-		o = msgp.AppendString(o, z.Remove[za0001])
+		o = msgp.AppendString(o, string(z.Remove[za0001]))
 	}
 	return
 }
@@ -1080,13 +1080,17 @@ func (z *BotEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Remove) >= int(zb0002) {
 				z.Remove = (z.Remove)[:zb0002]
 			} else {
-				z.Remove = make([]string, zb0002)
+				z.Remove = make([]BotRemoveField, zb0002)
 			}
 			for za0001 := range z.Remove {
-				z.Remove[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Remove", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Remove", za0001)
+						return
+					}
+					z.Remove[za0001] = BotRemoveField(zb0003)
 				}
 			}
 		default:
@@ -1117,7 +1121,7 @@ func (z *BotEditParams) Msgsize() (s int) {
 	}
 	s += 17 + msgp.StringPrefixSize + len(z.InteractionsURL) + 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
-		s += msgp.StringPrefixSize + len(z.Remove[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Remove[za0001]))
 	}
 	return
 }
@@ -1232,6 +1236,34 @@ func (z *BotInviteParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z BotInviteParams) Msgsize() (s int) {
 	s = 1 + 7 + msgp.StringPrefixSize + len(z.Server) + 6 + msgp.StringPrefixSize + len(z.Group)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z BotRemoveField) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *BotRemoveField) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = BotRemoveField(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z BotRemoveField) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
 	return
 }
 
@@ -1832,6 +1864,34 @@ func (z *Channel) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z ChannelClearType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *ChannelClearType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = ChannelClearType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z ChannelClearType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *ChannelEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 9
@@ -1886,7 +1946,7 @@ func (z *ChannelEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
 	for za0001 := range z.Remove {
-		o = msgp.AppendString(o, z.Remove[za0001])
+		o = msgp.AppendString(o, string(z.Remove[za0001]))
 	}
 	return
 }
@@ -2045,13 +2105,17 @@ func (z *ChannelEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Remove) >= int(zb0003) {
 				z.Remove = (z.Remove)[:zb0003]
 			} else {
-				z.Remove = make([]string, zb0003)
+				z.Remove = make([]ChannelClearType, zb0003)
 			}
 			for za0001 := range z.Remove {
-				z.Remove[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Remove", za0001)
-					return
+				{
+					var zb0004 string
+					zb0004, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Remove", za0001)
+						return
+					}
+					z.Remove[za0001] = ChannelClearType(zb0004)
 				}
 			}
 		default:
@@ -2099,7 +2163,7 @@ func (z *ChannelEditParams) Msgsize() (s int) {
 	}
 	s += 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
-		s += msgp.StringPrefixSize + len(z.Remove[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Remove[za0001]))
 	}
 	return
 }
@@ -5145,7 +5209,7 @@ func (z *EventChannelUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	return
 }
@@ -5196,13 +5260,17 @@ func (z *EventChannelUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Clear) >= int(zb0002) {
 				z.Clear = (z.Clear)[:zb0002]
 			} else {
-				z.Clear = make([]string, zb0002)
+				z.Clear = make([]ChannelClearType, zb0002)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = ChannelClearType(zb0003)
 				}
 			}
 		default:
@@ -5221,7 +5289,7 @@ func (z *EventChannelUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventChannelUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	return
 }
@@ -7001,7 +7069,7 @@ func (z *EventMessageUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	return
 }
@@ -7058,13 +7126,17 @@ func (z *EventMessageUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Clear) >= int(zb0002) {
 				z.Clear = (z.Clear)[:zb0002]
 			} else {
-				z.Clear = make([]string, zb0002)
+				z.Clear = make([]MessageClearType, zb0002)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = MessageClearType(zb0003)
 				}
 			}
 		default:
@@ -7083,7 +7155,7 @@ func (z *EventMessageUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventMessageUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 8 + msgp.StringPrefixSize + len(z.Channel) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8448,7 +8520,7 @@ func (z *EventServerMemberUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8528,13 +8600,17 @@ func (z *EventServerMemberUpdate) UnmarshalMsg(bts []byte) (o []byte, err error)
 			if cap(z.Clear) >= int(zb0003) {
 				z.Clear = (z.Clear)[:zb0003]
 			} else {
-				z.Clear = make([]string, zb0003)
+				z.Clear = make([]ServerMemberClearType, zb0003)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0004 string
+					zb0004, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = ServerMemberClearType(zb0004)
 				}
 			}
 		default:
@@ -8553,7 +8629,7 @@ func (z *EventServerMemberUpdate) UnmarshalMsg(bts []byte) (o []byte, err error)
 func (z *EventServerMemberUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + 1 + 5 + msgp.StringPrefixSize + len(z.ID.User) + 7 + msgp.StringPrefixSize + len(z.ID.Server) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8741,7 +8817,7 @@ func (z *EventServerRoleUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8798,13 +8874,17 @@ func (z *EventServerRoleUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Clear) >= int(zb0002) {
 				z.Clear = (z.Clear)[:zb0002]
 			} else {
-				z.Clear = make([]string, zb0002)
+				z.Clear = make([]ServerRoleClearType, zb0002)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = ServerRoleClearType(zb0003)
 				}
 			}
 		default:
@@ -8823,7 +8903,7 @@ func (z *EventServerRoleUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventServerRoleUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 8 + msgp.StringPrefixSize + len(z.RoleID) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8849,7 +8929,7 @@ func (z *EventServerUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	return
 }
@@ -8900,13 +8980,17 @@ func (z *EventServerUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Clear) >= int(zb0002) {
 				z.Clear = (z.Clear)[:zb0002]
 			} else {
-				z.Clear = make([]string, zb0002)
+				z.Clear = make([]ServerEditParamsRemove, zb0002)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = ServerEditParamsRemove(zb0003)
 				}
 			}
 		default:
@@ -8925,7 +9009,7 @@ func (z *EventServerUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventServerUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	return
 }
@@ -9365,7 +9449,7 @@ func (z *EventUserUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa5, 0x63, 0x6c, 0x65, 0x61, 0x72)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Clear)))
 	for za0001 := range z.Clear {
-		o = msgp.AppendString(o, z.Clear[za0001])
+		o = msgp.AppendString(o, string(z.Clear[za0001]))
 	}
 	// string "event_id"
 	o = append(o, 0xa8, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64)
@@ -9423,13 +9507,17 @@ func (z *EventUserUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Clear) >= int(zb0002) {
 				z.Clear = (z.Clear)[:zb0002]
 			} else {
-				z.Clear = make([]string, zb0002)
+				z.Clear = make([]UserRemoveField, zb0002)
 			}
 			for za0001 := range z.Clear {
-				z.Clear[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Clear", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Clear", za0001)
+						return
+					}
+					z.Clear[za0001] = UserRemoveField(zb0003)
 				}
 			}
 		case "event_id":
@@ -9465,7 +9553,7 @@ func (z *EventUserUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventUserUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Data.Msgsize() + 6 + msgp.ArrayHeaderSize
 	for za0001 := range z.Clear {
-		s += msgp.StringPrefixSize + len(z.Clear[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Clear[za0001]))
 	}
 	s += 9
 	if z.EventID == nil {
@@ -10037,7 +10125,7 @@ func (z *EventWebhookUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
 	for za0001 := range z.Remove {
-		o = msgp.AppendString(o, z.Remove[za0001])
+		o = msgp.AppendString(o, string(z.Remove[za0001]))
 	}
 	return
 }
@@ -10088,13 +10176,17 @@ func (z *EventWebhookUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Remove) >= int(zb0002) {
 				z.Remove = (z.Remove)[:zb0002]
 			} else {
-				z.Remove = make([]string, zb0002)
+				z.Remove = make([]WebhookRemoveField, zb0002)
 			}
 			for za0001 := range z.Remove {
-				z.Remove[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Remove", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Remove", za0001)
+						return
+					}
+					z.Remove[za0001] = WebhookRemoveField(zb0003)
 				}
 			}
 		default:
@@ -10113,7 +10205,7 @@ func (z *EventWebhookUpdate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *EventWebhookUpdate) Msgsize() (s int) {
 	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Data.Msgsize() + 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
-		s += msgp.StringPrefixSize + len(z.Remove[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Remove[za0001]))
 	}
 	return
 }
@@ -13145,6 +13237,34 @@ func (z *MessageAppend) Msgsize() (s int) {
 			s += z.Embeds[za0001].Msgsize()
 		}
 	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z MessageClearType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *MessageClearType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = MessageClearType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z MessageClearType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
 	return
 }
 
@@ -16955,13 +17075,20 @@ func (z *PartialServer) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *PartialServerMember) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 6
+	// map header, size 7
 	// string "nickname"
-	o = append(o, 0x86, 0xa8, 0x6e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65)
+	o = append(o, 0x87, 0xa8, 0x6e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65)
 	if z.Nickname == nil {
 		o = msgp.AppendNil(o)
 	} else {
 		o = msgp.AppendString(o, *z.Nickname)
+	}
+	// string "pronouns"
+	o = append(o, 0xa8, 0x70, 0x72, 0x6f, 0x6e, 0x6f, 0x75, 0x6e, 0x73)
+	if z.Pronouns == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendString(o, *z.Pronouns)
 	}
 	// string "avatar"
 	o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
@@ -17040,6 +17167,23 @@ func (z *PartialServerMember) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				*z.Nickname, bts, err = msgp.ReadStringBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Nickname")
+					return
+				}
+			}
+		case "pronouns":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Pronouns = nil
+			} else {
+				if z.Pronouns == nil {
+					z.Pronouns = new(string)
+				}
+				*z.Pronouns, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Pronouns")
 					return
 				}
 			}
@@ -17164,6 +17308,12 @@ func (z *PartialServerMember) Msgsize() (s int) {
 		s += msgp.NilSize
 	} else {
 		s += msgp.StringPrefixSize + len(*z.Nickname)
+	}
+	s += 9
+	if z.Pronouns == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.StringPrefixSize + len(*z.Pronouns)
 	}
 	s += 7
 	if z.Avatar == nil {
@@ -21078,6 +21228,34 @@ func (z *ServerRole) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z ServerRoleClearType) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendString(o, string(z))
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *ServerRoleClearType) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	{
+		var zb0001 string
+		zb0001, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		(*z) = ServerRoleClearType(zb0001)
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z ServerRoleClearType) Msgsize() (s int) {
+	s = msgp.StringPrefixSize + len(string(z))
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *ServerRoleCreateParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 2
@@ -21251,7 +21429,7 @@ func (z *ServerRoleEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
 	for za0001 := range z.Remove {
-		o = msgp.AppendString(o, z.Remove[za0001])
+		o = msgp.AppendString(o, string(z.Remove[za0001]))
 	}
 	return
 }
@@ -21330,13 +21508,17 @@ func (z *ServerRoleEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Remove) >= int(zb0002) {
 				z.Remove = (z.Remove)[:zb0002]
 			} else {
-				z.Remove = make([]string, zb0002)
+				z.Remove = make([]ServerRoleClearType, zb0002)
 			}
 			for za0001 := range z.Remove {
-				z.Remove[za0001], bts, err = msgp.ReadStringBytes(bts)
-				if err != nil {
-					err = msgp.WrapError(err, "Remove", za0001)
-					return
+				{
+					var zb0003 string
+					zb0003, bts, err = msgp.ReadStringBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Remove", za0001)
+						return
+					}
+					z.Remove[za0001] = ServerRoleClearType(zb0003)
 				}
 			}
 		default:
@@ -21367,7 +21549,7 @@ func (z *ServerRoleEditParams) Msgsize() (s int) {
 	}
 	s += 7 + msgp.ArrayHeaderSize
 	for za0001 := range z.Remove {
-		s += msgp.StringPrefixSize + len(z.Remove[za0001])
+		s += msgp.StringPrefixSize + len(string(z.Remove[za0001]))
 	}
 	return
 }
