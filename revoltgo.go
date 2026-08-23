@@ -126,10 +126,21 @@ type InstanceConfigFeaturesJanuary struct {
 	URL     string `msg:"url" json:"url,omitzero"`
 }
 
-type InstanceConfigFeaturesVoso struct {
-	Enabled bool   `msg:"enabled" json:"enabled,omitzero"`
-	URL     string `msg:"url" json:"url,omitzero"`
-	WS      string `msg:"ws" json:"ws,omitzero"`
+// InstanceConfigVoiceNode is one voice server the instance publishes. Name is
+// what ChannelJoinCallParams.Node has to be given; the coordinates are there so
+// a client that knows its own location can pick the nearest.
+type InstanceConfigVoiceNode struct {
+	Name      string  `msg:"name" json:"name,omitzero"`
+	Latitude  float64 `msg:"lat" json:"lat,omitzero"`
+	Longitude float64 `msg:"lon" json:"lon,omitzero"`
+	PublicURL string  `msg:"public_url" json:"public_url,omitzero"`
+}
+
+// InstanceConfigFeaturesLiveKit is the instance's voice configuration. It
+// replaces the "voso" block, which the backend no longer sends.
+type InstanceConfigFeaturesLiveKit struct {
+	Enabled bool                      `msg:"enabled" json:"enabled,omitzero"`
+	Nodes   []InstanceConfigVoiceNode `msg:"nodes" json:"nodes,omitzero"`
 }
 
 type InstanceConfigFeatures struct {
@@ -138,7 +149,7 @@ type InstanceConfigFeatures struct {
 	InviteOnly bool                          `msg:"invite_only" json:"invite_only,omitzero"`
 	Autumn     InstanceConfigFeaturesAutumn  `msg:"autumn" json:"autumn,omitzero"`
 	January    InstanceConfigFeaturesJanuary `msg:"january" json:"january,omitzero"`
-	Voso       InstanceConfigFeaturesVoso    `msg:"voso" json:"voso,omitzero"`
+	LiveKit    InstanceConfigFeaturesLiveKit `msg:"livekit" json:"livekit,omitzero"`
 }
 
 type InstanceConfigBuild struct {

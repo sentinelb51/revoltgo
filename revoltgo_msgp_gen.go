@@ -20741,9 +20741,9 @@ func (z ServerMemberClearType) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *ServerMemberEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 5
+	// map header, size 8
 	// string "nickname"
-	o = append(o, 0x85, 0xa8, 0x6e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65)
+	o = append(o, 0x88, 0xa8, 0x6e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65)
 	o = msgp.AppendString(o, z.Nickname)
 	// string "avatar"
 	o = append(o, 0xa6, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72)
@@ -20761,6 +20761,23 @@ func (z *ServerMemberEditParams) MarshalMsg(b []byte) (o []byte, err error) {
 	} else {
 		o = msgp.AppendInt64(o, timeToMs(*z.Timeout))
 	}
+	// string "can_publish"
+	o = append(o, 0xab, 0x63, 0x61, 0x6e, 0x5f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68)
+	if z.CanPublish == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.CanPublish)
+	}
+	// string "can_receive"
+	o = append(o, 0xab, 0x63, 0x61, 0x6e, 0x5f, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65)
+	if z.CanReceive == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.CanReceive)
+	}
+	// string "voice_channel"
+	o = append(o, 0xad, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c)
+	o = msgp.AppendString(o, z.VoiceChannel)
 	// string "remove"
 	o = append(o, 0xa6, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Remove)))
@@ -20840,6 +20857,46 @@ func (z *ServerMemberEditParams) UnmarshalMsg(bts []byte) (o []byte, err error) 
 					*z.Timeout = msToTime(zb0003)
 				}
 			}
+		case "can_publish":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.CanPublish = nil
+			} else {
+				if z.CanPublish == nil {
+					z.CanPublish = new(bool)
+				}
+				*z.CanPublish, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "CanPublish")
+					return
+				}
+			}
+		case "can_receive":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.CanReceive = nil
+			} else {
+				if z.CanReceive == nil {
+					z.CanReceive = new(bool)
+				}
+				*z.CanReceive, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "CanReceive")
+					return
+				}
+			}
+		case "voice_channel":
+			z.VoiceChannel, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "VoiceChannel")
+				return
+			}
 		case "remove":
 			var zb0004 uint32
 			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
@@ -20887,7 +20944,19 @@ func (z *ServerMemberEditParams) Msgsize() (s int) {
 	} else {
 		s += msgp.Int64Size
 	}
-	s += 7 + msgp.ArrayHeaderSize
+	s += 12
+	if z.CanPublish == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 12
+	if z.CanReceive == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
+	s += 14 + msgp.StringPrefixSize + len(z.VoiceChannel) + 7 + msgp.ArrayHeaderSize
 	for za0002 := range z.Remove {
 		s += msgp.StringPrefixSize + len(string(z.Remove[za0002]))
 	}

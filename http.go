@@ -503,11 +503,28 @@ type ServerChannelCreateParams struct {
 }
 
 type ServerMemberEditParams struct {
-	Nickname string                  `msg:"nickname" json:"nickname,omitzero"`
-	Avatar   string                  `msg:"avatar" json:"avatar,omitzero"`
-	Roles    []string                `msg:"roles" json:"roles,omitzero"`
-	Timeout  *time.Time              `msg:"timeout" json:"timeout,omitzero"`
-	Remove   []ServerMemberClearType `msg:"remove" json:"remove,omitzero"`
+	Nickname string     `msg:"nickname" json:"nickname,omitzero"`
+	Avatar   string     `msg:"avatar" json:"avatar,omitzero"`
+	Roles    []string   `msg:"roles" json:"roles,omitzero"`
+	Timeout  *time.Time `msg:"timeout" json:"timeout,omitzero"`
+
+	// CanPublish and CanReceive are server-wide voice moderation: false is muted
+	// and deafened respectively. Both are pointers because the route reads an
+	// absent field as "leave it alone".
+	//
+	// Neither is nullable server-side, so removing one resets it to *true* rather
+	// than unsetting it — un-muting is CanPublish: &true, never
+	// ServerMemberClearCanPublish.
+	CanPublish *bool `msg:"can_publish" json:"can_publish,omitzero"`
+	CanReceive *bool `msg:"can_receive" json:"can_receive,omitzero"`
+
+	// VoiceChannel drags a member already in a call into another voice channel; a
+	// member who is in no call is unaffected. Removing it disconnects them, which
+	// is the route's own spelling of a disconnect rather than a field being
+	// emptied — ServerMemberClearVoiceChannel.
+	VoiceChannel string `msg:"voice_channel" json:"voice_channel,omitzero"`
+
+	Remove []ServerMemberClearType `msg:"remove" json:"remove,omitzero"`
 }
 
 // ServerMemberBanParams derived from:
@@ -529,7 +546,11 @@ type EmojiCreateParams struct {
 }
 
 type ChannelJoinCallParams struct {
-	Node string `msg:"node" json:"node,omitzero"` // Name of the node to join
+	// Name of the node to join, from InstanceConfigFeatures.LiveKit.Nodes.
+	//
+	// Required. An empty node is rejected with UnknownNode rather than the server
+	// choosing one, so a client that does not name one cannot join at all.
+	Node string `msg:"node" json:"node,omitzero"`
 
 	// Whether to force disconnect any other existing voice connections
 	// Useful for disconnecting on another device and joining on a new one
