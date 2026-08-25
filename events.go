@@ -13,21 +13,12 @@ type WebsocketMessageType string
 const (
 	WebsocketKeepAlivePeriod = 60 * time.Second
 
-	WebsocketMessageTypeAuthenticate WebsocketMessageType = "Authenticate"
-	WebsocketMessageTypeHeartbeat    WebsocketMessageType = "Ping"
-	WebsocketMessageTypeBeginTyping  WebsocketMessageType = "BeginTyping"
-	WebsocketMessageTypeEndTyping    WebsocketMessageType = "EndTyping"
+	// Typing is the only client message sent as a payload: the token
+	// authenticates in the connect URL, and the heartbeat is a protocol-level
+	// ping frame rather than a "Ping" message.
+	WebsocketMessageTypeBeginTyping WebsocketMessageType = "BeginTyping"
+	WebsocketMessageTypeEndTyping   WebsocketMessageType = "EndTyping"
 )
-
-type WebsocketMessageAuthenticate struct {
-	Type  WebsocketMessageType `msg:"type" json:"type,omitzero"`
-	Token string               `msg:"token" json:"token,omitzero"`
-}
-
-type WebsocketMessagePing struct {
-	Type WebsocketMessageType `msg:"type" json:"type,omitzero"`
-	Data int64                `msg:"data" json:"data,omitzero"`
-}
 
 type WebsocketChannelTyping struct {
 	Type    WebsocketMessageType `msg:"type" json:"type,omitzero"`

@@ -25,6 +25,10 @@ const (
 // that can retire it.
 const defaultIdleTimeout = 10 * time.Minute
 
+// defaultRetryDelay is how long a 429 that reported no window is waited out
+// for before the request is replayed.
+const defaultRetryDelay = time.Second
+
 type ratelimitBucket struct {
 	sync.Mutex
 
@@ -253,14 +257,17 @@ func (b *ratelimitBucket) update(headers http.Header) error {
 	return nil
 }
 
-// delay claims this caller's send slot and returns how long to wait for it.
+// reserve claims this caller's send slot and returns how long to wait for it.
 //
 // The slot is claimed under the lock and the cursor moved past it, so callers
 // that arrive while the window is spent are handed distinct wake times instead
 // of all waking at the reset and arriving together. Slots the window still
 // allows cost nothing: the server permits the burst, and its own count is what
 // stops it.
-func (b *ratelimitBucket) delay() time.Duration {
+//
+// It mutates the bucket, so it cannot be called speculatively: every call is a
+// claim somebody has to spend.
+func (b *ratelimitBucket) reserve() time.Duration {
 	b.Lock()
 	defer b.Unlock()
 
@@ -296,6 +303,30 @@ func (b *ratelimitBucket) delay() time.Duration {
 	}
 
 	return at.Sub(now)
+}
+
+// retryDelay reports how long to wait before replaying a request the server
+// answered with 429. It claims nothing.
+//
+// The refused send already claimed a slot, so reserving a second would charge
+// one logical request twice and push every caller queued behind it out by that
+// much. What is left to wait for is the window the server itself named, which
+// update took from the same response.
+func (b *ratelimitBucket) retryDelay() time.Duration {
+	b.Lock()
+	defer b.Unlock()
+
+	now := time.Now()
+	b.lastUsed = now
+
+	if wait := b.resetAfter.Sub(now); wait > 0 {
+		return wait
+	}
+
+	// The 429 carried no ratelimit headers, so update left resetAfter zero or
+	// in the past and nothing here knows when the route frees up. Replaying at
+	// once is precisely what was just refused.
+	return defaultRetryDelay
 }
 
 // cleaner takes stop as an argument so a restart cannot race with the channel it was started on

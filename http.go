@@ -217,7 +217,7 @@ func (c *HTTPClient) RequestWithContext(ctx context.Context, method, destination
 
 	rl := c.ratelimiter.get(method, destination)
 
-	if wait := rl.delay(); wait > 0 {
+	if wait := rl.reserve(); wait > 0 {
 		if c.Debug {
 			logf("[HTTP/RATELIMIT] %s %s, waiting %s", method, destination, wait)
 		}
@@ -274,11 +274,13 @@ func (c *HTTPClient) RequestWithContext(ctx context.Context, method, destination
 	}
 
 	// Retry once on 429; rl.update already absorbed the reset window from the response.
+	// The refused send claimed a slot, so the replay waits that window out rather
+	// than reserving a second one for the same logical request.
 	// Requests without GetBody (file uploads stream from a pipe) cannot be replayed.
 	if response.StatusCode == http.StatusTooManyRequests && request.GetBody != nil {
 		_ = response.Body.Close()
 
-		if wait := rl.delay(); wait > 0 {
+		if wait := rl.retryDelay(); wait > 0 {
 			if c.Debug {
 				logf("[HTTP/RATELIMIT] %s %s got 429, retrying in %s", method, destination, wait)
 			}
