@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/rand/v2"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -120,9 +121,14 @@ func (ws *Websocket) connect() error {
 	options := &gws.ClientOption{
 		Addr: ws.url,
 
-		// Serial dispatch. Gateway order is the contract every handler is
-		// written against, and gws's parallel pool does not preserve it.
-		ParallelEnabled:  false,
+		// Parallel dispatch: gws spawns a goroutine per frame, so a handler
+		// that blocks costs one slot rather than the connection. The price is
+		// that frames are not applied in arrival order — two events about the
+		// same object can invert if both land inside one state mutation, which
+		// is a decode and a single guarded map write. The window is chosen,
+		// not overlooked; EventBulk's sub-events are still applied in order.
+		ParallelEnabled:  true,
+		ParallelGolimit:  runtime.NumCPU(),
 		CheckUtf8Enabled: false,
 	}
 
@@ -326,9 +332,10 @@ func (ws *Websocket) OnPing(_ *gws.Conn, payload []byte) {
 	logf("Received unexpected ping: %s", string(payload))
 }
 
-// OnMessage dispatches one frame. It runs on the read loop, so a handler that
-// blocks blocks the connection: past HeartbeatInterval*2 the read deadline
-// kills the socket. Handlers that cannot answer promptly must hand off.
+// OnMessage dispatches one frame. gws runs it on its own goroutine, so a
+// handler may block without costing the connection — but frames dispatched
+// concurrently apply in no particular order, so a handler must not assume it
+// sees an object's events in the order the gateway sent them.
 func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 
 	data := message.Data.Bytes()
