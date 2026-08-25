@@ -2,7 +2,6 @@ package revoltgo
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -54,7 +53,7 @@ func (t *h3Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 
 		// QUIC broke mid-session: revert this host to TCP for good, then retry here only if the body can be rewound.
 		t.hosts.Store(host, false)
-		log.Printf("HTTP/3 to %s failed (%v), reverting to TCP", host, err)
+		logf("HTTP/3 to %s failed (%v), reverting to TCP", host, err)
 
 		if request.Body != nil {
 			if request.GetBody == nil {
@@ -99,14 +98,14 @@ func (t *h3Transport) probe(host string) {
 		// Any response proves the path works; status code irrelevant.
 		response, err := t.quic.RoundTrip(request)
 		if err != nil {
-			log.Printf("HTTP/3 unavailable for %s (%v), staying on TCP", host, err)
+			logf("HTTP/3 unavailable for %s (%v), staying on TCP", host, err)
 			return
 		}
 
 		// Nothing to read; closing resets the stream; connection stays warm.
 		_ = response.Body.Close()
 		t.hosts.Store(host, true)
-		log.Printf("%s compatible with QUIC; upgrading to HTTP/3", host)
+		logf("%s compatible with QUIC; upgrading to HTTP/3", host)
 	}()
 }
 

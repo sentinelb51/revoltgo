@@ -464,6 +464,7 @@ func (s *Session) buildOpenQueryParams() url.Values {
 
 	return parameters
 }
+
 // Instance fetches the instance configuration served at the API root: the
 // websocket URL, the build, and the features block naming the file server, the
 // proxy and the voice nodes.
@@ -475,7 +476,6 @@ func (s *Session) Instance() (instance InstanceConfig, err error) {
 	err = s.HTTP.Request(http.MethodGet, apiURL, nil, &instance)
 	return
 }
-
 
 // Open determines the Websocket URL and establishes a connection.
 // It also detects if you are logged in as a user or a bot.

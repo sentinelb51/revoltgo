@@ -88,23 +88,46 @@ func (m *ServerMember) inTimeout() bool {
 	return m.Timeout != nil && time.Now().Before(*m.Timeout)
 }
 
-// roleIDs returns the member's roles that exist on the server, ordered by descending rank.
-// A lower rank outranks a higher one, so applying overwrites in this order lets the
-// member's highest role win last. Unknown role IDs are skipped, as the backend does.
-func (m *ServerMember) roleIDs(server *Server) []string {
-	ids := make([]string, 0, len(m.Roles))
+// rankedRole is what the calculation needs of a role, captured once so that neither the
+// sort's comparator nor the apply loops look the role up in the server's table again.
+//
+//msgp:ignore rankedRole
+type rankedRole struct {
+	id        string
+	rank      int64
+	overwrite PermissionOverwrite
+}
 
-	for _, rID := range m.Roles {
-		if server.Roles[rID] != nil {
-			ids = append(ids, rID)
-		}
+// scratchRoles is how many roles a caller's stack buffer holds before rankedRoles has to
+// allocate. Sized for an ordinary member, not for the largest one.
+const scratchRoles = 8
+
+// rankedRoles fills scratch with the member's roles that exist on the server, ordered by
+// descending rank. A lower rank outranks a higher one, so applying overwrites in this
+// order lets the member's highest role win last. Unknown role IDs are skipped, as the
+// backend does. scratch is overwritten rather than appended to, and is only replaced when
+// the member has more roles than it holds, so a caller passing a stack array pays nothing.
+func (m *ServerMember) rankedRoles(server *Server, scratch []rankedRole) []rankedRole {
+	roles := scratch[:0]
+
+	if cap(roles) < len(m.Roles) {
+		roles = make([]rankedRole, 0, len(m.Roles))
 	}
 
-	slices.SortStableFunc(ids, func(a, b string) int {
-		return cmp.Compare(server.Roles[b].Rank, server.Roles[a].Rank)
+	for _, rID := range m.Roles {
+		role := server.Roles[rID]
+		if role == nil {
+			continue
+		}
+
+		roles = append(roles, rankedRole{id: rID, rank: role.Rank, overwrite: role.Permissions})
+	}
+
+	slices.SortStableFunc(roles, func(a, b rankedRole) int {
+		return cmp.Compare(b.rank, a.rank)
 	})
 
-	return ids
+	return roles
 }
 
 // revokeVoice strips the voice permissions a server-wide mute or deafen takes away.
@@ -182,8 +205,14 @@ func (s *State) mutualConnection(a, b string) bool {
 
 // UserPermissions calculates user's permissions towards target, in UserPermission* bits.
 // Mutual connections are read from the state, so an unpopulated cache under-reports.
+// A nil argument answers 0, the same answer a stranger gets: with no error to return,
+// an uncached user is indistinguishable from one who may do nothing.
 // Reference: calculate_user_permissions in core/permissions/src/impl.rs.
 func (s *State) UserPermissions(user, target *User) int64 {
+	if user == nil || target == nil {
+		return 0
+	}
+
 	if user.Privileged || user.ID == target.ID {
 		return UserPermissionGrantAll
 	}
@@ -215,8 +244,13 @@ func (s *State) UserPermissions(user, target *User) int64 {
 
 // ServerPermissions calculates user's permissions in server.
 // A non-member gets 0; the backend does not distinguish that from having no permissions.
+// A nil argument answers 0 as well, so an uncached record reads here as a denial.
 // Reference: calculate_server_permissions in core/permissions/src/impl.rs.
 func (s *State) ServerPermissions(user *User, server *Server) int64 {
+	if user == nil || server == nil {
+		return 0
+	}
+
 	if user.Privileged || server.Owner == user.ID {
 		return PermissionGrantAllSafe
 	}
@@ -228,8 +262,10 @@ func (s *State) ServerPermissions(user *User, server *Server) int64 {
 
 	permissions := server.DefaultPermissions
 
-	for _, rID := range member.roleIDs(server) {
-		permissions = server.Roles[rID].Permissions.apply(permissions)
+	var scratch [scratchRoles]rankedRole
+
+	for _, role := range member.rankedRoles(server, scratch[:0]) {
+		permissions = role.overwrite.apply(permissions)
 	}
 
 	permissions = member.revokeVoice(permissions)
@@ -243,9 +279,17 @@ func (s *State) ServerPermissions(user *User, server *Server) int64 {
 
 // ChannelPermissions calculates user's permissions in channel.
 // It returns 0 for a user with no permissions, and wraps ErrNotCached when the
-// state is missing a record the calculation needs.
+// state is missing a record the calculation needs, a nil argument included.
 // Reference: calculate_channel_permissions in core/permissions/src/impl.rs.
 func (s *State) ChannelPermissions(user *User, channel *Channel) (int64, error) {
+	if user == nil {
+		return 0, fmt.Errorf("user: %w", ErrNotCached)
+	}
+
+	if channel == nil {
+		return 0, fmt.Errorf("channel: %w", ErrNotCached)
+	}
+
 	if user.Privileged {
 		return PermissionGrantAllSafe, nil
 	}
@@ -324,14 +368,16 @@ func (s *State) ChannelPermissions(user *User, channel *Channel) (int64, error) 
 		}
 
 		// Server overwrites come first, then the channel's, both lowest rank last
-		roleIDs := member.roleIDs(server)
+		var scratch [scratchRoles]rankedRole
 
-		for _, rID := range roleIDs {
-			permissions = server.Roles[rID].Permissions.apply(permissions)
+		roles := member.rankedRoles(server, scratch[:0])
+
+		for _, role := range roles {
+			permissions = role.overwrite.apply(permissions)
 		}
 
-		for _, rID := range roleIDs {
-			if overwrite, ok := channel.RolePermissions[rID]; ok {
+		for _, role := range roles {
+			if overwrite, ok := channel.RolePermissions[role.id]; ok {
 				permissions = overwrite.apply(permissions)
 			}
 		}

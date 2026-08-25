@@ -2,7 +2,6 @@ package revoltgo
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -101,7 +100,7 @@ func (s *Server) clear(fields []ServerEditParamsRemove) {
 		case ServerEditDataRemoveSystemMessages:
 			s.SystemMessages = ServerSystemMessages{}
 		default:
-			log.Printf("Server.clear(): unknown field %s\n", field)
+			logf("Server.clear(): unknown field %s", field)
 		}
 	}
 }
@@ -149,6 +148,10 @@ func (r *ServerRole) update(data PartialServerRole) {
 		r.Colour = data.Colour
 	}
 
+	if data.Icon != nil {
+		r.Icon = data.Icon
+	}
+
 	if data.Hoist != nil {
 		r.Hoist = *data.Hoist
 	}
@@ -173,7 +176,7 @@ func (r *ServerRole) clear(fields []ServerRoleClearType) {
 		case ServerRoleClearIcon:
 			r.Icon = nil
 		default:
-			log.Printf("ServerRole.clear(): unknown field %s\n", field)
+			logf("ServerRole.clear(): unknown field %s", field)
 		}
 	}
 }
@@ -182,6 +185,7 @@ type PartialServerRole struct {
 	Name        *string              `msg:"name" json:"name,omitzero"`
 	Permissions *PermissionOverwrite `msg:"permissions" json:"permissions,omitzero"`
 	Colour      *string              `msg:"colour" json:"colour,omitzero"`
+	Icon        *File                `msg:"icon" json:"icon,omitzero"`
 	Hoist       *bool                `msg:"hoist" json:"hoist,omitzero"`
 	Rank        *int64               `msg:"rank" json:"rank,omitzero"`
 }
@@ -295,7 +299,7 @@ func (m *ServerMember) clear(fields []ServerMemberClearType) {
 			// edit it disconnects the member from voice, and the event echoes
 			// the request's remove list back verbatim.
 		default:
-			log.Printf("ServerMember.clear(): unhandled field %s\n", field)
+			logf("ServerMember.clear(): unhandled field %s", field)
 		}
 	}
 }

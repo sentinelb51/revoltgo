@@ -5,8 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"log"
-	"runtime"
+	"math/rand/v2"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,10 +17,8 @@ import (
 
 //msgp:ignore Websocket
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetPrefix("[R-GO] ")
-}
+// reconnectIntervalMax caps the backoff between reconnection attempts.
+const reconnectIntervalMax = 60 * time.Second
 
 type Websocket struct {
 	url     string
@@ -37,6 +34,10 @@ type Websocket struct {
 	heartbeatLastSent time.Time
 	heartbeatLastAck  time.Time
 
+	// latency is the last round trip in nanoseconds, computed where both ends
+	// of it are known rather than from two timestamps read separately.
+	latency atomic.Int64
+
 	/* Configurable options */
 
 	// Interval between sending heartbeats. Lower values update the latency faster.
@@ -45,7 +46,7 @@ type Websocket struct {
 
 	Debug             bool                   // Prints sending (not a typo) and received websocket messages
 	ShouldReconnect   bool                   // Whether the websocket should attempt to reconnect on disconnection
-	ReconnectInterval time.Duration          // Interval between reconnecting, if connection fails
+	ReconnectInterval time.Duration          // Base wait before reconnecting; doubles per failed attempt up to a minute
 	CustomCompression *gws.PermessageDeflate // Defines a custom compression algorithm for the Websocket.
 }
 
@@ -60,7 +61,7 @@ func newWebsocket(session *Session, url string) *Websocket {
 
 		ShouldReconnect:   true,
 		HeartbeatInterval: 30 * time.Second,
-		ReconnectInterval: 5 * time.Second,
+		ReconnectInterval: time.Second,
 		// CustomCompression; not defined as the websocket doesn't support it yet
 	}
 }
@@ -68,10 +69,10 @@ func newWebsocket(session *Session, url string) *Websocket {
 func (ws *Websocket) printDebugData(data []byte) {
 	var buf bytes.Buffer
 	if _, err := msgp.CopyToJSON(&buf, bytes.NewReader(data)); err != nil {
-		log.Printf("Failed to convert msgpack to JSON for debug: %s\n", err)
+		logf("Failed to convert msgpack to JSON for debug: %s", err)
 		return
 	}
-	log.Printf("[WS/RX]: %s\n", buf.String())
+	logf("[WS/RX]: %s", buf.String())
 }
 
 func (ws *Websocket) IsConnected() bool {
@@ -80,11 +81,10 @@ func (ws *Websocket) IsConnected() bool {
 	return ws.conn != nil
 }
 
-// Latency returns the Websocket latency
+// Latency returns the round trip of the last acknowledged heartbeat, and zero
+// until one has been acknowledged.
 func (ws *Websocket) Latency() time.Duration {
-	ws.mu.RLock()
-	defer ws.mu.RUnlock()
-	return ws.heartbeatLastAck.Sub(ws.heartbeatLastSent)
+	return time.Duration(ws.latency.Load())
 }
 
 // Uptime approximates the duration the Websocket has been connected for
@@ -106,21 +106,23 @@ func (ws *Websocket) Uptime() time.Duration {
 // connect dials the gateway. The caller decides what a failure means:
 // Open reports it, reconnectLoop retries it.
 func (ws *Websocket) connect() error {
-	ws.mu.Lock()
-	defer ws.mu.Unlock()
 
-	// If we are already shutting down, do not reconnect
-	if ws.ctx.Err() != nil {
-		return ws.ctx.Err()
+	// ctx is fixed at construction, so the shutdown check needs no lock. The
+	// dial is deliberately outside the lock: it can take as long as the TCP and
+	// TLS handshakes do, and WriteClose must not wait on it.
+	if err := ws.ctx.Err(); err != nil {
+		return err
 	}
 
 	url, _, _ := strings.Cut(ws.url, "?")
-	log.Printf("Connecting to %s...\n", url)
+	logf("Connecting to %s...", url)
 
 	options := &gws.ClientOption{
-		Addr:             ws.url,
-		ParallelEnabled:  true,
-		ParallelGolimit:  runtime.NumCPU(),
+		Addr: ws.url,
+
+		// Serial dispatch. Gateway order is the contract every handler is
+		// written against, and gws's parallel pool does not preserve it.
+		ParallelEnabled:  false,
 		CheckUtf8Enabled: false,
 	}
 
@@ -137,30 +139,69 @@ func (ws *Websocket) connect() error {
 		_ = response.Body.Close()
 	}
 
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+
+	// The session closed, or another dial won, while this one was in flight.
+	// Either way nothing holds this socket, so it is this call's to drop.
+	if err = ws.ctx.Err(); err != nil {
+		_ = socket.WriteClose(1000, nil)
+		return err
+	}
+
+	if ws.conn != nil {
+		_ = socket.WriteClose(1000, nil)
+		return nil
+	}
+
+	// Installed before the read loop starts, so OnClose can always recognise
+	// its own socket.
 	ws.conn = socket
 
 	go socket.ReadLoop()
 	return nil
 }
 
+// backoff is how long to wait before attempt n (counted from zero): the base
+// doubled per failure and capped, then spread by up to a fifth either way so
+// that clients dropped together do not return together.
+func (ws *Websocket) backoff(attempt int) time.Duration {
+	delay := ws.ReconnectInterval
+	if delay <= 0 {
+		delay = time.Second
+	}
+
+	for i := 0; i < attempt && delay < reconnectIntervalMax; i++ {
+		delay *= 2
+	}
+
+	if delay > reconnectIntervalMax {
+		delay = reconnectIntervalMax
+	}
+
+	spread := int64(delay) / 5
+
+	return delay + time.Duration(rand.Int64N(2*spread+1)-spread)
+}
+
 // reconnectLoop retries until the connection succeeds, the session is closed,
 // or reconnects are disabled.
 func (ws *Websocket) reconnectLoop() {
-	for ws.ShouldReconnect {
+	for attempt := 0; ws.ShouldReconnect; attempt++ {
 		select {
 		case <-ws.ctx.Done():
 			return
-		case <-time.After(ws.ReconnectInterval):
+		case <-time.After(ws.backoff(attempt)):
 		}
 
-		log.Printf("Re-connecting...")
+		logf("Re-connecting...")
 
 		err := ws.connect()
 		if err == nil {
 			return
 		}
 
-		log.Printf("Connection failed: %s\n", err)
+		logf("Connection failed: %s", err)
 	}
 }
 
@@ -186,25 +227,27 @@ func (ws *Websocket) heartbeatLoop(original *gws.Conn) {
 			payload := make([]byte, 8)
 			binary.LittleEndian.PutUint64(payload, uint64(count))
 
-			if err := current.WritePing(payload); err != nil {
-				log.Printf("Heartbeat failed: %s\n", err)
-				_ = current.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
-				return
-			}
-
+			// Stamped before the write: the pong can arrive before WritePing
+			// returns, and would otherwise be timed against the previous send.
 			ws.mu.Lock()
 			ws.heartbeatLastSent = time.Now()
 			ws.mu.Unlock()
+
+			if err := current.WritePing(payload); err != nil {
+				logf("Heartbeat failed: %s", err)
+				_ = current.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
+				return
+			}
 		}
 	}
 }
 
 func (ws *Websocket) OnOpen(socket *gws.Conn) {
-	log.Printf("Resolved: %s\n", socket.RemoteAddr())
+	logf("Resolved: %s", socket.RemoteAddr())
 	ws.heartbeatCount.Store(0)
 
 	if err := socket.SetDeadline(time.Now().Add(WebsocketKeepAlivePeriod * 2)); err != nil {
-		log.Printf("Set deadline failed: %s\n", err)
+		logf("Set deadline failed: %s", err)
 		_ = socket.WriteClose(1000, nil) // Fires OnClose: handle reconnection logic
 		return
 	}
@@ -212,13 +255,21 @@ func (ws *Websocket) OnOpen(socket *gws.Conn) {
 	go ws.heartbeatLoop(socket)
 }
 
-func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
+func (ws *Websocket) OnClose(socket *gws.Conn, err error) {
 	ws.mu.Lock()
+
+	// A socket that has already been replaced must not clear the live
+	// connection, nor start a second reconnect loop for it.
+	if ws.conn != socket {
+		ws.mu.Unlock()
+		return
+	}
+
 	ws.conn = nil
 	ws.mu.Unlock()
 
 	if err == nil || ws.ctx.Err() != nil {
-		log.Println("Connection closed gracefully")
+		logf("Connection closed gracefully")
 		return
 	}
 
@@ -228,9 +279,9 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 	*/
 
 	if closeErr, ok := errors.AsType[*gws.CloseError](err); ok {
-		log.Printf("Connection closed with code %d: %s\n", closeErr.Code, err)
+		logf("Connection closed with code %d: %s", closeErr.Code, err)
 	} else {
-		log.Printf("Connection closed with error: %s\n", err)
+		logf("Connection closed with error: %s", err)
 	}
 
 	if ws.ShouldReconnect && ws.ctx.Err() == nil {
@@ -239,6 +290,10 @@ func (ws *Websocket) OnClose(_ *gws.Conn, err error) {
 }
 
 func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
+
+	// Any pong is proof the peer is alive, whatever counter it echoes back.
+	_ = socket.SetDeadline(time.Now().Add(ws.HeartbeatInterval * 2))
+
 	if len(payload) < 8 {
 		return
 	}
@@ -247,22 +302,33 @@ func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
 	current := ws.heartbeatCount.Load()
 
 	if count != current {
-		log.Printf("Heartbeat mismatch: %d != %d\n", count, current)
+		logf("Heartbeat mismatch: %d != %d", count, current)
 		return
 	}
 
+	acknowledged := time.Now()
+
 	ws.mu.Lock()
-	ws.heartbeatLastAck = time.Now()
+	ws.heartbeatLastAck = acknowledged
+
+	// An unsolicited pong carrying a zeroed payload matches count 0 before any
+	// ping has been sent; timing it against the zero value is not a round trip.
+	if !ws.heartbeatLastSent.IsZero() {
+		ws.latency.Store(int64(acknowledged.Sub(ws.heartbeatLastSent)))
+	}
+
 	ws.mu.Unlock()
 
 	ws.heartbeatCount.Add(1)
-	_ = socket.SetDeadline(time.Now().Add(ws.HeartbeatInterval * 2))
 }
 
 func (ws *Websocket) OnPing(_ *gws.Conn, payload []byte) {
-	log.Printf("Received unexpected ping: %s\n", string(payload))
+	logf("Received unexpected ping: %s", string(payload))
 }
 
+// OnMessage dispatches one frame. It runs on the read loop, so a handler that
+// blocks blocks the connection: past HeartbeatInterval*2 the read deadline
+// kills the socket. Handlers that cannot answer promptly must hand off.
 func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 
 	data := message.Data.Bytes()
@@ -273,7 +339,7 @@ func (ws *Websocket) OnMessage(_ *gws.Conn, message *gws.Message) {
 	}
 
 	if err := message.Close(); err != nil {
-		log.Printf("OnMessage Close() error: %s\n", err)
+		logf("OnMessage Close() error: %s", err)
 	}
 }
 
@@ -286,7 +352,7 @@ func (ws *Websocket) WriteMessage(opcode gws.Opcode, payload []byte) error {
 	}
 
 	if ws.Debug {
-		log.Printf("[WS/TX]: %s\n", string(payload))
+		logf("[WS/TX]: %s", string(payload))
 	}
 
 	return ws.conn.WriteMessage(opcode, payload)
@@ -311,7 +377,7 @@ func (ws *Websocket) handle(raw []byte) {
 
 	eventType, err := eventTypeFromMSGP(raw)
 	if err != nil {
-		log.Printf("event type detection failed: %s\n", err)
+		logf("event type detection failed: %s", err)
 		return
 	}
 
@@ -328,7 +394,7 @@ func (ws *Websocket) handle(raw []byte) {
 
 	constructor, found := eventConstructors[string(eventType)]
 	if !found {
-		log.Println("Unknown event type:", string(eventType))
+		logf("Unknown event type: %s", eventType)
 		return
 	}
 
@@ -336,7 +402,7 @@ func (ws *Websocket) handle(raw []byte) {
 	// compile-time error in eventConstructors rather than a runtime check here.
 	event := constructor()
 	if _, err = event.UnmarshalMsg(raw); err != nil {
-		log.Printf("Failed to unmarshal event %T: %s\n", event, err)
+		logf("Failed to unmarshal event %T: %s", event, err)
 		return
 	}
 

@@ -1,6 +1,7 @@
 package revoltgo
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/tinylib/msgp/msgp"
@@ -8,40 +9,75 @@ import (
 
 //go:generate msgp -tests=false -io=false
 
-const (
-	// jsonSkipAheadKeyType = len(`{"type":"`)
-	msgpTypeValueOffset = len(`"type"`)
-)
+// eventKeyType is the map key naming an event's variant.
+var eventKeyType = []byte("type")
 
-//// eventTypeFromJSON uses heuristics to quickly extract the event type from JSON data
-//func eventTypeFromJSON(data []byte) (string, error) {
-//	closingTagIndex := bytes.IndexByte(data[jsonSkipAheadKeyType:], '"')
-//	if closingTagIndex < 0 {
-//		return "", fmt.Errorf("closing quote of type field not found")
-//	}
-//
-//	result := data[jsonSkipAheadKeyType : jsonSkipAheadKeyType+closingTagIndex]
-//	return string(result), nil
-//}
-
-// eventTypeFromMSGP uses heuristics to quickly extract the event type from MessagePack data.
+// eventTypeFromMSGP extracts the event type from a MessagePack map without
+// decoding the frame. Neither the map's size nor its key order is fixed: a
+// payload with 16 or more pairs takes a map16 header, and the encoder is free
+// to place "type" anywhere, so the offset-based read is only a fast path and
+// the walk behind it is what has to be correct. The returned slice aliases data.
 func eventTypeFromMSGP(data []byte) ([]byte, error) {
-	if len(data) <= msgpTypeValueOffset {
-		return nil, fmt.Errorf("data too short: %d bytes", len(data))
+	if value, ok := eventTypeFixmap(data); ok {
+		return value, nil
 	}
 
-	header := data[msgpTypeValueOffset]
+	pairs, bts, err := msgp.ReadMapHeaderBytes(data)
+	if err != nil {
+		return nil, err
+	}
+
+	for range pairs {
+		var key []byte
+
+		if key, bts, err = msgp.ReadMapKeyZC(bts); err != nil {
+			return nil, err
+		}
+
+		if !bytes.Equal(key, eventKeyType) {
+			if bts, err = msgp.Skip(bts); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		value, _, err := msgp.ReadStringZC(bts)
+		if err != nil {
+			return nil, err
+		}
+
+		return value, nil
+	}
+
+	return nil, fmt.Errorf("no type field in map of %d pairs", pairs)
+}
+
+// eventTypeFixmap reads the shape the gateway actually sends: a fixmap whose
+// first key is "type" and whose value is a fixstr. Anything else reports false
+// and is left to the walk.
+func eventTypeFixmap(data []byte) ([]byte, bool) {
+	const valueAt = 1 + 1 + len("type") // fixmap header, 0xa4, the key
+
+	if len(data) <= valueAt {
+		return nil, false
+	}
+
+	if data[0]&0xF0 != 0x80 || data[1] != 0xA4 || !bytes.Equal(data[2:valueAt], eventKeyType) {
+		return nil, false
+	}
+
+	header := data[valueAt]
 	if header < 0xA0 || header > 0xBF {
-		return nil, fmt.Errorf("expected fixstr, got byte 0x%X", header)
+		return nil, false
 	}
 
-	start := msgpTypeValueOffset + 1
+	start := valueAt + 1
 	end := start + int(header&0x1F)
 	if end > len(data) {
-		return nil, fmt.Errorf("size %d exceeds data length %d", end-start, len(data))
+		return nil, false
 	}
 
-	return data[start:end], nil
+	return data[start:end], true
 }
 
 type Event struct {

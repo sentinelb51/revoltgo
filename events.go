@@ -79,13 +79,18 @@ type EventReadyPolicyChange struct {
 // This is used to populate the session's cache
 type EventReady struct {
 	Event
-	Users          []*User                  `msg:"users" json:"users,omitzero"`
-	Servers        []*Server                `msg:"servers" json:"servers,omitzero"`
-	Channels       []*Channel               `msg:"channels" json:"channels,omitzero"`
-	Members        []*ServerMember          `msg:"members" json:"members,omitzero"`
-	Emojis         []*Emoji                 `msg:"emojis" json:"emojis,omitzero"`
-	VoiceStates    []*ChannelVoiceState     `msg:"voice_states" json:"voice_states,omitzero"`
-	UserSettings   map[string]any           `msg:"user_settings" json:"user_settings,omitzero"`
+	Users       []*User              `msg:"users" json:"users,omitzero"`
+	Servers     []*Server            `msg:"servers" json:"servers,omitzero"`
+	Channels    []*Channel           `msg:"channels" json:"channels,omitzero"`
+	Members     []*ServerMember      `msg:"members" json:"members,omitzero"`
+	Emojis      []*Emoji             `msg:"emojis" json:"emojis,omitzero"`
+	VoiceStates []*ChannelVoiceState `msg:"voice_states" json:"voice_states,omitzero"`
+
+	// UserSettings is left encoded: nothing here reads it, and decoding a
+	// settings blob into interface values costs an allocation per leaf. Each
+	// value owns its bytes, so it outlives the frame; decode one with msgp.
+	UserSettings map[string]msgp.Raw `msg:"user_settings" json:"user_settings,omitzero"`
+
 	ChannelUnreads []ChannelUnread          `msg:"channel_unreads" json:"channel_unreads,omitzero"`
 	PolicyChanges  []EventReadyPolicyChange `msg:"policy_changes" json:"policy_changes,omitzero"`
 }

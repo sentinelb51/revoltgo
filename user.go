@@ -2,10 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
-	"log"
 	"time"
-
-	"github.com/tinylib/msgp/msgp"
 )
 
 //go:generate msgp -tests=false -io=false
@@ -139,7 +136,7 @@ func (u *User) clear(fields []UserRemoveField) {
 		case UserRemovePronouns:
 			u.Pronouns = nil
 		default:
-			log.Printf("User.clear(): unknown field %s\n", field)
+			logf("User.clear(): unknown field %s", field)
 		}
 	}
 }
@@ -198,12 +195,6 @@ type MutualFriendsAndServersResponse struct {
 	Users    []string `msg:"users" json:"users,omitzero"`
 	Servers  []string `msg:"servers" json:"servers,omitzero"`
 	Channels []string `msg:"channels" json:"channels,omitzero"`
-}
-
-// UserSettings TODO: This does not get decoded due to API sending tuples for some god-forsaken reason
-type UserSettings struct {
-	Updated int
-	Data    msgp.Raw
 }
 
 // UserVoiceState is derived from

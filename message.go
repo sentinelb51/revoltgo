@@ -48,11 +48,20 @@ const (
 	MessageEmbedSpecialStreamable MessageEmbedSpecialType = "Streamable"
 )
 
+// Upstream's MessageFlags discriminants (1, 2, 3) are bit *positions*, not
+// masks: database/src/models/messages/model.rs reads a flag as `1 << flag as u32`.
+// These are the resulting masks. The backend's send path separately rejects any
+// raw value above 7, so MentionsOnline can be received but never sent.
 const (
-	MessageFlagsSuppressNotifications MessageFlagsType = 1 // Will not send push / desktop notifications
-	MessageFlagsMentionsEveryone      MessageFlagsType = 2 // will mention all users who can see the channel
-	MessageFlagsMentionsOnline        MessageFlagsType = 3 // will mention all users who are online and can see the channel. This cannot be true if MentionsEveryone is true
+	MessageFlagsSuppressNotifications MessageFlagsType = 1 << 1 // will not send push / desktop notifications
+	MessageFlagsMentionsEveryone      MessageFlagsType = 1 << 2 // will mention all users who can see the channel
+	MessageFlagsMentionsOnline        MessageFlagsType = 1 << 3 // will mention all users who are online and can see the channel; cannot be set alongside MentionsEveryone
 )
+
+// Has reports whether every bit of flag is set in f.
+func (f MessageFlagsType) Has(flag MessageFlagsType) bool {
+	return f&flag == flag
+}
 
 // Message contains information about a message.
 type Message struct {
@@ -141,13 +150,33 @@ type MessageInteractions struct {
 	RestrictReactions bool `msg:"restrict_reactions" json:"restrict_reactions,omitzero"`
 }
 
+// MessageSystem is the union of every variant of upstream's untagged SystemMessage
+// enum, so no field is filled for every Type. Which Type fills what:
+//
+//	text                                         Content
+//	user_added, user_remove                      ID, By
+//	user_joined, user_left,
+//	user_kicked, user_banned                     ID
+//	channel_renamed                              Name, By
+//	channel_description_changed,
+//	channel_icon_changed                         By
+//	channel_ownership_changed                    From, To
+//	message_pinned, message_unpinned             ID, By
+//	call_started                                 By, FinishedAt
+//
+// ID is a *user* ID for the user_ variants and a *message* ID for the two pin
+// variants; text carries neither, only Content.
 type MessageSystem struct {
 	Type MessageSystemType `msg:"type" json:"type,omitzero"`
 	ID   string            `msg:"id" json:"id,omitzero"`
-}
 
-type MessageEdited struct {
-	Date int `msg:"$date" json:"$date,omitzero"`
+	By      string `msg:"by" json:"by,omitzero"`
+	Content string `msg:"content" json:"content,omitzero"`
+	Name    string `msg:"name" json:"name,omitzero"`
+	From    string `msg:"from" json:"from,omitzero"`
+	To      string `msg:"to" json:"to,omitzero"`
+
+	FinishedAt *time.Time `msg:"finished_at" json:"finished_at,omitzero"`
 }
 
 // MessageEmbed is derived from:

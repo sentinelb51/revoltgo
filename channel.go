@@ -1,7 +1,5 @@
 package revoltgo
 
-import "log"
-
 //go:generate msgp -tests=false -io=false
 
 type ChannelType string
@@ -113,7 +111,7 @@ func (c *Channel) clear(fields []ChannelClearType) {
 		case ChannelClearSlowmode:
 			c.Slowmode = nil
 		default:
-			log.Printf("Channel.clear(): unknown field %s", field)
+			logf("Channel.clear(): unknown field %s", field)
 		}
 	}
 }
@@ -133,17 +131,6 @@ type PartialChannel struct {
 	LastMessageID      *string                        `msg:"last_message_id" json:"last_message_id,omitzero"`
 	Voice              *ChannelVoiceInformation       `msg:"voice" json:"voice,omitzero"`
 	Slowmode           *int                           `msg:"slowmode" json:"slowmode,omitzero"`
-}
-
-type CompositeChannelID struct {
-	Channel string `msg:"channel" json:"channel,omitzero"`
-	User    string `msg:"user" json:"user,omitzero"`
-}
-
-type ChannelFetchedMessages struct {
-	Messages []*Message      `msg:"messages" json:"messages,omitzero"`
-	Users    []*User         `msg:"users" json:"users,omitzero"`
-	Members  []*ServerMember `msg:"members" json:"members,omitzero"`
 }
 
 type ChannelJoinCall struct {

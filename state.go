@@ -4,7 +4,7 @@ package revoltgo
 
 import (
 	"iter"
-	"log"
+	"maps"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -13,12 +13,127 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+/*
+	Cache invariant
+
+	A cached object is immutable once published. A mutator clones the object it
+	is about, updates the clone, and swaps it into the map under the write lock;
+	it never writes through a pointer a getter has already handed out. A getter
+	may therefore return a pointer that goes stale, but never one that changes
+	under the reader — which is what makes returning the raw pointer safe, and
+	what keeps the Seq iterators allocation-free.
+
+	The same rule bans filing an event's or an API result's own object: the
+	caller keeps that one and may write to it. Everything entering a cache is
+	copied by the clone helpers below, which are deep enough to cover every map
+	and slice a mutator splices.
+*/
+
+// cloneUser returns a private copy of user, or nil.
+func cloneUser(user *User) *User {
+
+	if user == nil {
+		return nil
+	}
+
+	next := *user
+	next.Relations = slices.Clone(user.Relations)
+
+	return &next
+}
+
+// cloneRole returns a private copy of role, or nil.
+func cloneRole(role *ServerRole) *ServerRole {
+
+	if role == nil {
+		return nil
+	}
+
+	next := *role
+
+	return &next
+}
+
+// cloneServer returns a private copy of server, or nil. Roles holds pointers,
+// so each role is copied too; a struct copy alone would still share them.
+func cloneServer(server *Server) *Server {
+
+	if server == nil {
+		return nil
+	}
+
+	next := *server
+	next.Channels = slices.Clone(server.Channels)
+	next.Categories = slices.Clone(server.Categories)
+
+	if server.Roles != nil {
+		next.Roles = make(map[string]*ServerRole, len(server.Roles))
+		for id, role := range server.Roles {
+			next.Roles[id] = cloneRole(role)
+		}
+	}
+
+	return &next
+}
+
+// cloneChannel returns a private copy of channel, or nil.
+func cloneChannel(channel *Channel) *Channel {
+
+	if channel == nil {
+		return nil
+	}
+
+	next := *channel
+	next.Recipients = slices.Clone(channel.Recipients)
+	next.RolePermissions = maps.Clone(channel.RolePermissions)
+
+	return &next
+}
+
+// cloneMember returns a private copy of member, or nil.
+func cloneMember(member *ServerMember) *ServerMember {
+
+	if member == nil {
+		return nil
+	}
+
+	next := *member
+	next.Roles = slices.Clone(member.Roles)
+
+	return &next
+}
+
+// cloneEmoji returns a private copy of emoji, or nil.
+func cloneEmoji(emoji *Emoji) *Emoji {
+
+	if emoji == nil {
+		return nil
+	}
+
+	next := *emoji
+
+	return &next
+}
+
+// cloneVoiceState returns a private copy of state, or nil.
+func cloneVoiceState(state *UserVoiceState) *UserVoiceState {
+
+	if state == nil {
+		return nil
+	}
+
+	next := *state
+
+	return &next
+}
+
 type uIDtoMember map[string]*ServerMember
 
 // stateMembers maps a Server.ID -> [ User.ID -> ServerMember.ID ]
 type stateMembers map[string]uIDtoMember
 
-// add adds a singular member to a server's members
+// add files a member under its server. The cache takes ownership: the member
+// must be freshly built or cloned, never one the caller keeps a pointer to.
 func (sm stateMembers) add(member *ServerMember) {
 	// Get the members for a particular server
 	members := sm[member.ID.Server]
@@ -32,12 +147,16 @@ func (sm stateMembers) add(member *ServerMember) {
 	members[member.ID.User] = member
 }
 
-// addMany adds multiple members to multiple servers
+// addMany adds multiple members to multiple servers, copying each one in.
 // Note that this does not lock the state; the caller must handle this
 func (sm stateMembers) addMany(members []*ServerMember) {
 	// Group members based on their server ID
 	groups := make(map[string][]*ServerMember)
 	for _, member := range members {
+		if member == nil {
+			continue
+		}
+
 		groups[member.ID.Server] = append(groups[member.ID.Server], member)
 	}
 
@@ -54,7 +173,7 @@ func (sm stateMembers) addMany(members []*ServerMember) {
 
 		// Add the members to the server
 		for _, member := range serverMembers {
-			members[member.ID.User] = member
+			members[member.ID.User] = cloneMember(member)
 		}
 	}
 }
@@ -70,9 +189,14 @@ func (sm stateMembers) countInServer(sID string) int {
 	return len(sm[sID])
 }
 
-// remove drops a single membership from a server.
+// remove drops a single membership from a server, and the server once it is empty.
 func (sm stateMembers) remove(sID, uID string) {
-	delete(sm[sID], uID)
+	members := sm[sID]
+	delete(members, uID)
+
+	if len(members) == 0 {
+		delete(sm, sID)
+	}
 }
 
 // removeServer drops a server's entire member cache.
@@ -82,26 +206,13 @@ func (sm stateMembers) removeServer(sID string) {
 
 // removeUser drops a user from every server they are cached in.
 func (sm stateMembers) removeUser(uID string) {
-	for _, members := range sm {
+	for sID, members := range sm {
 		delete(members, uID)
-	}
-}
 
-// upsert returns the cached member for id, creating an empty one if absent.
-func (sm stateMembers) upsert(id MemberCompositeID) *ServerMember {
-	members := sm[id.Server]
-	if members == nil {
-		members = make(uIDtoMember)
-		sm[id.Server] = members
+		if len(members) == 0 {
+			delete(sm, sID)
+		}
 	}
-
-	member := members[id.User]
-	if member == nil {
-		member = &ServerMember{ID: id}
-		members[id.User] = member
-	}
-
-	return member
 }
 
 type uIDtoVoiceState map[string]*UserVoiceState
@@ -109,7 +220,8 @@ type uIDtoVoiceState map[string]*UserVoiceState
 // stateVoice maps a Channel.ID -> [ User.ID -> UserVoiceState ]
 type stateVoice map[string]uIDtoVoiceState
 
-// add adds a singular participant to a channel
+// add files a participant under a channel. The cache takes ownership: the state
+// must be freshly built or cloned, never one the caller keeps a pointer to.
 func (sv stateVoice) add(cID string, state *UserVoiceState) {
 	// Get the participants for a particular channel
 	states := sv[cID]
@@ -123,7 +235,7 @@ func (sv stateVoice) add(cID string, state *UserVoiceState) {
 	states[state.ID] = state
 }
 
-// addMany adds the participants of multiple channels
+// addMany adds the participants of multiple channels, copying each one in.
 // Note that this does not lock the state; the caller must handle this
 func (sv stateVoice) addMany(voiceStates []*ChannelVoiceState) {
 	// The wire already groups participants by channel, so no grouping pass is needed
@@ -142,7 +254,11 @@ func (sv stateVoice) addMany(voiceStates []*ChannelVoiceState) {
 		}
 
 		for _, participant := range voiceState.Participants {
-			states[participant.ID] = participant
+			if participant == nil {
+				continue
+			}
+
+			states[participant.ID] = cloneVoiceState(participant)
 		}
 	}
 }
@@ -184,23 +300,6 @@ func (sv stateVoice) removeUser(uID string) {
 	}
 }
 
-// upsert returns the cached voice state for a participant, creating an empty one if absent.
-func (sv stateVoice) upsert(cID, uID string) *UserVoiceState {
-	states := sv[cID]
-	if states == nil {
-		states = make(uIDtoVoiceState)
-		sv[cID] = states
-	}
-
-	state := states[uID]
-	if state == nil {
-		state = &UserVoiceState{ID: uID}
-		states[uID] = state
-	}
-
-	return state
-}
-
 type State struct {
 	self atomic.Pointer[User] // The current user, also present in users
 
@@ -240,6 +339,10 @@ type State struct {
 
 /*
 	Getter functions
+
+	Everything returned here is the cached object itself. Per the cache
+	invariant it will never change, so it is safe to read from any goroutine —
+	but it can go stale, and writing to it corrupts the cache.
 */
 
 func (s *State) Self() *User {
@@ -584,7 +687,7 @@ func (s *State) addUser(user *User) {
 	s.usersMu.Lock()
 	defer s.usersMu.Unlock()
 
-	s.users[user.ID] = user
+	s.users[user.ID] = cloneUser(user)
 }
 
 func (s *State) addServer(server *Server) {
@@ -596,7 +699,7 @@ func (s *State) addServer(server *Server) {
 	s.serversMu.Lock()
 	defer s.serversMu.Unlock()
 
-	s.servers[server.ID] = server
+	s.servers[server.ID] = cloneServer(server)
 }
 
 func (s *State) addChannels(channels []*Channel) {
@@ -613,7 +716,7 @@ func (s *State) addChannels(channels []*Channel) {
 			continue
 		}
 
-		s.channels[channel.ID] = channel
+		s.channels[channel.ID] = cloneChannel(channel)
 	}
 }
 
@@ -626,7 +729,7 @@ func (s *State) addChannel(channel *Channel) {
 	s.channelsMu.Lock()
 	defer s.channelsMu.Unlock()
 
-	s.channels[channel.ID] = channel
+	s.channels[channel.ID] = cloneChannel(channel)
 }
 
 func (s *State) addServerMember(member *ServerMember) {
@@ -638,7 +741,7 @@ func (s *State) addServerMember(member *ServerMember) {
 	s.membersMu.Lock()
 	defer s.membersMu.Unlock()
 
-	s.members.add(member)
+	s.members.add(cloneMember(member))
 }
 
 func (s *State) addServerMembersAndUsers(users []*User, members []*ServerMember) {
@@ -659,7 +762,11 @@ func (s *State) addServerMembersAndUsers(users []*User, members []*ServerMember)
 	if shouldProcessUsers {
 		s.usersMu.Lock()
 		for _, user := range users {
-			s.users[user.ID] = user
+			if user == nil {
+				continue
+			}
+
+			s.users[user.ID] = cloneUser(user)
 		}
 		s.usersMu.Unlock()
 	}
@@ -680,7 +787,46 @@ func (s *State) addEmoji(emoji *Emoji) {
 	s.emojisMu.Lock()
 	defer s.emojisMu.Unlock()
 
-	s.emojis[emoji.ID] = emoji
+	s.emojis[emoji.ID] = cloneEmoji(emoji)
+}
+
+/*
+	Escape hatches
+
+	Nothing evicts a user automatically: one can be reachable from a member row,
+	a group recipient list, a message author or a DM, so the cache has no safe
+	rule of its own. A consumer that knows its own retention rules needs a way
+	to act, and the maps are unexported.
+*/
+
+// AddUser files a copy of user in the cache, replacing any record of the same
+// ID. It ignores TrackUsers and TrackAPICalls: the caller asked explicitly.
+func (s *State) AddUser(user *User) {
+
+	if user == nil {
+		return
+	}
+
+	next := cloneUser(user)
+
+	s.usersMu.Lock()
+	defer s.usersMu.Unlock()
+
+	s.users[next.ID] = next
+
+	if self := s.self.Load(); self != nil && self.ID == next.ID {
+		s.self.Store(next)
+	}
+}
+
+// EvictUser drops a user from the cache. Nothing else does, short of a platform
+// wipe, so an account that sees many users grows without this.
+func (s *State) EvictUser(id string) {
+
+	s.usersMu.Lock()
+	defer s.usersMu.Unlock()
+
+	delete(s.users, id)
 }
 
 // StateConfig controls which entity caches the State maintains. Pass it to
@@ -748,32 +894,45 @@ func newState() *State {
 // It will overwrite any existing data in the state.
 func (s *State) populate(ready *EventReady) {
 
-	if len(ready.Users) > 0 {
-		// The last user in the ready event should be the current user
-		self := ready.Users[len(ready.Users)-1]
-
-		// Sanity check: if last user is indeed self, it should be relationship type User
-		if self.Relationship == UserRelationshipTypeUser {
-			s.self.Store(self)
-		}
-	}
-
-	/* Populate the caches */
+	/* Populate the caches. The event stays the caller's; the caches take copies */
 	if s.trackUsers {
 
 		s.usersMu.Lock()
 		s.users = make(map[string]*User, len(ready.Users))
 		for _, user := range ready.Users {
-			s.users[user.ID] = user
+			if user == nil {
+				continue
+			}
+
+			s.users[user.ID] = cloneUser(user)
 		}
 		s.usersMu.Unlock()
+	}
+
+	if len(ready.Users) > 0 {
+		// The last user in the ready event should be the current user
+		self := ready.Users[len(ready.Users)-1]
+
+		// Sanity check: if last user is indeed self, it should be relationship type User
+		if self != nil && self.Relationship == UserRelationshipTypeUser {
+			// Prefer the cached copy, so Self and User(id) are the one object
+			if cached := s.User(self.ID); cached != nil {
+				s.self.Store(cached)
+			} else {
+				s.self.Store(cloneUser(self))
+			}
+		}
 	}
 
 	if s.trackServers {
 		s.serversMu.Lock()
 		s.servers = make(map[string]*Server, len(ready.Servers))
 		for _, server := range ready.Servers {
-			s.servers[server.ID] = server
+			if server == nil {
+				continue
+			}
+
+			s.servers[server.ID] = cloneServer(server)
 		}
 		s.serversMu.Unlock()
 	}
@@ -782,7 +941,11 @@ func (s *State) populate(ready *EventReady) {
 		s.channelsMu.Lock()
 		s.channels = make(map[string]*Channel, len(ready.Channels))
 		for _, channel := range ready.Channels {
-			s.channels[channel.ID] = channel
+			if channel == nil {
+				continue
+			}
+
+			s.channels[channel.ID] = cloneChannel(channel)
 		}
 		s.channelsMu.Unlock()
 	}
@@ -798,7 +961,11 @@ func (s *State) populate(ready *EventReady) {
 		s.emojisMu.Lock()
 		s.emojis = make(map[string]*Emoji, len(ready.Emojis))
 		for _, emoji := range ready.Emojis {
-			s.emojis[emoji.ID] = emoji
+			if emoji == nil {
+				continue
+			}
+
+			s.emojis[emoji.ID] = cloneEmoji(emoji)
 		}
 		s.emojisMu.Unlock()
 	}
@@ -855,19 +1022,23 @@ func (s *State) updateServerRoleRanks(event *EventServerRoleRanksUpdate) {
 
 	server := s.servers[event.ID]
 	if server == nil {
-		log.Printf("role ranks update for unknown server %s\n", event.ID)
+		logf("role ranks update for unknown server %s", event.ID)
 		return
 	}
 
+	next := cloneServer(server)
+
 	for index, rID := range event.Ranks {
-		role, exists := server.Roles[rID]
+		role, exists := next.Roles[rID]
 		if !exists {
-			log.Printf("role ranks update for unknown role %s in server %s\n", rID, event.ID)
+			logf("role ranks update for unknown role %s in server %s", rID, event.ID)
 			continue
 		}
 
 		role.Rank = int64(index)
 	}
+
+	s.servers[event.ID] = next
 }
 
 func (s *State) updateServerRole(event *EventServerRoleUpdate) {
@@ -881,19 +1052,28 @@ func (s *State) updateServerRole(event *EventServerRoleUpdate) {
 
 	server := s.servers[event.ID]
 	if server == nil {
-		log.Printf("update for role %s in unknown server %s\n", event.RoleID, event.ID)
+		logf("update for role %s in unknown server %s", event.RoleID, event.ID)
 		return
 	}
 
-	role := server.Roles[event.RoleID]
+	next := cloneServer(server)
+
+	role := next.Roles[event.RoleID]
 	if role == nil {
 		// Role was created
 		role = &ServerRole{ID: event.RoleID}
-		server.Roles[event.RoleID] = role
+
+		if next.Roles == nil {
+			next.Roles = make(map[string]*ServerRole, 1)
+		}
+
+		next.Roles[event.RoleID] = role
 	}
 
 	role.update(event.Data)
 	role.clear(event.Clear)
+
+	s.servers[event.ID] = next
 }
 
 func (s *State) deleteServerRole(data *EventServerRoleDelete) {
@@ -906,9 +1086,14 @@ func (s *State) deleteServerRole(data *EventServerRoleDelete) {
 	defer s.serversMu.Unlock()
 
 	server := s.servers[data.ID]
-	if server != nil {
-		delete(server.Roles, data.RoleID)
+	if server == nil {
+		return
 	}
+
+	next := cloneServer(server)
+	delete(next.Roles, data.RoleID)
+
+	s.servers[data.ID] = next
 }
 
 func (s *State) createServerMember(data *EventServerMemberJoin) {
@@ -964,10 +1149,17 @@ func (s *State) updateServerMember(event *EventServerMemberUpdate) {
 	s.membersMu.Lock()
 	defer s.membersMu.Unlock()
 
-	member := s.members.upsert(event.ID)
+	// Upserting keeps us in sync if we somehow missed the join
+	next := ServerMember{ID: event.ID}
+	if member := s.members.get(event.ID.Server, event.ID.User); member != nil {
+		next = *member
+	}
 
-	member.update(event.Data)
-	member.clear(event.Clear)
+	// update installs the event's own slices, so the copy is taken after it
+	next.update(event.Data)
+	next.clear(event.Clear)
+
+	s.members.add(cloneMember(&next))
 }
 
 func (s *State) createChannel(event *EventChannelCreate) {
@@ -977,7 +1169,7 @@ func (s *State) createChannel(event *EventChannelCreate) {
 	}
 
 	s.channelsMu.Lock()
-	s.channels[event.ID] = &event.Channel
+	s.channels[event.ID] = cloneChannel(&event.Channel)
 	s.channelsMu.Unlock()
 
 	if !s.trackServers {
@@ -993,11 +1185,14 @@ func (s *State) createChannel(event *EventChannelCreate) {
 
 	server := s.servers[*event.Server]
 	if server == nil {
-		log.Printf("channel %s created in unknown server %s\n", event.ID, *event.Server)
+		logf("channel %s created in unknown server %s", event.ID, *event.Server)
 		return
 	}
 
-	server.Channels = sliceAppendUnique(server.Channels, event.ID)
+	next := cloneServer(server)
+	next.Channels = sliceAppendUnique(next.Channels, event.ID)
+
+	s.servers[*event.Server] = next
 }
 
 func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
@@ -1011,11 +1206,14 @@ func (s *State) addGroupParticipant(event *EventChannelGroupJoin) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		log.Printf("%s joined unknown group: %s\n", event.User, event.ID)
+		logf("%s joined unknown group: %s", event.User, event.ID)
 		return
 	}
 
-	channel.Recipients = sliceAppendUnique(channel.Recipients, event.User)
+	next := cloneChannel(channel)
+	next.Recipients = sliceAppendUnique(next.Recipients, event.User)
+
+	s.channels[event.ID] = next
 }
 
 func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
@@ -1029,16 +1227,19 @@ func (s *State) removeGroupParticipant(event *EventChannelGroupLeave) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		log.Printf("%s left unknown group %s\n", event.User, event.ID)
+		logf("%s left unknown group %s", event.User, event.ID)
 		return
 	}
 
-	for i, uID := range channel.Recipients {
-		if uID == event.User {
-			channel.Recipients = sliceRemoveIndex(channel.Recipients, i)
-			return
-		}
+	index := slices.Index(channel.Recipients, event.User)
+	if index < 0 {
+		return
 	}
+
+	next := cloneChannel(channel)
+	next.Recipients = sliceRemoveIndex(next.Recipients, index)
+
+	s.channels[event.ID] = next
 }
 
 func (s *State) updateChannel(event *EventChannelUpdate) {
@@ -1052,12 +1253,16 @@ func (s *State) updateChannel(event *EventChannelUpdate) {
 
 	channel := s.channels[event.ID]
 	if channel == nil {
-		log.Printf("unknown channel updated %s\n", event.ID)
+		logf("unknown channel updated %s", event.ID)
 		return
 	}
 
-	channel.update(event.Data)
-	channel.clear(event.Clear)
+	// update installs the event's own maps and slices, so the deep copy is taken after it
+	next := *channel
+	next.update(event.Data)
+	next.clear(event.Clear)
+
+	s.channels[event.ID] = cloneChannel(&next)
 }
 
 func (s *State) deleteChannel(event *EventChannelDelete) {
@@ -1076,7 +1281,7 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 	channel := s.channels[event.ID]
 	if channel == nil {
 		s.channelsMu.Unlock()
-		log.Printf("unknown channel deleted %s\n", event.ID)
+		logf("unknown channel deleted %s", event.ID)
 		return
 	}
 
@@ -1087,9 +1292,9 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 		return
 	}
 
-	// If channel doesn't belong to a server, skip
+	// Reading the dropped channel unlocked is safe: it is already published, so it cannot change
 	if channel.Server == nil {
-		return
+		return // Channel doesn't belong to a server
 	}
 
 	s.serversMu.Lock()
@@ -1097,51 +1302,52 @@ func (s *State) deleteChannel(event *EventChannelDelete) {
 
 	server := s.servers[*channel.Server]
 	if server == nil {
-		log.Printf("channel %s deleted from unknown server %s\n", event.ID, *channel.Server)
+		logf("channel %s deleted from unknown server %s", event.ID, *channel.Server)
 		return
 	}
 
-	for i, cID := range server.Channels {
-		if cID == event.ID {
-			server.Channels = sliceRemoveIndex(server.Channels, i)
-			return
-		}
+	index := slices.Index(server.Channels, event.ID)
+	if index < 0 {
+		return
 	}
+
+	next := cloneServer(server)
+	next.Channels = sliceRemoveIndex(next.Channels, index)
+
+	s.servers[*channel.Server] = next
 }
 
 func (s *State) createServer(event *EventServerCreate) {
 
 	if event.Server == nil {
-		log.Printf("State.createServer: server %s has no server data\n", event.ID)
+		logf("State.createServer: server %s has no server data", event.ID)
 		return
 	}
 
 	if s.trackServers {
 		s.serversMu.Lock()
-		s.servers[event.ID] = event.Server
+		s.servers[event.ID] = cloneServer(event.Server)
 		s.serversMu.Unlock()
 	}
 
 	// If there's something you'll be first at in life, it's being a member in your own server.
+	// Only this row needs self, so an unresolved one costs the row and not the rest of the event.
 	if s.trackMembers {
+		if self := s.Self(); self == nil {
+			logf("State.createServer: self is nil; skipping self-membership for server %s", event.ID)
+		} else {
+			s.membersMu.Lock()
+			member := &ServerMember{
+				ID: MemberCompositeID{User: self.ID, Server: event.ID},
+			}
 
-		self := s.Self()
-		if self == nil {
-			log.Printf("State.createServer: s.TrackMembers & self is nil")
-			return
+			if id, err := ulid.Parse(event.Server.ID); err == nil {
+				member.JoinedAt = ulid.Time(id.Time())
+			}
+
+			s.members.add(member)
+			s.membersMu.Unlock()
 		}
-
-		s.membersMu.Lock()
-		member := &ServerMember{
-			ID: MemberCompositeID{User: self.ID, Server: event.ID},
-		}
-
-		if id, err := ulid.Parse(event.Server.ID); err == nil {
-			member.JoinedAt = ulid.Time(id.Time())
-		}
-
-		s.members.add(member)
-		s.membersMu.Unlock()
 	}
 
 	if s.trackChannels {
@@ -1149,7 +1355,7 @@ func (s *State) createServer(event *EventServerCreate) {
 		for _, channel := range event.Channels {
 			// Need to add directly here to avoid nested lock acquisition
 			if channel != nil {
-				s.channels[channel.ID] = channel
+				s.channels[channel.ID] = cloneChannel(channel)
 			}
 		}
 		s.channelsMu.Unlock()
@@ -1160,7 +1366,7 @@ func (s *State) createServer(event *EventServerCreate) {
 		for _, emoji := range event.Emojis {
 			// Need to add directly here to avoid nested lock acquisition
 			if emoji != nil {
-				s.emojis[emoji.ID] = emoji
+				s.emojis[emoji.ID] = cloneEmoji(emoji)
 			}
 		}
 		s.emojisMu.Unlock()
@@ -1184,12 +1390,16 @@ func (s *State) updateServer(event *EventServerUpdate) {
 
 	server := s.servers[event.ID]
 	if server == nil {
-		log.Printf("unknown server update %s\n", event.ID)
+		logf("unknown server update %s", event.ID)
 		return
 	}
 
-	server.update(event.Data)
-	server.clear(event.Clear)
+	// update installs the event's own maps and slices, so the deep copy is taken after it
+	next := *server
+	next.update(event.Data)
+	next.clear(event.Clear)
+
+	s.servers[event.ID] = cloneServer(&next)
 }
 
 func (s *State) deleteServer(event *EventServerDelete) {
@@ -1226,15 +1436,58 @@ func (s *State) updateUser(event *EventUserUpdate) {
 	s.usersMu.Lock()
 	defer s.usersMu.Unlock()
 
-	user := s.users[event.ID]
-	if user == nil {
-		// For self-bots, this will ignore a lot of events; maybe add more mechanisms for caching users?
-		// log.Printf("unknown user update %s\n", event.ID)
+	next := User{ID: event.ID}
+
+	if user := s.users[event.ID]; user != nil {
+		next = *user
+	} else if event.Data.Username == nil {
+		// An uncached user is only worth inserting if the partial names them: a
+		// presence-only update would file a record nothing can render, and the
+		// gateway sends those for everyone the account can see. EvictUser is the
+		// only way back out, so the bar to entry is what bounds the map.
+		logf("dropping update for uncached, unnamed user %s", event.ID)
 		return
 	}
 
-	user.update(event.Data)
-	user.clear(event.Clear)
+	// update installs the event's own slices, so the copy is taken after it
+	next.update(event.Data)
+	next.clear(event.Clear)
+
+	stored := cloneUser(&next)
+	s.users[event.ID] = stored
+
+	// Self is the same record under a second pointer; both move or neither does
+	if self := s.self.Load(); self != nil && self.ID == event.ID {
+		s.self.Store(stored)
+	}
+}
+
+// updateUserRelationship applies a relationship change. The event carries the
+// whole user, so one we have never seen is inserted rather than dropped.
+func (s *State) updateUserRelationship(event *EventUserRelationship) {
+
+	if !s.trackUsers || event.User == nil {
+		return
+	}
+
+	s.usersMu.Lock()
+	defer s.usersMu.Unlock()
+
+	var stored *User
+
+	if user := s.users[event.User.ID]; user != nil {
+		next := *user
+		next.Relationship = event.User.Relationship
+		stored = cloneUser(&next)
+	} else {
+		stored = cloneUser(event.User)
+	}
+
+	s.users[stored.ID] = stored
+
+	if self := s.self.Load(); self != nil && self.ID == stored.ID {
+		s.self.Store(stored)
+	}
 }
 
 func (s *State) createEmoji(event *EventEmojiCreate) {
@@ -1246,7 +1499,7 @@ func (s *State) createEmoji(event *EventEmojiCreate) {
 	s.emojisMu.Lock()
 	defer s.emojisMu.Unlock()
 
-	s.emojis[event.ID] = &event.Emoji
+	s.emojis[event.ID] = cloneEmoji(&event.Emoji)
 }
 
 func (s *State) deleteEmoji(event *EventEmojiDelete) {
@@ -1270,7 +1523,7 @@ func (s *State) joinVoiceChannel(event *EventVoiceChannelJoin) {
 	s.voiceMu.Lock()
 	defer s.voiceMu.Unlock()
 
-	s.voice.add(event.ID, &event.State)
+	s.voice.add(event.ID, cloneVoiceState(&event.State))
 }
 
 func (s *State) leaveVoiceChannel(event *EventVoiceChannelLeave) {
@@ -1297,7 +1550,7 @@ func (s *State) moveVoiceChannel(event *EventVoiceChannelMove) {
 	defer s.voiceMu.Unlock()
 
 	s.voice.remove(event.From, event.User)
-	s.voice.add(event.To, &event.State)
+	s.voice.add(event.To, cloneVoiceState(&event.State))
 }
 
 func (s *State) updateVoiceState(event *EventUserVoiceStateUpdate) {
@@ -1310,6 +1563,12 @@ func (s *State) updateVoiceState(event *EventUserVoiceStateUpdate) {
 	defer s.voiceMu.Unlock()
 
 	// Upserting keeps us in sync if we somehow missed the join
-	state := s.voice.upsert(event.ChannelID, event.ID)
-	state.update(event.Data)
+	next := UserVoiceState{ID: event.ID}
+	if state := s.voice.get(event.ChannelID, event.ID); state != nil {
+		next = *state
+	}
+
+	next.update(event.Data)
+
+	s.voice.add(event.ChannelID, &next)
 }

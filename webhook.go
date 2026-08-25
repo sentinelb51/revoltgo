@@ -1,11 +1,11 @@
 package revoltgo
 
-import "log"
-
 //go:generate msgp -tests=false -io=false
 
 type WebhookRemoveField string
 
+// The spec's FieldsWebhook enum admits only "Avatar"; WebhookRemoveNickname is
+// carried for compatibility and the backend rejects it.
 const (
 	WebhookRemoveNickname WebhookRemoveField = "Nickname"
 	WebhookRemoveAvatar   WebhookRemoveField = "Avatar"
@@ -21,43 +21,6 @@ type Webhook struct {
 	ChannelID   string  `msg:"channel_id" json:"channel_id,omitzero"`
 	Permissions int64   `msg:"permissions" json:"permissions,omitzero"`
 	Token       *string `msg:"token" json:"token,omitzero"`
-}
-
-func (w *Webhook) update(data PartialWebhook) {
-	if data.Name != nil {
-		w.Name = *data.Name
-	}
-
-	if data.Avatar != nil {
-		w.Avatar = data.Avatar
-	}
-
-	if data.CreatorID != nil {
-		w.CreatorID = *data.CreatorID
-	}
-
-	if data.ChannelID != nil {
-		w.ChannelID = *data.ChannelID
-	}
-
-	if data.Permissions != nil {
-		w.Permissions = *data.Permissions
-	}
-
-	if data.Token != nil {
-		w.Token = data.Token
-	}
-}
-
-func (w *Webhook) clear(fields []WebhookRemoveField) {
-	for _, field := range fields {
-		switch field {
-		case WebhookRemoveAvatar:
-			w.Avatar = nil
-		default:
-			log.Printf("Webhook.clear(): unknown field %s", field)
-		}
-	}
 }
 
 type PartialWebhook struct {

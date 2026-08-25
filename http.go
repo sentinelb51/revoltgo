@@ -2,10 +2,11 @@ package revoltgo
 
 import (
 	"bytes"
+	"context"
+	"encoding/json/jsontext"
 	json "encoding/json/v2"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -79,8 +80,23 @@ func (c *HTTPClient) SetTimeout(timeout time.Duration) error {
 		return fmt.Errorf("timeout %s > %s", timeout, maxTimeout)
 	}
 
-	c.client.Timeout = timeout
+	// Swap the client rather than mutate it: a request in flight is reading the
+	// one it started with, and http.Client is not safe to write under it. The
+	// transport is shared across the swap, so the connection pool and the
+	// per-host HTTP/3 decisions survive.
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.client = &http.Client{Transport: c.transport, Timeout: timeout}
 	return nil
+}
+
+// httpClient returns the client one request should use throughout, so a
+// SetTimeout mid-request cannot change the timeout under it.
+func (c *HTTPClient) httpClient() *http.Client {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.client
 }
 
 // AddHeader adds a header and checks if it already exists
@@ -165,14 +181,14 @@ func (c *HTTPClient) printDebugTX(method, destination string, data any) {
 			}
 		}
 	}
-	log.Printf("[HTTP/TX] %s %s -> %s", method, destination, payload)
+	logf("[HTTP/TX] %s %s -> %s", method, destination, payload)
 }
 
 // printDebugRX logs the incoming response body and returns a replayable reader
 // so handleResponse can read it again.
 func (c *HTTPClient) printDebugRX(statusCode int, body io.Reader) io.Reader {
 	bodyBytes, _ := io.ReadAll(body)
-	log.Printf("[HTTP/RX] %d %s", statusCode, string(bodyBytes))
+	logf("[HTTP/RX] %d %s", statusCode, string(bodyBytes))
 	return bytes.NewReader(bodyBytes)
 }
 
@@ -183,8 +199,16 @@ Request sends a JSON Request with "method" to a destination URL
 
 - If the "data" is a *FileParams, it will be uploaded as a multipart form
 This function automatically handles rate-limiting and response status codes
+
+It runs on a background context; RequestWithContext bounds one call.
 */
 func (c *HTTPClient) Request(method, destination string, data, result any) error {
+	return c.RequestWithContext(context.Background(), method, destination, data, result)
+}
+
+// RequestWithContext is Request bounded by ctx: cancelling it abandons the call
+// and any rate-limit wait ahead of it.
+func (c *HTTPClient) RequestWithContext(ctx context.Context, method, destination string, data, result any) error {
 
 	destination, err := c.ResolveURL(destination)
 	if err != nil {
@@ -195,10 +219,12 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 
 	if wait := rl.delay(); wait > 0 {
 		if c.Debug {
-			log.Printf("[HTTP/RATELIMIT] %s %s, waiting %s", method, destination, wait)
+			logf("[HTTP/RATELIMIT] %s %s, waiting %s", method, destination, wait)
 		}
 
-		time.Sleep(wait)
+		if err = sleepContext(ctx, wait); err != nil {
+			return err
+		}
 	}
 
 	reader, contentType, err := c.prepareRequestBody(data)
@@ -206,13 +232,11 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 		return err
 	}
 
-	request, err := http.NewRequest(method, destination, reader)
+	request, err := http.NewRequestWithContext(ctx, method, destination, reader)
 	if err != nil {
 		// Nothing owns the reader yet;
 		// Close it so a streaming body's writer doesn't pull a "step-bro I'm stuck >.<"
-		if closer, ok := reader.(io.Closer); ok {
-			_ = closer.Close()
-		}
+		closeBody(reader)
 		return err
 	}
 
@@ -234,8 +258,13 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 		c.printDebugTX(method, destination, data)
 	}
 
-	response, err := c.client.Do(request)
+	client := c.httpClient()
+
+	response, err := client.Do(request)
 	if err != nil {
+		// A cancelled ctx returns here with the multipart goroutine still
+		// blocked on the pipe; closing the reader is what ends it.
+		closeBody(reader)
 		return err
 	}
 
@@ -251,17 +280,25 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 
 		if wait := rl.delay(); wait > 0 {
 			if c.Debug {
-				log.Printf("[HTTP/RATELIMIT] %s %s got 429, retrying in %s", method, destination, wait)
+				logf("[HTTP/RATELIMIT] %s %s got 429, retrying in %s", method, destination, wait)
 			}
 
-			time.Sleep(wait)
+			if err = sleepContext(ctx, wait); err != nil {
+				return err
+			}
+		}
+
+		// Replaying under a cancelled ctx reports the cancellation as a
+		// transport failure over a body that has already been consumed.
+		if err = ctx.Err(); err != nil {
+			return err
 		}
 
 		if request.Body, err = request.GetBody(); err != nil {
 			return err
 		}
 
-		if response, err = c.client.Do(request); err != nil {
+		if response, err = client.Do(request); err != nil {
 			return err
 		}
 
@@ -290,7 +327,28 @@ func (c *HTTPClient) Request(method, destination string, data, result any) error
 		body = c.printDebugRX(response.StatusCode, body)
 	}
 
-	return c.handleResponse(response.StatusCode, body, result)
+	return c.handleResponse(method, destination, response.StatusCode, body, result)
+}
+
+// sleepContext waits out d, or gives up early if ctx is cancelled.
+func sleepContext(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// closeBody closes a request body nobody else owns yet. Only the multipart pipe
+// is a closer, and its writer goroutine stays blocked until this runs.
+func closeBody(reader io.Reader) {
+	if closer, ok := reader.(io.Closer); ok {
+		_ = closer.Close()
+	}
 }
 
 // prepareRequestBody prepares an appropriate Request body and determines the content type
@@ -340,12 +398,30 @@ func (c *HTTPClient) prepareJSONBody(body any) (io.Reader, string, error) {
 	return bytes.NewReader(data), "application/json", nil
 }
 
+// APIError is what a non-2xx answer is reported as. Its message is load-bearing:
+// consumers parse the status back out of the "bad status code %d" prefix, so the
+// wording is fixed even though the fields make parsing unnecessary.
+type APIError struct {
+	StatusCode int
+
+	Method string
+	URL    string
+
+	// Body is the answer, truncated to what is worth carrying in an error.
+	Body []byte
+}
+
+// Error restates the status and whatever the API said about it.
+func (e *APIError) Error() string {
+	return fmt.Sprintf("bad status code %d: %s", e.StatusCode, e.Body)
+}
+
 // handleResponse processes the API response
-func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) error {
-	switch statusCode {
-	case http.StatusNoContent:
+func (c *HTTPClient) handleResponse(method, destination string, statusCode int, body io.Reader, result any) error {
+	switch {
+	case statusCode == http.StatusNoContent, statusCode == http.StatusResetContent:
 		return nil
-	case http.StatusOK, http.StatusCreated:
+	case statusCode/100 == 2:
 		switch result := result.(type) {
 		case nil:
 		case *[]byte:
@@ -356,14 +432,28 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 			}
 			*result = data
 		default:
-			if err := json.UnmarshalRead(body, result); err != nil {
+			// 202 accepts a request rather than performing it and sends no
+			// body: decoding one byte ahead tells that apart from a truncated
+			// answer, which is an error. The byte is handed back to the decoder.
+			var probe [1]byte
+
+			n, err := io.ReadFull(body, probe[:])
+			if err == io.EOF {
+				return nil
+			}
+
+			if err != nil {
+				return fmt.Errorf("handleResponse: %w", err)
+			}
+
+			if err = json.UnmarshalRead(io.MultiReader(bytes.NewReader(probe[:n]), body), result); err != nil {
 				return fmt.Errorf("handleResponse: %w", err)
 			}
 		}
 	default:
 		const limit = 1024
 		message, _ := io.ReadAll(io.LimitReader(body, limit))
-		return fmt.Errorf("bad status code %d: %s", statusCode, message)
+		return &APIError{StatusCode: statusCode, Method: method, URL: destination, Body: message}
 	}
 
 	return nil
@@ -371,10 +461,20 @@ func (c *HTTPClient) handleResponse(statusCode int, body io.Reader, result any) 
 
 /* HTTP data that can be sent to the REST API */
 
+// LoginParams is one of the two shapes DataLogin accepts: email and password,
+// or the ticket a first attempt answered with plus the response to its
+// challenge. FriendlyName belongs to both.
 type LoginParams struct {
 	Email        string `msg:"email" json:"email,omitzero"`
 	Password     string `msg:"password" json:"password,omitzero"`
 	FriendlyName string `msg:"friendly_name" json:"friendly_name,omitzero"`
+
+	// MFATicket is the unvalidated ticket naming the account to resolve.
+	MFATicket string `msg:"mfa_ticket" json:"mfa_ticket,omitzero"`
+
+	// MFAResponse answers the challenge and takes precedence over Password. It
+	// is a pointer so an email/password login omits it rather than sending {}.
+	MFAResponse *MFAResponse `msg:"mfa_response" json:"mfa_response,omitzero"`
 }
 
 type BotEditParams struct {
@@ -690,11 +790,102 @@ type ChannelEditParams struct {
 	Remove []ChannelClearType `msg:"remove" json:"remove,omitzero"`
 }
 
+//msgp:ignore SyncSettingsParamsTuple
+
+// SyncSettingsParamsTuple is one settings entry as the wire sends it: a
+// 2-element array, not an object. Both codecs are hand-written because the
+// generated object form matches neither transport.
 type SyncSettingsParamsTuple struct {
-	Timestamp time.Time `msg:"0" json:"0,omitzero"`
-	Value     msgp.Raw  `msg:"1" json:"1,omitzero"` // Enjoy using this.
+	// Timestamp is milliseconds since the epoch. It is an integer on both
+	// transports, so neither the package's msgp time shim nor json/v2's RFC3339
+	// default describes it — which is why it is not a time.Time.
+	Timestamp int64
+
+	// Value is a settings document carried as a JSON *string*. Decoding it into
+	// a raw message would embed it as nested JSON and break both directions.
+	Value string
 }
 
+// Time reports the timestamp as a time.Time; the stored form is the wire's.
+func (t SyncSettingsParamsTuple) Time() time.Time {
+	return time.UnixMilli(t.Timestamp)
+}
+
+// MarshalJSON writes the tuple as the 2-element array the wire uses.
+func (t SyncSettingsParamsTuple) MarshalJSON() ([]byte, error) {
+	value, err := json.Marshal(t.Value)
+	if err != nil {
+		return nil, fmt.Errorf("SyncSettingsParamsTuple: %w", err)
+	}
+
+	out := make([]byte, 0, len(value)+24)
+	out = append(out, '[')
+	out = strconv.AppendInt(out, t.Timestamp, 10)
+	out = append(out, ',')
+	out = append(out, value...)
+	out = append(out, ']')
+
+	return out, nil
+}
+
+// UnmarshalJSON reads the 2-element array back.
+func (t *SyncSettingsParamsTuple) UnmarshalJSON(data []byte) error {
+	var raw [2]jsontext.Value
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("SyncSettingsParamsTuple: %w", err)
+	}
+
+	if err := json.Unmarshal(raw[0], &t.Timestamp); err != nil {
+		return fmt.Errorf("SyncSettingsParamsTuple.Timestamp: %w", err)
+	}
+
+	if err := json.Unmarshal(raw[1], &t.Value); err != nil {
+		return fmt.Errorf("SyncSettingsParamsTuple.Value: %w", err)
+	}
+
+	return nil
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (t SyncSettingsParamsTuple) MarshalMsg(b []byte) ([]byte, error) {
+	o := msgp.Require(b, t.Msgsize())
+	o = msgp.AppendArrayHeader(o, 2)
+	o = msgp.AppendInt64(o, t.Timestamp)
+	o = msgp.AppendString(o, t.Value)
+	return o, nil
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (t *SyncSettingsParamsTuple) UnmarshalMsg(bts []byte) ([]byte, error) {
+	size, bts, err := msgp.ReadArrayHeaderBytes(bts)
+	if err != nil {
+		return bts, msgp.WrapError(err)
+	}
+
+	if size != 2 {
+		return bts, msgp.WrapError(msgp.ArrayError{Wanted: 2, Got: size})
+	}
+
+	if t.Timestamp, bts, err = msgp.ReadInt64Bytes(bts); err != nil {
+		return bts, msgp.WrapError(err, "Timestamp")
+	}
+
+	if t.Value, bts, err = msgp.ReadStringBytes(bts); err != nil {
+		return bts, msgp.WrapError(err, "Value")
+	}
+
+	return bts, nil
+}
+
+// Msgsize implements msgp.Sizer
+func (t SyncSettingsParamsTuple) Msgsize() int {
+	return msgp.ArrayHeaderSize + msgp.Int64Size + msgp.StringPrefixSize + len(t.Value)
+}
+
+// SyncSettingsParams is what /sync/settings/fetch answers with. The set
+// direction is not this shape: it sends map[string]string and carries the
+// timestamp as a query parameter.
 type SyncSettingsParams map[string]SyncSettingsParamsTuple
 
 type SyncSettingsFetchParams struct {
@@ -706,7 +897,13 @@ type WebhookCreateParams struct {
 	Avatar string `msg:"avatar" json:"avatar,omitzero"`
 }
 
-type WebhookExecuteParams Message
+// WebhookExecuteParams is what a webhook posts. The route takes the same body as
+// POST /channels/{id}/messages, so it is that type under a second name rather
+// than a shape of its own. Being an alias, it would otherwise have msgp emit
+// MessageSend's methods a second time; the body is REST-only regardless.
+//
+//msgp:ignore WebhookExecuteParams
+type WebhookExecuteParams = MessageSend
 
 type WebhookEditParams struct {
 	Name        *string              `msg:"name" json:"name,omitzero"`

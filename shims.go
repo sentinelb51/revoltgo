@@ -2,6 +2,11 @@ package revoltgo
 
 import "time"
 
+// The shim below binds the gateway only, and does not contradict REST's RFC3339:
+// the gateway is rmp_serde (not human-readable), where iso8601-timestamp emits an
+// i64 of milliseconds, while REST is serde_json (human-readable), where the same
+// type emits an ISO8601 string. One Go field, two encodings, both correct.
+
 //go:generate msgp -tests=false -io=false
 //msgp:shim time.Time as:int64 using:timeToMs/msToTime
 
