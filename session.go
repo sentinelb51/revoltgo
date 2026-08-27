@@ -1408,3 +1408,25 @@ func (s *Session) PolicyAck() (err error) {
 	endpoint := EndpointPolicy("acknowledge")
 	return s.HTTP.Request(http.MethodPost, endpoint, nil, nil)
 }
+
+// GIFSearch searches Gifbox.
+func (s *Session) GIFSearch(params GIFSearchParams) (page GIFPage, err error) {
+	endpoint := EndpointGifbox(URLGifboxSearch, params.values())
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &page)
+	return
+}
+
+// GIFTrending fetches what Gifbox is featuring.
+func (s *Session) GIFTrending(params GIFTrendingParams) (page GIFPage, err error) {
+	endpoint := EndpointGifbox(URLGifboxTrending, params.values())
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &page)
+	return
+}
+
+// GIFCategories fetches the categories GIFs are browsable by. One is searched for
+// with its Title as the Query and IsCategory set.
+func (s *Session) GIFCategories(locale string) (categories []*GIFCategory, err error) {
+	endpoint := EndpointGifbox(URLGifboxCategories, gifboxValues(locale, 0, ""))
+	err = s.HTTP.Request(http.MethodGet, endpoint, nil, &categories)
+	return
+}

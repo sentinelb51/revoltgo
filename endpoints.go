@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"log"
+	"net/url"
 	"strconv"
 )
 
@@ -26,10 +27,15 @@ import (
 /* These base URLs are used by the Session.Request method */
 var (
 	apiURL = "https://api.stoat.chat"
-	cdnURL = "https://cdn.stoatusercontent.com"
+	cdnURL = "https://cdn.stoatusercontent.com" // todo: fetch from the root payload
 
-	parsedAPIBase = mustParseURL(apiURL)
-	parsedCDNBase = mustParseURL(cdnURL)
+	// gifboxURL is the GIF service; the root payload does not name it, so the
+	// official clients hardcode it too.
+	gifboxURL = "https://api.gifbox.me"
+
+	parsedAPIBase    = mustParseURL(apiURL)
+	parsedCDNBase    = mustParseURL(cdnURL)
+	parsedGifboxBase = mustParseURL(gifboxURL)
 )
 
 func BaseURL() string {
@@ -38,6 +44,10 @@ func BaseURL() string {
 
 func CDNURL() string {
 	return cdnURL
+}
+
+func GifboxURL() string {
+	return gifboxURL
 }
 
 // SetBaseURL sets the base URL for the API.
@@ -67,6 +77,22 @@ func SetCDNURL(newURL string) error {
 	parsedCDNBase = u
 
 	log.Printf("CDN URL set to %s", cdnURL)
+	return nil
+}
+
+// SetGifboxURL sets the base URL for the GIF service (Gifbox).
+// Call before opening any sessions; this is not mutex-protected.
+// Whatever is set here is a host the session token is sent to.
+func SetGifboxURL(newURL string) error {
+	u, err := validateBaseURL(newURL)
+	if err != nil {
+		return err
+	}
+
+	gifboxURL = u.String()
+	parsedGifboxBase = u
+
+	log.Printf("Gifbox URL set to %s", gifboxURL)
 	return nil
 }
 
@@ -137,7 +163,22 @@ const (
 	URLSafetyReport = "/safety/report"
 
 	URLPolicy = "/policy/%s"
+
+	// Paths on Gifbox rather than on the API: reach them through EndpointGifbox.
+	URLGifboxSearch     = "/search"
+	URLGifboxTrending   = "/trending"
+	URLGifboxCategories = "/categories"
 )
+
+// EndpointGifbox joins a Gifbox path and its query onto the Gifbox base; unlike
+// every other endpoint here, the result is absolute.
+func EndpointGifbox(path string, query url.Values) string {
+	if len(query) == 0 {
+		return gifboxURL + path
+	}
+
+	return gifboxURL + path + "?" + query.Encode()
+}
 
 func EndpointOnboard(action string) string {
 	return "/onboard/" + action

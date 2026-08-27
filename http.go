@@ -134,7 +134,8 @@ func (c *HTTPClient) Header(key string) string {
 }
 
 // ResolveURL converts a relative URL to an absolute URL. Prefixes relative URLs with the API base URL.
-// It also allows absolute URLs targeting the CDN. Otherwise, it rejects the URL.
+// It also allows absolute URLs targeting the CDN or Gifbox. Otherwise, it rejects the URL.
+// Request authorises whatever resolves here, so an allowed host is one the token is sent to.
 func (c *HTTPClient) ResolveURL(destination string) (string, error) {
 
 	// Fast path: our endpoints are usually absolute paths ("/endpoint") -> Skip url.Parse/ResolveReference.
@@ -154,7 +155,7 @@ func (c *HTTPClient) ResolveURL(destination string) (string, error) {
 
 	// Reject scheme-less URLs (//host/path) and any provided scheme.
 	if u.Scheme != "" || u.Host != "" {
-		if sameHostname(u, parsedAPIBase) || sameHostname(u, parsedCDNBase) {
+		if sameHostname(u, parsedAPIBase) || sameHostname(u, parsedCDNBase) || sameHostname(u, parsedGifboxBase) {
 			return u.String(), nil
 		}
 		return "", fmt.Errorf("refusing external URL host %q", u.Host)
