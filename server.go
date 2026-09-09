@@ -25,6 +25,8 @@ type Server struct {
 	Discoverable       bool                   `msg:"discoverable" json:"discoverable,omitzero"`
 	Icon               *File                  `msg:"icon" json:"icon,omitzero"`
 	Banner             *File                  `msg:"banner" json:"banner,omitzero"`
+
+	ApproximateMemberCount uint `msg:"approximate_member_count" json:"approximate_member_count,omitzero"`
 }
 
 func (s *Server) update(data PartialServer) {
@@ -84,6 +86,10 @@ func (s *Server) update(data PartialServer) {
 	if data.Discoverable != nil {
 		s.Discoverable = *data.Discoverable
 	}
+
+	if data.ApproximateMemberCount != nil {
+		s.ApproximateMemberCount = *data.ApproximateMemberCount
+	}
 }
 
 func (s *Server) clear(fields []ServerEditParamsRemove) {
@@ -121,6 +127,8 @@ type PartialServer struct {
 	NSFW               *bool                  `msg:"nsfw" json:"nsfw,omitzero"`
 	Analytics          *bool                  `msg:"analytics" json:"analytics,omitzero"`
 	Discoverable       *bool                  `msg:"discoverable" json:"discoverable,omitzero"`
+
+	ApproximateMemberCount *uint `msg:"approximate_member_count" json:"approximate_member_count,omitzero"`
 }
 
 // ServerRole is derived from

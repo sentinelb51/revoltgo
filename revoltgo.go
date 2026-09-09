@@ -142,6 +142,44 @@ type InstanceConfigFeaturesLiveKit struct {
 	Nodes   []InstanceConfigVoiceNode `msg:"nodes" json:"nodes,omitzero"`
 }
 
+type InstanceConfigFeaturesLimitsGlobal struct {
+	GroupSize              int64    `msg:"group_size" json:"group_size,omitzero"`
+	MessageEmbeds          int64    `msg:"message_embeds" json:"message_embeds,omitzero"`
+	MessageReplies         int64    `msg:"message_replies" json:"message_replies,omitzero"`
+	MessageReactions       int64    `msg:"message_reactions" json:"message_reactions,omitzero"`
+	ServerEmoji            int64    `msg:"server_emoji" json:"server_emoji,omitzero"`
+	ServerRoles            int64    `msg:"server_roles" json:"server_roles,omitzero"`
+	ServerChannels         int64    `msg:"server_channels" json:"server_channels,omitzero"`
+	BodyLimitSize          int64    `msg:"body_limit_size" json:"body_limit_size,omitzero"`
+	RestrictServerCreation []string `msg:"restrict_server_creation" json:"restrict_server_creation,omitzero"`
+	NewUserHours           int64    `msg:"new_user_hours" json:"new_user_hours,omitzero"`
+}
+
+type InstanceConfigFeaturesLimitsUser struct {
+	OutgoingFriendRequests int64           `msg:"outgoing_friend_requests" json:"outgoing_friend_requests,omitzero"`
+	Bots                   int64           `msg:"bots" json:"bots,omitzero"`
+	MessageLength          int64           `msg:"message_length" json:"message_length,omitzero"`
+	MessageAttachments     int64           `msg:"message_attachments" json:"message_attachments,omitzero"`
+	Servers                int64           `msg:"servers" json:"servers,omitzero"`
+	VoiceQuality           int64           `msg:"voice_quality" json:"voice_quality,omitzero"`
+	Video                  bool            `msg:"video" json:"video,omitzero"`
+	VideoResolution        []int64         `msg:"video_resolution" json:"video_resolution,omitzero"`
+	VideoAspectRatio       []float64       `msg:"video_aspect_ratio" json:"video_aspect_ratio,omitzero"`
+	FileUploadSizeLimits   map[string]uint `msg:"file_upload_size_limits" json:"file_upload_size_limits,omitzero"`
+}
+
+type InstanceConfigFeaturesLimits struct {
+	Global  InstanceConfigFeaturesLimitsGlobal `msg:"global" json:"global,omitzero"`
+	NewUser InstanceConfigFeaturesLimitsUser   `msg:"new_user" json:"new_user,omitzero"`
+	Default InstanceConfigFeaturesLimitsUser   `msg:"default" json:"default,omitzero"`
+}
+
+type InstanceConfigFeaturesLegalLinks struct {
+	TermsOfService string `msg:"terms_of_service" json:"terms_of_service,omitzero"`
+	PrivacyPolicy  string `msg:"privacy_policy" json:"privacy_policy,omitzero"`
+	Guidelines     string `msg:"guidelines" json:"guidelines,omitzero"`
+}
+
 type InstanceConfigFeatures struct {
 	Captcha    InstanceConfigFeaturesCaptcha `msg:"captcha" json:"captcha,omitzero"`
 	Email      bool                          `msg:"email" json:"email,omitzero"`
@@ -149,6 +187,9 @@ type InstanceConfigFeatures struct {
 	Autumn     InstanceConfigFeaturesAutumn  `msg:"autumn" json:"autumn,omitzero"`
 	January    InstanceConfigFeaturesJanuary `msg:"january" json:"january,omitzero"`
 	LiveKit    InstanceConfigFeaturesLiveKit `msg:"livekit" json:"livekit,omitzero"`
+
+	Limits     InstanceConfigFeaturesLimits     `msg:"limits" json:"limits,omitzero"`
+	LegalLinks InstanceConfigFeaturesLegalLinks `msg:"legal_links" json:"legal_links,omitzero"`
 }
 
 type InstanceConfigBuild struct {

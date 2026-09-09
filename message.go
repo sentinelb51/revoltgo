@@ -194,11 +194,17 @@ type MessageEmbed struct {
 	IconURL     string               `msg:"icon_url" json:"icon_url,omitzero"`
 	Colour      string               `msg:"colour" json:"colour,omitzero"`
 	Media       *File                `msg:"media" json:"media,omitzero"`
+
+	Width  int                       `msg:"width" json:"width,omitzero"`
+	Height int                       `msg:"height" json:"height,omitzero"`
+	Size   MessageEmbedImageSizeType `msg:"size" json:"size,omitzero"`
 }
 
 type MessageEmbedSpecial struct {
 	Type        MessageEmbedSpecialType `msg:"type" json:"type,omitzero"`
 	ID          string                  `msg:"id" json:"id,omitzero"`
+	CreatorName string                  `msg:"creator_name" json:"creator_name,omitzero"`
+	CreatorURL  string                  `msg:"creator_url" json:"creator_url,omitzero"`
 	Timestamp   string                  `msg:"timestamp" json:"timestamp,omitzero"`
 	ContentType string                  `msg:"content_type" json:"content_type,omitzero"`
 	AlbumID     string                  `msg:"album_id" json:"album_id,omitzero"`
@@ -241,6 +247,7 @@ type MessageMasquerade struct {
 }
 
 type MessageReplies struct {
-	ID      string `msg:"id" json:"id,omitzero"`
-	Mention bool   `msg:"mention" json:"mention"`
+	ID              string `msg:"id" json:"id,omitzero"`
+	Mention         bool   `msg:"mention" json:"mention"`
+	FailIfNotExists *bool  `msg:"fail_if_not_exists" json:"fail_if_not_exists,omitzero"`
 }

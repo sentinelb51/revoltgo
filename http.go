@@ -563,6 +563,7 @@ type UsernameParams struct {
 type GroupCreateParams struct {
 	Name        string   `msg:"name" json:"name,omitzero"`
 	Description string   `msg:"description" json:"description,omitzero"`
+	Icon        string   `msg:"icon" json:"icon,omitzero"`
 	Users       []string `msg:"users" json:"users,omitzero"`
 	NSFW        bool     `msg:"nsfw" json:"nsfw,omitzero"`
 }
@@ -592,6 +593,7 @@ type ServerEditParams struct {
 	Flags          *uint32                  `msg:"flags" json:"flags,omitzero"`
 	Discoverable   *bool                    `msg:"discoverable" json:"discoverable,omitzero"`
 	Analytics      *bool                    `msg:"analytics" json:"analytics,omitzero"`
+	Owner          string                   `msg:"owner" json:"owner,omitzero"`
 	Remove         []ServerEditParamsRemove `msg:"remove" json:"remove,omitzero"`
 }
 
@@ -607,10 +609,12 @@ type ServerChannelCreateParams struct {
 	Name        string                        `msg:"name" json:"name,omitzero"`
 	Description string                        `msg:"description" json:"description,omitzero"`
 	NSFW        bool                          `msg:"nsfw" json:"nsfw,omitzero"`
+	Voice       *ChannelVoiceInformation      `msg:"voice" json:"voice,omitzero"`
 }
 
 type ServerMemberEditParams struct {
 	Nickname string     `msg:"nickname" json:"nickname,omitzero"`
+	Pronouns string     `msg:"pronouns" json:"pronouns,omitzero"`
 	Avatar   string     `msg:"avatar" json:"avatar,omitzero"`
 	Roles    []string   `msg:"roles" json:"roles,omitzero"`
 	Timeout  *time.Time `msg:"timeout" json:"timeout,omitzero"`
@@ -741,6 +745,7 @@ func (p ChannelMessagesParams) Encode() string {
 type ServerRoleEditParams struct {
 	Name   string                `msg:"name" json:"name,omitzero"`
 	Colour string                `msg:"colour" json:"colour,omitzero"`
+	Icon   string                `msg:"icon" json:"icon,omitzero"`
 	Hoist  *bool                 `msg:"hoist" json:"hoist,omitzero"`
 	Rank   *int                  `msg:"rank" json:"rank,omitzero"`
 	Remove []ServerRoleClearType `msg:"remove" json:"remove,omitzero"`
