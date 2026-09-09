@@ -9,6 +9,8 @@ Package revoltgo is a wrapper for the Revolt API with low-level bindings
 
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 import (
 	json "encoding/json/v2"
 	"net/http"

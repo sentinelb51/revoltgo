@@ -1,5 +1,7 @@
 package revoltgo
 
+//go:generate msgp -tests=false -io=false
+
 import (
 	"net/url"
 	"strconv"
