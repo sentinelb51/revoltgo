@@ -57,7 +57,7 @@ func handleSelfbotMessage(session *revoltgo.Session, m *revoltgo.EventMessage) {
 		return
 	}
 
-	latency := session.WS.Latency()
+	latency := session.Socket().Latency()
 	content := latency.String()
 
 	if latency.Milliseconds() == 0 {

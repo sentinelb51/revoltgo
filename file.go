@@ -3,7 +3,6 @@ package revoltgo
 //go:generate msgp -tests=false -io=false
 
 import (
-	"log"
 	"sync"
 )
 
@@ -66,7 +65,7 @@ func (t FileTag) check() FileTag {
 	}
 
 	if _, seen := unknownFileTags.LoadOrStore(t, struct{}{}); !seen {
-		log.Printf("revoltgo: file tag %q is not one of the buckets named in file.go; the list may be out of date", string(t))
+		logf("revoltgo: file tag %q is not one of the buckets named in file.go; the list may be out of date", string(t))
 	}
 
 	return t

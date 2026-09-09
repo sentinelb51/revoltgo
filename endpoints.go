@@ -1,7 +1,6 @@
 package revoltgo
 
 import (
-	"log"
 	"net/url"
 	"strconv"
 )
@@ -61,7 +60,7 @@ func SetBaseURL(newURL string) error {
 	apiURL = u.String()
 	parsedAPIBase = u
 
-	log.Printf("Base URL set to %s", apiURL)
+	logf("Base URL set to %s", apiURL)
 	return nil
 }
 
@@ -76,7 +75,7 @@ func SetCDNURL(newURL string) error {
 	cdnURL = u.String()
 	parsedCDNBase = u
 
-	log.Printf("CDN URL set to %s", cdnURL)
+	logf("CDN URL set to %s", cdnURL)
 	return nil
 }
 
@@ -92,7 +91,7 @@ func SetGifboxURL(newURL string) error {
 	gifboxURL = u.String()
 	parsedGifboxBase = u
 
-	log.Printf("Gifbox URL set to %s", gifboxURL)
+	logf("Gifbox URL set to %s", gifboxURL)
 	return nil
 }
 

@@ -3,7 +3,6 @@ package revoltgo
 import (
 	json "encoding/json/v2"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -44,7 +43,7 @@ func New(token string) *Session {
 // You are expected to store and re-use the token for future sessions.
 func NewWithLogin(data LoginParams) (*Session, LoginResponse, error) {
 	session := New("")
-	session.selfbot = true
+	session.selfbot.Store(true)
 
 	if data.FriendlyName == "" {
 		data.FriendlyName = fmt.Sprintf("RevoltGo/%s (%d)", VERSION, os.Getpid())
@@ -78,21 +77,21 @@ func NewWithExpressLogin(data LoginParams) (*Session, error) {
 
 	// If token exists, use it
 	if token != "" {
-		log.Println("Attempting to re-use existing token")
+		logf("Attempting to re-use existing token")
 		session := New(token)
-		session.selfbot = true
+		session.selfbot.Store(true)
 		return session, nil
 	}
 
 	// Otherwise, perform login
-	log.Println("Performing authentication...")
+	logf("Performing authentication...")
 	session, mfa, err := NewWithLogin(data)
 	if err != nil {
 		return nil, err
 	}
 
 	// Save token to file
-	log.Println("Saving authentication token for re-use")
+	logf("Saving authentication token for re-use")
 	err = os.WriteFile(ExpressLoginFile, []byte(mfa.Token), 0o600)
 	return session, err
 }
@@ -100,18 +99,27 @@ func NewWithExpressLogin(data LoginParams) (*Session, error) {
 // Session represents a connection to the Revolt API.
 type Session struct {
 	Token           string      // Authorisation token
-	WS              *Websocket  // Websocket handler for bidirectional events
 	HTTP            *HTTPClient // HTTP handler for the REST API
 	State           *State      // State is a central store for all data received from the API
 	CheckForUpdates bool        // Whether to check for updates in the default EventReady handler
 
 	// todo: maybe selfbot can be derived from runtime? maybe call User(@me) before connect
-	selfbot bool // Whether the session is a user or bot
+	selfbot atomic.Bool // Whether the session is a user or bot
+
+	// ws is installed by Open on the caller's goroutine and read by Close and
+	// the socket writers from any other, so it is atomic rather than a plain
+	// field. Socket is the accessor.
+	ws atomic.Pointer[Websocket]
 
 	// handlersMu only serialises writers against each other. The hot path reads
 	// handlers lock-free via Load().
 	handlersMu sync.Mutex
 	handlers   atomic.Pointer[sessionHandlers]
+}
+
+// Socket returns the gateway connection, or nil before Open has been called.
+func (s *Session) Socket() *Websocket {
+	return s.ws.Load()
 }
 
 type sessionHandlers struct {
@@ -143,7 +151,7 @@ func (h *sessionHandlers) clone() *sessionHandlers {
 
 // Selfbot returns whether the session is a selfbot
 func (s *Session) Selfbot() bool {
-	return s.selfbot
+	return s.selfbot.Load()
 }
 
 // addDefaultHandlers registers the library's own handlers. It is called from Open once tracking is known:
@@ -167,29 +175,29 @@ func (s *Session) addDefaultHandlers() {
 
 		switch e.Data.Type {
 		case EventErrorAlreadyAuthenticated:
-			log.Println("Attempted authentication when already authenticated")
+			logf("Attempted authentication when already authenticated")
 		case EventErrorInvalidSession:
-			log.Println("Invalid session token; it is either malformed or revoked")
+			logf("Invalid session token; it is either malformed or revoked")
 		case EventErrorOnboardingNotFinished:
-			log.Println("Onboarding not finished; please complete onboarding in the official client")
+			logf("Onboarding not finished; please complete onboarding in the official client")
 		case EventErrorLabelMe:
-			log.Println("Unlabeled error; please report this to the Revolt's developers")
+			logf("Unlabeled error; please report this to the Revolt's developers")
 		case EventErrorInternalError:
-			log.Println("Internal server error; please try again later")
+			logf("Internal server error; please try again later")
 		}
 
 		_ = s.Close()
 	})
 
 	addDefaultHandler(s, func(s *Session, e *EventLogout) {
-		log.Println("Logout event received; closing session")
+		logf("Logout event received; closing session")
 		_ = s.Close()
 	})
 
 	addDefaultHandler(s, func(s *Session, e *EventBulk) {
 		// Process bulk sub-events synchronously to preserve their order
 		for _, event := range e.V {
-			s.WS.handle(event)
+			s.Socket().handle(event)
 		}
 	})
 
@@ -199,15 +207,15 @@ func (s *Session) addDefaultHandlers() {
 		if s.State.Self() == nil {
 			self, err := s.User("@me")
 			if err == nil {
-				log.Printf("Identified self via API call\n")
+				logf("Identified self via API call")
 				s.State.setSelf(self)
 			} else {
-				log.Printf("Failed to identify self: %s\n", err)
+				logf("Failed to identify self: %s", err)
 			}
 		}
 
 		self := s.State.Self()
-		s.selfbot = self != nil && self.Bot == nil
+		s.selfbot.Store(self != nil && self.Bot == nil)
 
 		if s.CheckForUpdates {
 			go HasUpdate()
@@ -328,7 +336,8 @@ func (s *Session) addDefaultHandlers() {
 }
 
 // handlerName derives the event name (e.g. "Message") from a handler's event
-// struct type T, validating the struct shape. It fatals on misuse.
+// struct type T, validating the struct shape. It panics on misuse: a library
+// must never exit the program, and a bad registration is a programming error.
 func handlerName[T any]() string {
 
 	// Optimization: Get the type of T without allocating a zero value using *new(T)
@@ -340,7 +349,7 @@ func handlerName[T any]() string {
 	// todo: look if this is needed
 
 	if t.Kind() != reflect.Ptr {
-		log.Fatalf("handler must be a pointer to a struct")
+		panic("revoltgo: handler must be a pointer to a struct")
 	}
 
 	for t.Kind() == reflect.Ptr {
@@ -348,19 +357,19 @@ func handlerName[T any]() string {
 	}
 
 	if t.Kind() != reflect.Struct {
-		log.Fatalf("expected struct type, got %s", t.Kind())
+		panic(fmt.Sprintf("revoltgo: expected struct type, got %s", t.Kind()))
 	}
 
 	if field, ok := t.FieldByName("Type"); ok {
 		if field.Type.Kind() != reflect.String {
-			log.Fatalf("event struct %s 'Type' field must be a string", t.Name())
+			panic(fmt.Sprintf("revoltgo: event struct %s 'Type' field must be a string", t.Name()))
 		}
 	} else {
-		log.Fatalf("struct %s must have a 'Type' field", t.Name())
+		panic(fmt.Sprintf("revoltgo: struct %s must have a 'Type' field", t.Name()))
 	}
 
 	if !strings.HasPrefix(t.Name(), "Event") {
-		log.Fatalf("struct %s must be prefixed with 'Event'", t.Name())
+		panic(fmt.Sprintf("revoltgo: struct %s must be prefixed with 'Event'", t.Name()))
 	}
 
 	// Convert "EventMessage" struct name to "Message" event name
@@ -368,7 +377,7 @@ func handlerName[T any]() string {
 
 	// Safety check (assuming eventConstructors is defined elsewhere)
 	if _, found := eventConstructors[name]; !found {
-		log.Fatalf("attempting to bind handler for unsupported event type: %s", t.Name())
+		panic(fmt.Sprintf("revoltgo: attempting to bind handler for unsupported event type: %s", t.Name()))
 	}
 
 	return name
@@ -410,7 +419,7 @@ func addDefaultHandler[T any](s *Session, handler func(*Session, T)) {
 
 	// Catch a development error if we ever overwrite an existing handler; it probably wasn't intentional
 	if _, exists := next.defaults[name]; exists {
-		log.Printf("addDefaultHandler is overwriting for: %T", handler)
+		logf("addDefaultHandler is overwriting for: %T", handler)
 	}
 
 	next.defaults[name] = func(s *Session, e any) {
@@ -421,7 +430,8 @@ func addDefaultHandler[T any](s *Session, handler func(*Session, T)) {
 }
 
 func (s *Session) IsConnected() bool {
-	return s.WS != nil && s.WS.IsConnected()
+	ws := s.Socket()
+	return ws != nil && ws.IsConnected()
 }
 
 func (s *Session) buildOpenQueryParams() url.Values {
@@ -513,9 +523,9 @@ func (s *Session) Open(configuration ...StateConfig) (err error) {
 		return
 	}
 
-	log.Printf("Using API version: %s\n", instance.Revolt)
+	logf("Using API version: %s", instance.Revolt)
 	if instance.Revolt != ExpectedAPI {
-		log.Printf("This version was built against API version %s; behaviour may differ", ExpectedAPI)
+		logf("This version was built against API version %s; behaviour may differ", ExpectedAPI)
 	}
 
 	wsURL, err := url.Parse(instance.WS)
@@ -525,8 +535,9 @@ func (s *Session) Open(configuration ...StateConfig) (err error) {
 
 	wsURL.RawQuery = s.buildOpenQueryParams().Encode()
 
-	s.WS = newWebsocket(s, wsURL.String())
-	return s.WS.connect()
+	ws := newWebsocket(s, wsURL.String())
+	s.ws.Store(ws)
+	return ws.connect()
 }
 
 // Close closes the Websocket connection and stops background workers.
@@ -537,8 +548,8 @@ func (s *Session) Close() error {
 		_ = s.HTTP.transport.Close()
 	}
 
-	if s.WS != nil {
-		return s.WS.WriteClose()
+	if ws := s.Socket(); ws != nil {
+		return ws.WriteClose()
 	}
 
 	return nil
@@ -546,13 +557,14 @@ func (s *Session) Close() error {
 
 // WriteSocketJSON writes data to the websocket in JSON
 func (s *Session) WriteSocketJSON(data any) error {
-	if s.WS == nil {
+	ws := s.Socket()
+	if ws == nil {
 		return gws.ErrConnClosed
 	}
 
 	payload, err := json.Marshal(data)
 	if err == nil {
-		err = s.WS.WriteMessage(gws.OpcodeText, payload)
+		err = ws.WriteMessage(gws.OpcodeText, payload)
 	}
 
 	return err
@@ -560,20 +572,21 @@ func (s *Session) WriteSocketJSON(data any) error {
 
 // WriteSocketMSGP writes data to the Websocket in MessagePack
 func (s *Session) WriteSocketMSGP(data any) error {
-	if s.WS == nil {
+	ws := s.Socket()
+	if ws == nil {
 		return gws.ErrConnClosed
 	}
 
 	marshaler, ok := data.(msgp.Marshaler)
 	if !ok {
 		err := fmt.Errorf("%T doesn't implement msgp.Marshaler", data)
-		log.Println(fmt.Errorf("%w. Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", err))
+		logf("%s. Did you mean to use WriteSocketJSON, or is revoltgo_msgp_gen outdated", err)
 		return err
 	}
 
 	payload, err := marshaler.MarshalMsg(nil)
 	if err == nil {
-		err = s.WS.WriteMessage(gws.OpcodeBinary, payload)
+		err = ws.WriteMessage(gws.OpcodeBinary, payload)
 	}
 
 	return err
@@ -583,7 +596,7 @@ func (s *Session) WriteSocketMSGP(data any) error {
 func (s *Session) Upload(tag FileTag, file *FileParams) (attachment *FileParamsData, err error) {
 
 	if file.Name == "" {
-		log.Printf("Warning: uploading files without names may cause the media to not load on the client")
+		logf("Warning: uploading files without names may cause the media to not load on the client")
 	}
 
 	endpoint := EndpointAutumn(tag)

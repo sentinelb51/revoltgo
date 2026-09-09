@@ -11,7 +11,6 @@ package revoltgo
 
 import (
 	json "encoding/json/v2"
-	"log"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -70,13 +69,13 @@ type GithubReposCommitUserData struct {
 
 func HasUpdate() bool {
 	if commit == "" {
-		log.Printf("Update check skipped: this build has no resolvable module version")
+		logf("Update check skipped: this build has no resolvable module version")
 		return false
 	}
 
 	response, err := http.Get(MainCommitsURL)
 	if err != nil {
-		log.Printf("Update check failed whilst fetching: %v", err)
+		logf("Update check failed whilst fetching: %v", err)
 		return false
 	}
 
@@ -85,18 +84,18 @@ func HasUpdate() bool {
 	var repo GithubRepos
 	err = json.UnmarshalRead(response.Body, &repo)
 	if err != nil {
-		log.Printf("Update check failed whilst decoding: %v", err)
+		logf("Update check failed whilst decoding: %v", err)
 		return false
 	}
 
 	if !strings.HasPrefix(repo.Sha, commit) {
 		days := time.Now().Sub(repo.Commits.Author.Date).Hours() / 24
-		log.Printf("A new update is available (%.0f days ago)", days)
-		log.Printf("To update, run: go get -u github.com/sentinelb51/revoltgo")
+		logf("A new update is available (%.0f days ago)", days)
+		logf("To update, run: go get -u github.com/sentinelb51/revoltgo")
 		return true
 	}
 
-	log.Printf("Update check complete; you are using the latest version of revoltgo")
+	logf("Update check complete; you are using the latest version of revoltgo")
 	return false
 }
 

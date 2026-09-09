@@ -106,14 +106,14 @@ func mergeJSON[T any](object *T, data json.RawMessage, clearFields []string) {
 	decoded := make(map[string]any)
 	err := json.Unmarshal(data, &decoded)
 	if err != nil {
-		log.Printf("Error unmarshalling data: %s\n", err)
+		logf("Error unmarshalling data: %s", err)
 		return
 	}
 
 	// Marshal the object to JSON
 	objectBytes, err := json.Marshal(object)
 	if err != nil {
-		log.Printf("Error marshalling object: %s\n", err)
+		logf("Error marshalling object: %s", err)
 		return
 	}
 
@@ -121,7 +121,7 @@ func mergeJSON[T any](object *T, data json.RawMessage, clearFields []string) {
 	objectMap := make(map[string]any)
 	err = json.Unmarshal(objectBytes, &objectMap)
 	if err != nil {
-		log.Printf("Error unmarshalling object: %s\n", err)
+		logf("Error unmarshalling object: %s", err)
 		return
 	}
 
@@ -141,7 +141,7 @@ func mergeJSON[T any](object *T, data json.RawMessage, clearFields []string) {
 	// Marshal the map back into JSON
 	objectBytes, err = json.Marshal(objectMap)
 	if err != nil {
-		log.Printf("Error marshalling object: %s\n", err)
+		logf("Error marshalling object: %s", err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func mergeJSON[T any](object *T, data json.RawMessage, clearFields []string) {
 
 	err = json.Unmarshal(objectBytes, result)
 	if err != nil {
-		log.Printf("Error unmarshalling new object: %s\n", err)
+		logf("Error unmarshalling new object: %s", err)
 		return
 	}
 

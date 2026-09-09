@@ -160,14 +160,28 @@ func routeKey(method, endpoint string) string {
 		}
 	}
 
-	segments := strings.Split(endpoint, "/")
-	for i, segment := range segments {
+	// One buffer and one allocation, on every REST call: an id segment only
+	// ever shrinks to ":id", so the path's own length bounds the key.
+	var key strings.Builder
+	key.Grow(len(method) + 1 + len(endpoint))
+	key.WriteString(method)
+	key.WriteByte(':')
+
+	for {
+		segment, rest, more := strings.Cut(endpoint, "/")
 		if isULID(segment) {
-			segments[i] = ":id"
+			key.WriteString(":id")
+		} else {
+			key.WriteString(segment)
 		}
+		if !more {
+			break
+		}
+		key.WriteByte('/')
+		endpoint = rest
 	}
 
-	return method + ":" + strings.Join(segments, "/")
+	return key.String()
 }
 
 func (r *Ratelimiter) get(method, endpoint string) *ratelimitBucket {
