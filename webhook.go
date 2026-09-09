@@ -12,9 +12,13 @@ const (
 )
 
 // Webhook is derived from
-// https://github.com/stoatchat/stoatchat/blob/main/crates/core/database/src/models/channel_webhooks/model.rs#L8
+// https://github.com/stoatchat/stoatchat/blob/main/crates/core/models/src/v0/channel_webhooks.rs#L6
+//
+// The v0 model rather than the database one beside it: only the document in
+// Mongo names the field `_id`, and the routes and the WebhookCreate event both
+// serialise this, where it is `id`.
 type Webhook struct {
-	ID          string  `msg:"_id" json:"_id,omitzero"`
+	ID          string  `msg:"id" json:"id,omitzero"`
 	Name        string  `msg:"name" json:"name,omitzero"`
 	Avatar      *File   `msg:"avatar" json:"avatar,omitzero"`
 	CreatorID   string  `msg:"creator_id" json:"creator_id,omitzero"`

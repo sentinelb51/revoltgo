@@ -9654,8 +9654,8 @@ func (z *EventWebhookCreate) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "type"
 	o = append(o, 0x88, 0xa4, 0x74, 0x79, 0x70, 0x65)
 	o = msgp.AppendString(o, z.Type)
-	// string "_id"
-	o = append(o, 0xa3, 0x5f, 0x69, 0x64)
+	// string "id"
+	o = append(o, 0xa2, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "name"
 	o = append(o, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
@@ -9714,7 +9714,7 @@ func (z *EventWebhookCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Type")
 				return
 			}
-		case "_id":
+		case "id":
 			z.ID, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ID")
@@ -9792,7 +9792,7 @@ func (z *EventWebhookCreate) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *EventWebhookCreate) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 4 + msgp.StringPrefixSize + len(z.ID) + 5 + msgp.StringPrefixSize + len(z.Name) + 7
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Type) + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + msgp.StringPrefixSize + len(z.Name) + 7
 	if z.Avatar == nil {
 		s += msgp.NilSize
 	} else {
@@ -25715,8 +25715,8 @@ func (z UsernameParams) Msgsize() (s int) {
 func (z *Webhook) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 7
-	// string "_id"
-	o = append(o, 0x87, 0xa3, 0x5f, 0x69, 0x64)
+	// string "id"
+	o = append(o, 0x87, 0xa2, 0x69, 0x64)
 	o = msgp.AppendString(o, z.ID)
 	// string "name"
 	o = append(o, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
@@ -25769,7 +25769,7 @@ func (z *Webhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "_id":
+		case "id":
 			z.ID, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ID")
@@ -25847,7 +25847,7 @@ func (z *Webhook) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Webhook) Msgsize() (s int) {
-	s = 1 + 4 + msgp.StringPrefixSize + len(z.ID) + 5 + msgp.StringPrefixSize + len(z.Name) + 7
+	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + msgp.StringPrefixSize + len(z.Name) + 7
 	if z.Avatar == nil {
 		s += msgp.NilSize
 	} else {
