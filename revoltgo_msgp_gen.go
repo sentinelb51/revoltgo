@@ -477,10 +477,18 @@ func (z *AttachmentMetadata) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendInt(o, z.Height)
 	// string "thumbhash"
 	o = append(o, 0xa9, 0x74, 0x68, 0x75, 0x6d, 0x62, 0x68, 0x61, 0x73, 0x68)
-	o = msgp.AppendBytes(o, z.Thumbhash)
+	o, err = z.Thumbhash.MarshalMsg(o)
+	if err != nil {
+		err = msgp.WrapError(err, "Thumbhash")
+		return
+	}
 	// string "animated"
 	o = append(o, 0xa8, 0x61, 0x6e, 0x69, 0x6d, 0x61, 0x74, 0x65, 0x64)
-	o = msgp.AppendBool(o, z.Animated)
+	o, err = z.Animated.MarshalMsg(o)
+	if err != nil {
+		err = msgp.WrapError(err, "Animated")
+		return
+	}
 	return
 }
 
@@ -525,13 +533,13 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "thumbhash":
-			z.Thumbhash, bts, err = msgp.ReadBytesBytes(bts, z.Thumbhash)
+			bts, err = z.Thumbhash.UnmarshalMsg(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Thumbhash")
 				return
 			}
 		case "animated":
-			z.Animated, bts, err = msgp.ReadBoolBytes(bts)
+			bts, err = z.Animated.UnmarshalMsg(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "Animated")
 				return
@@ -550,7 +558,7 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *AttachmentMetadata) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.IntSize + 7 + msgp.IntSize + 10 + msgp.BytesPrefixSize + len(z.Thumbhash) + 9 + msgp.BoolSize
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.IntSize + 7 + msgp.IntSize + 10 + z.Thumbhash.Msgsize() + 9 + z.Animated.Msgsize()
 	return
 }
 

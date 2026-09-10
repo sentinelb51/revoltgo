@@ -122,6 +122,6 @@ type AttachmentMetadata struct {
 	Width  int `msg:"width" json:"width,omitzero"`
 	Height int `msg:"height" json:"height,omitzero"`
 
-	Thumbhash []byte `msg:"thumbhash" json:"thumbhash,omitzero"`
-	Animated  bool   `msg:"animated" json:"animated,omitzero"`
+	Thumbhash NullableBytes `msg:"thumbhash" json:"thumbhash,omitzero"`
+	Animated  NullableBool  `msg:"animated" json:"animated,omitzero"`
 }
