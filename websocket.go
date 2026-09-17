@@ -33,7 +33,6 @@ type Websocket struct {
 
 	heartbeatCount    atomic.Int64
 	heartbeatLastSent time.Time
-	heartbeatLastAck  time.Time
 
 	// latency is the last round trip in nanoseconds, computed where both ends
 	// of it are known rather than from two timestamps read separately.
@@ -194,10 +193,8 @@ func (ws *Websocket) backoff(attempt int) time.Duration {
 // or reconnects are disabled.
 func (ws *Websocket) reconnectLoop() {
 	for attempt := 0; ws.ShouldReconnect; attempt++ {
-		select {
-		case <-ws.ctx.Done():
+		if sleepContext(ws.ctx, ws.backoff(attempt)) != nil {
 			return
-		case <-time.After(ws.backoff(attempt)):
 		}
 
 		logf("Re-connecting...")
@@ -314,16 +311,15 @@ func (ws *Websocket) OnPong(socket *gws.Conn, payload []byte) {
 
 	acknowledged := time.Now()
 
-	ws.mu.Lock()
-	ws.heartbeatLastAck = acknowledged
+	ws.mu.RLock()
+	lastSent := ws.heartbeatLastSent
+	ws.mu.RUnlock()
 
 	// An unsolicited pong carrying a zeroed payload matches count 0 before any
 	// ping has been sent; timing it against the zero value is not a round trip.
-	if !ws.heartbeatLastSent.IsZero() {
-		ws.latency.Store(int64(acknowledged.Sub(ws.heartbeatLastSent)))
+	if !lastSent.IsZero() {
+		ws.latency.Store(int64(acknowledged.Sub(lastSent)))
 	}
-
-	ws.mu.Unlock()
 
 	ws.heartbeatCount.Add(1)
 }

@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -68,7 +69,7 @@ func (u *User) update(data PartialUser) {
 	}
 
 	if data.Relations != nil {
-		u.Relations = *data.Relations
+		u.Relations = slices.Clone(*data.Relations) // copied, not adopted: the partial belongs to the caller
 	}
 
 	if data.Badges != nil {

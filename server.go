@@ -2,6 +2,7 @@ package revoltgo
 
 import (
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -43,12 +44,14 @@ func (s *Server) update(data PartialServer) {
 		s.Description = *data.Description
 	}
 
+	// Containers are copied, not adopted: the partial belongs to the caller
+
 	if data.Channels != nil {
-		s.Channels = *data.Channels
+		s.Channels = slices.Clone(*data.Channels)
 	}
 
 	if data.Categories != nil {
-		s.Categories = *data.Categories
+		s.Categories = slices.Clone(*data.Categories)
 	}
 
 	if data.SystemMessages != nil {
@@ -56,7 +59,7 @@ func (s *Server) update(data PartialServer) {
 	}
 
 	if data.Roles != nil {
-		s.Roles = data.Roles
+		s.Roles = cloneRoles(data.Roles)
 	}
 
 	if data.DefaultPermissions != nil {
@@ -248,7 +251,7 @@ func (m *ServerMember) update(data PartialServerMember) {
 	}
 
 	if data.Roles != nil {
-		m.Roles = *data.Roles
+		m.Roles = slices.Clone(*data.Roles) // copied, not adopted: the partial belongs to the caller
 	}
 
 	if data.Timeout != nil {

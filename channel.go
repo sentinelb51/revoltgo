@@ -1,5 +1,7 @@
 package revoltgo
 
+import "maps"
+
 //go:generate msgp -tests=false -io=false
 
 type ChannelType string
@@ -67,7 +69,7 @@ func (c *Channel) update(data PartialChannel) {
 	}
 
 	if data.RolePermissions != nil {
-		c.RolePermissions = data.RolePermissions
+		c.RolePermissions = maps.Clone(data.RolePermissions) // copied, not adopted: the partial belongs to the caller
 	}
 
 	if data.DefaultPermissions != nil {

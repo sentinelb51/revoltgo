@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json/jsontext"
 	json "encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"github.com/klauspost/compress/zstd"
-	"github.com/tinylib/msgp/msgp"
 )
 
 //go:generate msgp -tests=false -io=false
@@ -436,20 +436,12 @@ func (c *HTTPClient) handleResponse(method, destination string, statusCode int, 
 			*result = data
 		default:
 			// 202 accepts a request rather than performing it and sends no
-			// body: decoding one byte ahead tells that apart from a truncated
-			// answer, which is an error. The byte is handed back to the decoder.
-			var probe [1]byte
-
-			n, err := io.ReadFull(body, probe[:])
-			if err == io.EOF {
-				return nil
-			}
-
-			if err != nil {
-				return fmt.Errorf("handleResponse: %w", err)
-			}
-
-			if err = json.UnmarshalRead(io.MultiReader(bytes.NewReader(probe[:n]), body), result); err != nil {
+			// body. UnmarshalDecode reports that as io.EOF, and a truncated
+			// answer as io.ErrUnexpectedEOF, where UnmarshalRead would fold
+			// the two together. It does not check for trailing data after
+			// the value, which a response body has no reason to carry.
+			err := json.UnmarshalDecode(jsontext.NewDecoder(body), result)
+			if err != nil && !errors.Is(err, io.EOF) {
 				return fmt.Errorf("handleResponse: %w", err)
 			}
 		}
@@ -798,11 +790,11 @@ type ChannelEditParams struct {
 	Remove []ChannelClearType `msg:"remove" json:"remove,omitzero"`
 }
 
-//msgp:ignore SyncSettingsParamsTuple
+//msgp:tuple SyncSettingsParamsTuple
 
 // SyncSettingsParamsTuple is one settings entry as the wire sends it: a
-// 2-element array, not an object. Both codecs are hand-written because the
-// generated object form matches neither transport.
+// 2-element array, not an object. msgp emits that shape from the tuple
+// directive; json/v2 has no equivalent, so the JSON codec is hand-written.
 type SyncSettingsParamsTuple struct {
 	// Timestamp is milliseconds since the epoch. It is an integer on both
 	// transports, so neither the package's msgp time shim nor json/v2's RFC3339
@@ -821,19 +813,7 @@ func (t SyncSettingsParamsTuple) Time() time.Time {
 
 // MarshalJSON writes the tuple as the 2-element array the wire uses.
 func (t SyncSettingsParamsTuple) MarshalJSON() ([]byte, error) {
-	value, err := json.Marshal(t.Value)
-	if err != nil {
-		return nil, fmt.Errorf("SyncSettingsParamsTuple: %w", err)
-	}
-
-	out := make([]byte, 0, len(value)+24)
-	out = append(out, '[')
-	out = strconv.AppendInt(out, t.Timestamp, 10)
-	out = append(out, ',')
-	out = append(out, value...)
-	out = append(out, ']')
-
-	return out, nil
+	return json.Marshal([2]any{t.Timestamp, t.Value})
 }
 
 // UnmarshalJSON reads the 2-element array back.
@@ -853,42 +833,6 @@ func (t *SyncSettingsParamsTuple) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-// MarshalMsg implements msgp.Marshaler
-func (t SyncSettingsParamsTuple) MarshalMsg(b []byte) ([]byte, error) {
-	o := msgp.Require(b, t.Msgsize())
-	o = msgp.AppendArrayHeader(o, 2)
-	o = msgp.AppendInt64(o, t.Timestamp)
-	o = msgp.AppendString(o, t.Value)
-	return o, nil
-}
-
-// UnmarshalMsg implements msgp.Unmarshaler
-func (t *SyncSettingsParamsTuple) UnmarshalMsg(bts []byte) ([]byte, error) {
-	size, bts, err := msgp.ReadArrayHeaderBytes(bts)
-	if err != nil {
-		return bts, msgp.WrapError(err)
-	}
-
-	if size != 2 {
-		return bts, msgp.WrapError(msgp.ArrayError{Wanted: 2, Got: size})
-	}
-
-	if t.Timestamp, bts, err = msgp.ReadInt64Bytes(bts); err != nil {
-		return bts, msgp.WrapError(err, "Timestamp")
-	}
-
-	if t.Value, bts, err = msgp.ReadStringBytes(bts); err != nil {
-		return bts, msgp.WrapError(err, "Value")
-	}
-
-	return bts, nil
-}
-
-// Msgsize implements msgp.Sizer
-func (t SyncSettingsParamsTuple) Msgsize() int {
-	return msgp.ArrayHeaderSize + msgp.Int64Size + msgp.StringPrefixSize + len(t.Value)
 }
 
 // SyncSettingsParams is what /sync/settings/fetch answers with. The set

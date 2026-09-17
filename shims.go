@@ -35,7 +35,7 @@ func timeToMs(t time.Time) int64 {
 
 /* Wire shapes that the generated codecs get wrong on their own */
 
-//msgp:ignore NullableBytes NullableBool
+//msgp:ignore NullableBytes
 
 // NullableBytes is a Vec<u8> as Stoat's two encoders emit it, neither of which
 // msgp's generated []byte codec reads. Serde has no byte string: the gateway
@@ -132,29 +132,4 @@ func (b *NullableBytes) UnmarshalJSON(data []byte) error {
 	*b = out
 
 	return nil
-}
-
-// NullableBool is a bool the gateway may send as nil, where msgp's generated
-// decoder expects one of the two boolean bytes. A None means false: the field
-// exists to say a thing is so, and nothing said is not so.
-type NullableBool bool
-
-func (v NullableBool) MarshalMsg(o []byte) ([]byte, error) {
-	return msgp.AppendBool(o, bool(v)), nil
-}
-
-func (v *NullableBool) UnmarshalMsg(bts []byte) ([]byte, error) {
-	if msgp.IsNil(bts) {
-		*v = false
-		return msgp.ReadNilBytes(bts)
-	}
-
-	value, bts, err := msgp.ReadBoolBytes(bts)
-	*v = NullableBool(value)
-
-	return bts, err
-}
-
-func (v NullableBool) Msgsize() int {
-	return msgp.BoolSize
 }

@@ -14,10 +14,12 @@ import (
 	Ratelimit buckets use a simple mutex as they are updated on every response
 */
 
+// Spelled in canonical MIME form: http.Header.Get canonicalises its key, and a
+// key already in that form takes the allocation-free fast path.
 const (
-	ratelimitHeaderLimit      = "X-RateLimit-Limit"
-	ratelimitHeaderRemaining  = "X-RateLimit-Remaining"
-	ratelimitHeaderResetAfter = "X-RateLimit-Reset-After"
+	ratelimitHeaderLimit      = "X-Ratelimit-Limit"
+	ratelimitHeaderRemaining  = "X-Ratelimit-Remaining"
+	ratelimitHeaderResetAfter = "X-Ratelimit-Reset-After"
 )
 
 // defaultIdleTimeout is how long an unused bucket is kept. A bucket that never
@@ -77,7 +79,6 @@ func newRatelimiter() *Ratelimiter {
 	r := &Ratelimiter{
 		endpoints:     make(map[string]*ratelimitBucket),
 		CleanInterval: time.Minute,
-		IdleTimeout:   defaultIdleTimeout,
 	}
 
 	r.start()

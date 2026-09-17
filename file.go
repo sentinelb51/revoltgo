@@ -123,5 +123,5 @@ type AttachmentMetadata struct {
 	Height int `msg:"height" json:"height,omitzero"`
 
 	Thumbhash NullableBytes `msg:"thumbhash" json:"thumbhash,omitzero"`
-	Animated  NullableBool  `msg:"animated" json:"animated,omitzero"`
+	Animated  *bool         `msg:"animated" json:"animated,omitzero"` // nil when the wire sends none, as every other optional here
 }

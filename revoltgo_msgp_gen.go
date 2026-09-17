@@ -484,10 +484,10 @@ func (z *AttachmentMetadata) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 	// string "animated"
 	o = append(o, 0xa8, 0x61, 0x6e, 0x69, 0x6d, 0x61, 0x74, 0x65, 0x64)
-	o, err = z.Animated.MarshalMsg(o)
-	if err != nil {
-		err = msgp.WrapError(err, "Animated")
-		return
+	if z.Animated == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendBool(o, *z.Animated)
 	}
 	return
 }
@@ -539,10 +539,21 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "animated":
-			bts, err = z.Animated.UnmarshalMsg(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Animated")
-				return
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Animated = nil
+			} else {
+				if z.Animated == nil {
+					z.Animated = new(bool)
+				}
+				*z.Animated, bts, err = msgp.ReadBoolBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Animated")
+					return
+				}
 			}
 		default:
 			bts, err = msgp.Skip(bts)
@@ -558,7 +569,12 @@ func (z *AttachmentMetadata) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *AttachmentMetadata) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.IntSize + 7 + msgp.IntSize + 10 + z.Thumbhash.Msgsize() + 9 + z.Animated.Msgsize()
+	s = 1 + 5 + msgp.StringPrefixSize + len(string(z.Type)) + 6 + msgp.IntSize + 7 + msgp.IntSize + 10 + z.Thumbhash.Msgsize() + 9
+	if z.Animated == nil {
+		s += msgp.NilSize
+	} else {
+		s += msgp.BoolSize
+	}
 	return
 }
 
@@ -9115,11 +9131,10 @@ func (z *EventUserSettingsUpdate) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendMapHeader(o, uint32(len(z.Update)))
 	for za0001, za0002 := range z.Update {
 		o = msgp.AppendString(o, za0001)
-		o, err = za0002.MarshalMsg(o)
-		if err != nil {
-			err = msgp.WrapError(err, "Update", za0001)
-			return
-		}
+		// array header, size 2
+		o = append(o, 0x92)
+		o = msgp.AppendInt64(o, za0002.Timestamp)
+		o = msgp.AppendString(o, za0002.Value)
 	}
 	return
 }
@@ -9169,9 +9184,24 @@ func (z *EventUserSettingsUpdate) UnmarshalMsg(bts []byte) (o []byte, err error)
 					err = msgp.WrapError(err, "Update")
 					return
 				}
-				bts, err = za0002.UnmarshalMsg(bts)
+				var zb0003 uint32
+				zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Update", za0001)
+					return
+				}
+				if zb0003 != 2 {
+					err = msgp.ArrayError{Wanted: 2, Got: zb0003}
+					return
+				}
+				za0002.Timestamp, bts, err = msgp.ReadInt64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Update", za0001, "Timestamp")
+					return
+				}
+				za0002.Value, bts, err = msgp.ReadStringBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Update", za0001, "Value")
 					return
 				}
 				z.Update[za0001] = za0002
@@ -9194,7 +9224,7 @@ func (z *EventUserSettingsUpdate) Msgsize() (s int) {
 	if z.Update != nil {
 		for za0001, za0002 := range z.Update {
 			_ = za0002
-			s += msgp.StringPrefixSize + len(za0001) + za0002.Msgsize()
+			s += msgp.StringPrefixSize + len(za0001) + 1 + msgp.Int64Size + msgp.StringPrefixSize + len(za0002.Value)
 		}
 	}
 	return
@@ -24420,11 +24450,10 @@ func (z SyncSettingsParams) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendMapHeader(o, uint32(len(z)))
 	for za0001, za0002 := range z {
 		o = msgp.AppendString(o, za0001)
-		o, err = za0002.MarshalMsg(o)
-		if err != nil {
-			err = msgp.WrapError(err, za0001)
-			return
-		}
+		// array header, size 2
+		o = append(o, 0x92)
+		o = msgp.AppendInt64(o, za0002.Timestamp)
+		o = msgp.AppendString(o, za0002.Value)
 	}
 	return
 }
@@ -24453,9 +24482,24 @@ func (z *SyncSettingsParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			err = msgp.WrapError(err)
 			return
 		}
-		bts, err = zb0002.UnmarshalMsg(bts)
+		var zb0004 uint32
+		zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
 		if err != nil {
 			err = msgp.WrapError(err, zb0001)
+			return
+		}
+		if zb0004 != 2 {
+			err = msgp.ArrayError{Wanted: 2, Got: zb0004}
+			return
+		}
+		zb0002.Timestamp, bts, err = msgp.ReadInt64Bytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err, zb0001, "Timestamp")
+			return
+		}
+		zb0002.Value, bts, err = msgp.ReadStringBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err, zb0001, "Value")
 			return
 		}
 		(*z)[zb0001] = zb0002
@@ -24468,11 +24512,53 @@ func (z *SyncSettingsParams) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z SyncSettingsParams) Msgsize() (s int) {
 	s = msgp.MapHeaderSize
 	if z != nil {
-		for zb0004, zb0005 := range z {
-			_ = zb0005
-			s += msgp.StringPrefixSize + len(zb0004) + zb0005.Msgsize()
+		for zb0005, zb0006 := range z {
+			_ = zb0006
+			s += msgp.StringPrefixSize + len(zb0005) + 1 + msgp.Int64Size + msgp.StringPrefixSize + len(zb0006.Value)
 		}
 	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z SyncSettingsParamsTuple) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// array header, size 2
+	o = append(o, 0x92)
+	o = msgp.AppendInt64(o, z.Timestamp)
+	o = msgp.AppendString(o, z.Value)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *SyncSettingsParamsTuple) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadArrayHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 != 2 {
+		err = msgp.ArrayError{Wanted: 2, Got: zb0001}
+		return
+	}
+	z.Timestamp, bts, err = msgp.ReadInt64Bytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err, "Timestamp")
+		return
+	}
+	z.Value, bts, err = msgp.ReadStringBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err, "Value")
+		return
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z SyncSettingsParamsTuple) Msgsize() (s int) {
+	s = 1 + msgp.Int64Size + msgp.StringPrefixSize + len(z.Value)
 	return
 }
 
